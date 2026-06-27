@@ -255,7 +255,7 @@
         <button id="clearBtn">CLEAR</button>
         <button class="toggle-edit-btn" id="toggleEditBtn">🎛️ SHOW EDIT CONTROLS</button>
         <button class="save-btn" id="saveBtn">💾 SAVE BEAT</button>
-        <button id="recordBtn">EXPORT WAV</button>
+        <button id="recordBtn">RECORD WAV</button>
       </div>
     </header>
 
@@ -500,6 +500,12 @@ document.getElementById('recordBtn').addEventListener('click', async () => {
     document.getElementById('recordBtn').textContent = 'EXPORT WAV';
     document.getElementById('recordBtn').style.borderColor = '';
     document.getElementById('recordBtn').style.color = '';
+
+    // --- ADD THIS CHECK TO STOP THE SEQUENCER ---
+    if (isPlaying) {
+      startStopSequencer();
+    }
+    // ---------------------------------------------
 
     // 3. Create a download link for the user
     const url = URL.createObjectURL(recording);
