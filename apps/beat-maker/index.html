@@ -502,7 +502,15 @@ playBtn.addEventListener('click', () => {
         btn.classList.add('active');
       } else {
         const recording = await recorder.stop();
+const url = URL.createObjectURL(recording);
 
+// Send to parent with a clear action name
+window.parent.postMessage({ 
+    action: 'ADD_TRACK', 
+    audioUrl: url, 
+    trackName: 'Beat_' + Date.now() 
+}, '*');
+        
         // Stop playback along with the recording
         if (isPlaying) {
           Tone.Transport.stop();
