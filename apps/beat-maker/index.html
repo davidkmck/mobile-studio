@@ -292,6 +292,57 @@
   </footer>
 
   <script>
+    ///////////////////////////////////////////////////////
+    // from copilot:
+        // Ensure Tone.js starts correctly inside iframe
+    document.body.addEventListener('click', async () => {
+      await Tone.start();
+    }, { once: true });
+
+      // Initialize after DOM and iframe are ready
+    requestAnimationFrame(init);
+
+    function init() {
+      buildGrid();
+      setupSequencer();
+      setupMessaging();
+    }
+
+    function buildGrid() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      const instruments = ['kick', 'snare', 'hihat', 'clap', 'bass'];
+      instruments.forEach(inst => {
+        const row = document.createElement('div');
+        row.textContent = inst.toUpperCase();
+        row.style.color = `var(--${inst})`;
+        grid.appendChild(row);
+      });
+    }
+
+ function setupSequencer() {
+      // Example Tone.js setup
+      const synth = new Tone.MembraneSynth().toDestination();
+      const loop = new Tone.Loop(time => synth.triggerAttackRelease('C2', '8n', time), '4n');
+      loop.start(0);
+      Tone.Transport.start();
+    }
+
+    function setupMessaging() {
+      window.addEventListener('message', (event) => {
+        const { action, key, value } = event.data;
+        if (action === 'SAVE_DATA') {
+          localStorage.setItem(key, JSON.stringify(value));
+          window.parent.postMessage({ action: 'SAVE_CONFIRMED', key }, '*');
+        }
+        if (action === 'REQUEST_DATA') {
+          const data = JSON.parse(localStorage.getItem(key)) || null;
+          window.parent.postMessage({ action: 'RETURN_DATA', key, data }, '*');
+        }
+      });
+    }
+///////////////////////////////////////////////////////
+    
     const TRACKS = [
       { id: 'kick',  label: 'KICK',   color: 'kick'  },
       { id: 'snare', label: 'SNARE',  color: 'snare' },
