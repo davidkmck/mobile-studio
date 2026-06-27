@@ -393,6 +393,20 @@
     }
   }
 
+  // Inside Synth/Multitrack index.html
+window.addEventListener('message', (event) => {
+  if (event.data.action === 'START_AUDIO') {
+    Tone.start(); // Unlock audio
+    Tone.Transport.bpm.value = event.data.bpm;
+    Tone.Transport.start(); // Start the timeline
+  }
+});
+
+// Send the request when your internal Play button is pressed
+document.getElementById('playBtn').addEventListener('click', () => {
+  window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+});
+
   document.getElementById('recordBtn').addEventListener('click', recordWav);
 
   // ─── Boot ───────────────────────────────────────────────────────
