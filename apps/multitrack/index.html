@@ -370,22 +370,15 @@ if (playBtn) {
     
 async function addAudioToTimeline(url, trackName) {
   try {
-        // 1. Create a Tone.Player directly with the blob URL
-        const player = new Tone.Player(url).toDestination();
-        
-        // 2. Wait for it to load
-        await player.loaded;
-        
-        console.log("Audio loaded successfully:", trackName);
-        // ... proceed to add to your visual timeline
-    } catch (e) {
-        console.error("Failed to add incoming clip to timeline:", e);
-    }
-
-
-  try {
-    getAudioContext(); // make sure the AudioContext exists/resumes before decoding
+    console.log("Adding audio to timeline:", trackName);
+    
+    // Ensure the AudioContext is ready
+    getAudioContext(); 
+    
+    // ONLY call this once. It reads the blob, decodes it, and updates the UI.
     await createTrackNode(url, trackName);
+    
+    console.log("Audio added successfully:", trackName);
   } catch (err) {
     console.error('Failed to add incoming clip to timeline:', err);
     alert('Could not load the recorded beat into the mixer. See console for details.');
