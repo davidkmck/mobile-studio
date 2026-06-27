@@ -42,6 +42,17 @@
     font-weight: bold;
     background: rgba(0, 229, 255, 0.05);
   }
+    .app-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none; /* Hide by default */
+}
+
+.app-frame.active {
+    display: block; /* Show only when active */
+}
+    
 </style>
 </head>
 <body>
@@ -69,7 +80,7 @@
 
       // 2. Navigation — switch sub-app, then deliver any queued clip once it's loaded
       if (action === 'SWITCH_APP') {
-        loadApp(app);
+        switchApp(app);
       }
 
       // Listen for the app requesting a global state change
@@ -81,6 +92,19 @@
     });
   }
     });
+
+    function switchApp(targetAppId) {
+    // 1. Hide all frames
+    document.querySelectorAll('.app-frame').forEach(frame => {
+        frame.classList.remove('active');
+    });
+
+    // 2. Show the targeted frame
+    const activeFrame = document.getElementById(targetAppId);
+    if (activeFrame) {
+        activeFrame.classList.add('active');
+    }
+}
 
     function loadApp(appName, event) {
       if (event) event.preventDefault(); // Prevents the href="#" jump
