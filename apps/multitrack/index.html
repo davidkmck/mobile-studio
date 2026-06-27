@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,13 +8,13 @@
   <style>
     
     :root {
-  --bg: #0a0a0f;           /* The main backdrop color */
-  --panel: #12121c;         /* Card/Panel background */
-  --border: #26263b;        /* Border color for inputs/panels */
-  --text: #e2e2e9;          /* Primary text color */
-  --text-dim: #6c6c84;      /* Secondary/disabled text */
-  --accent: #00e5ff;        /* Primary accent (cyan) */
-  --accent-alt: #9d4edd;    /* Secondary accent (purple) */
+  --bg: #0a0a0f;
+  --panel: #12121c;
+  --border: #26263b;
+  --text: #e2e2e9;
+  --text-dim: #6c6c84;
+  --accent: #00e5ff;
+  --accent-alt: #9d4edd;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,14 +22,13 @@
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: 'Share Tech Mono', monospace; /* Or your preferred font */
+  font-family: 'Share Tech Mono', monospace;
   padding: 20px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* Standardized button look */
 button {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -45,7 +45,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 15px;
-  flex-grow: 1; /* This helps push the layout to fit the screen */
+  flex-grow: 1;
 }    
 
     main {
@@ -296,20 +296,29 @@ window.addEventListener('message', (event) => {
   if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
     const { audioBlob, trackName } = event.data;
     console.log("Tracks App: Received audio for", trackName);
-    
-    // Convert the Blob to a URL so your player can use it
-    const audioUrl = URL.createObjectURL(audioBlob);
-    
-    // Call your function to actually display/play the clip
-    addAudioToTimeline(trackName, audioUrl);
+
+    // Hand the incoming blob straight to the real track-creation pipeline
+    // (decodes it, adds it to `tracks`, and renders it in the mixer board)
+    addAudioToTimeline(trackName, audioBlob);
   }
 });
 
-function addAudioToTimeline(name, url) {
-  // YOUR EXISTING LOGIC:
-  // Create a new audio element or track node in your timeline 
-  // and set its source to 'url'
-  console.log("Adding to timeline:", url);
+async function addAudioToTimeline(name, blobOrUrl) {
+  // The parent app sends a real Blob, but keep this resilient in case
+  // something upstream ever sends a URL string instead.
+  let blob = blobOrUrl;
+  if (typeof blobOrUrl === 'string') {
+    const res = await fetch(blobOrUrl);
+    blob = await res.blob();
+  }
+
+  try {
+    getAudioContext(); // make sure the AudioContext exists/resumes before decoding
+    await createTrackNode(blob, name);
+  } catch (err) {
+    console.error('Failed to add incoming clip to timeline:', err);
+    alert('Could not load the recorded beat into the mixer. See console for details.');
+  }
 }
     
     // ─── State ────────────────────────────────────────────────────────────────
