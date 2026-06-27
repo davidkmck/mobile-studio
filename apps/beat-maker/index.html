@@ -506,6 +506,9 @@
         }, '*');
         window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
 
+        // Send request to play
+        window.parent.postMessage({ action: 'PLAY' }, '*');
+        
         isRecording = false;
         btn.textContent = 'RECORD WAV';
         btn.classList.remove('active');
