@@ -281,6 +281,7 @@
           step.onclick = () => {
             grid[ti][si] = !grid[ti][si];
             step.classList.toggle('active');
+            saveSession();
           };
           stepsContainer.appendChild(step);
         }
@@ -371,6 +372,37 @@
       return document.getElementById('globalEditorControls').children.length > 0;
     }
 
+    // ---- Session persistence (remembers last beat across sessions) ----
+    const SESSION_KEY = 'beatmaker_last_session';
+
+    function saveSession() {
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          bpm,
+          grid,
+          factorySelection: document.getElementById('factorySelect').value,
+          customSelection: document.getElementById('customSelect').value
+        }));
+      } catch (e) { /* ignore storage errors */ }
+    }
+
+    function restoreSession() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+        if (!saved) return false;
+        bpm = saved.bpm || 120;
+        document.getElementById('bpm').value = bpm;
+        grid = saved.grid && saved.grid.length === TRACKS.length
+          ? saved.grid.map(row => [...row])
+          : TRACKS.map(() => Array(STEPS).fill(false));
+        if (saved.factorySelection) document.getElementById('factorySelect').value = saved.factorySelection;
+        if (saved.customSelection) document.getElementById('customSelect').value = saved.customSelection;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
     // ---- Custom presets ----
     function getCustomPresets() {
       try {
@@ -403,6 +435,7 @@
       localStorage.setItem('last_custom_selection', name);
       localStorage.removeItem('last_factory_selection');
       document.getElementById('factorySelect').value = '';
+      saveSession();
     }
 
     function loadCustomPreset(name) {
@@ -448,8 +481,26 @@
         btn.classList.add('active');
       } else {
         const recording = await recorder.stop();
-        window.parent.postMessage({ action: 'EXPORT_AUDIO_TO_TRACKS', audioBlob: recording, trackName: 'Beat_1' }, '*');
-        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+
+        // Stop playback along with the recording
+        if (isPlaying) {
+          Tone.Transport.stop();
+          if (sequence) { sequence.dispose(); sequence = null; }
+          Tone.Transport.cancel();
+          isPlaying = false;
+          document.getElementById('playBtn').textContent = '▶ PLAY';
+          document.querySelectorAll('.step.playing').forEach(el => el.classList.remove('playing'));
+          currentStep = -1;
+        }
+
+        window.parent.postMessage({
+          action: 'EXPORT_AUDIO_TO_TRACKS',
+          audioBlob: recording,
+          trackName: 'Beat_1',
+          mimeType: recording.type || 'audio/wav'
+        }, '*');
+        window.parent.postMessage({ action: 'SWITCH_APP', app: 'tracks' }, '*');
+
         isRecording = false;
         btn.textContent = 'RECORD WAV';
         btn.classList.remove('active');
@@ -465,6 +516,7 @@
     document.getElementById('bpm').addEventListener('change', (e) => {
       bpm = parseInt(e.target.value, 10) || 120;
       if (isPlaying) Tone.Transport.bpm.value = bpm;
+      saveSession();
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
@@ -474,6 +526,7 @@
       const customSelect = document.getElementById('customSelect');
       if (customSelect) { customSelect.value = ""; localStorage.removeItem('last_custom_selection'); }
       buildGridUI();
+      saveSession();
     });
 
     document.getElementById('factorySelect').addEventListener('change', (e) => {
@@ -483,6 +536,7 @@
       const userSelect = document.getElementById('customSelect');
       if (userSelect) userSelect.value = "";
       triggerFactorySequence(selection);
+      saveSession();
     });
 
     document.getElementById('customSelect').addEventListener('change', (e) => {
@@ -492,10 +546,12 @@
       localStorage.removeItem('last_factory_selection');
       document.getElementById('factorySelect').value = '';
       loadCustomPreset(selection);
+      saveSession();
     });
 
     // ---- Boot ----
     refreshCustomSelectOptions();
+    restoreSession();
     buildGridUI();
 </script>
 </body>
