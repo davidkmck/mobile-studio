@@ -17,14 +17,16 @@
   
   #appFrame { flex: 1; border: none; width: 100%; }
 
-  .global-app-banner {
-    display: flex;
-    width: 100%;
-    height: 60px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-  }
 
+.global-app-banner {
+  display: flex;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  height: 60px;
+  background: var(--panel); /* Match the app panel color */
+  border-top: 1px solid var(--border);
+}
   .banner-icon {
     flex: 1;
     display: flex;
