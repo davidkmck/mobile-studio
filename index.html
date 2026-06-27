@@ -116,6 +116,15 @@
       frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
     });
   }
+
+      // 1. If Beat Maker sends an audio clip
+    if (event.data.action === 'ADD_TRACK') {
+        const multitrackFrame = document.getElementById('multitrack');
+        if (multitrackFrame) {
+            // Forward the data specifically to the Multitrack iframe
+            multitrackFrame.contentWindow.postMessage(event.data, '*');
+        }
+    }
     });
 
     function switchApp(targetAppId) {
