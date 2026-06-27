@@ -170,26 +170,19 @@
       });
     }
 
-    function triggerFactorySequence(selection) {
+function triggerFactorySequence(selection) {
       const presets = {
-        techno: [
-          [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-          [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-          [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, true],
-          [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false],
-          [true, true, false, true, false, true, false, false, true, false, true, false, false, true, false, false]
-        ],
-        house: [
-          [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-          [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-          [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
-          [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-          [false, false, true, false, false, false, false, true, false, true, false, false, false, false, true, false]
-        ]
+        techno: { bpm: 126, grid: [[true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, true], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, true, false, true, false, true, false, false, true, false, true, false, false, true, false, false]] },
+        house: { bpm: 120, grid: [[true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [false, false, true, false, false, false, false, true, false, true, false, false, false, false, true, false]] },
+        hiphop: { bpm: 90, grid: [[true, false, false, false, false, false, false, true, false, true, true, false, false, false, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, true], [true, false, true, false, true, false, true, true, true, false, true, false, true, false, true, false], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false]] },
+        synthwave: { bpm: 115, grid: [[true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false]] },
+        chill: { bpm: 95, grid: [[true, false, false, false, false, false, true, false, false, true, false, false, false, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, true, false, true, true, false, true, false, true, true, false, true, true, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, false, false, true, false], [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]] }
       };
-      
+
       if (presets[selection]) {
-        grid = presets[selection];
+        document.getElementById('bpm').value = presets[selection].bpm;
+        bpm = presets[selection].bpm;
+        grid = presets[selection].grid;
         buildGridUI();
       }
     }
@@ -216,9 +209,29 @@
     }
 
     // Initialize UI and Listeners
-    document.getElementById('recordBtn').addEventListener('click', recordWav);
-    document.getElementById('factorySelect').addEventListener('change', (e) => triggerFactorySequence(e.target.value));
-    
+  // Initialize UI and Listeners
+    document.getElementById('playBtn').addEventListener('click', startStopSequencer);
+    document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
+    document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      grid = TRACKS.map(() => Array(STEPS).fill(false));
+      document.getElementById('factorySelect').value = "";
+      localStorage.removeItem('last_factory_selection');
+      const customSelect = document.getElementById('customSelect');
+      if(customSelect) { customSelect.value = ""; localStorage.removeItem('last_custom_selection'); }
+      buildGridUI();
+    });
+
+    document.getElementById('factorySelect').addEventListener('change', (e) => {
+      const selection = e.target.value;
+      localStorage.setItem('last_factory_selection', selection);
+      localStorage.removeItem('last_custom_selection');
+      const userSelect = document.getElementById('customSelect');
+      if (userSelect) userSelect.value = "";
+      triggerFactorySequence(selection);
+    });
+  
+
     buildGridUI(); // Call this immediately on load
 
 
