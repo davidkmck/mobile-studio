@@ -364,16 +364,27 @@ if (event.data.action === 'ADD_TRACK') {
       
 });
 
-   // Update your create function to accept the already-decoded buffer
-async function createTrackNodeFromBuffer(decodedBuffer, customName) {
-    const trackObject = {
-        id: Date.now(),
-        name: customName,
-        audioBuffer: decodedBuffer,
-        // ... rest of your trackObject properties
-    };
-    tracks.push(trackObject);
-    renderMixerBoard();
+async function createTrackNodeFromBuffer(arrayBuffer, customName) {
+  const ctx = getAudioContext();
+  
+  // Directly decode the ArrayBuffer
+  const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+  const trackObject = {
+    id: Date.now(),
+    name: customName || `Track ${tracks.length + 1}`,
+    audioBuffer: decodedBuffer, // We now have the valid buffer!
+    sourceNode: null,
+    gainNode:   null,
+    panNode:    null,
+    currentPan: 0,
+    currentVolume: 1.0,
+    duration: decodedBuffer.duration || 0,
+    playheadOffset: 0
+  };
+
+  tracks.push(trackObject);
+  renderMixerBoard();
 }
     
     
@@ -388,26 +399,22 @@ if (playBtn) {
     
 async function addAudioToTimeline(url, trackName) {
   try {
-    console.log("Attempting to load:", url);
+    console.log("Loading data for:", trackName);
 
-    // 1. Force a fetch to turn the string URL into a Blob object
+    // 1. Fetch the data
     const response = await fetch(url);
-    const blob = await response.blob();
     
-    console.log("Blob object created:", blob);
+    // 2. Convert directly to ArrayBuffer (This is what decodeAudioData needs)
+    const arrayBuffer = await response.arrayBuffer();
+    
+    console.log("ArrayBuffer ready. Size:", arrayBuffer.byteLength);
 
-    // 2. Ensure AudioContext is ready
-    const ctx = getAudioContext();
-    if (ctx.state === 'suspended') await ctx.resume();
-
-    // 3. Now pass the actual blob object to createTrackNode
-    await createTrackNode(blob, trackName);
+    // 3. Update your function to accept an ArrayBuffer instead of a Blob
+    await createTrackNodeFromBuffer(arrayBuffer, trackName);
     
     console.log("Success: Track added to mixer.");
   } catch (err) {
     console.error('CRITICAL ERROR in addAudioToTimeline:', err);
-    // Log the type of 'url' to see why it's failing
-    console.log("The type of URL received was:", typeof url);
   }
 }
     
