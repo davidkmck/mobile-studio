@@ -298,9 +298,25 @@
       });
     }
 
+const playBtn = document.getElementById('playBtn');
+
+playBtn.addEventListener('click', () => {
+    // 1. Trigger internal audio logic
+    startStopSequencer();
+    
+    // 2. Sync external app only when necessary
+    // Only send if you are starting (isPlaying is false before this click)
+    if (!isPlaying) {
+        window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+    }
+});
+
+  
     // ---- Playback ----
     async function startStopSequencer() {
       const btn = document.getElementById('playBtn');
+
+      
       await Tone.start();
 
       if (isPlaying) {
@@ -506,8 +522,7 @@
         }, '*');
         window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
 
-        // Send request to play
-        window.parent.postMessage({ action: 'PLAY' }, '*');
+
         
         isRecording = false;
         btn.textContent = 'RECORD WAV';
