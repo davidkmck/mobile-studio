@@ -109,22 +109,24 @@
       }
 
       // Listen for the app requesting a global state change
-  if (action === 'REQUEST_PLAY') {
-    // Broadcast to ALL subapps
-    const frames = document.querySelectorAll('#appFrame'); 
-    frames.forEach(frame => {
-      frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
-    });
-  }
+      if (action === 'REQUEST_PLAY') {
+        // Broadcast to ALL subapps
+        const frames = document.querySelectorAll('#appFrame'); 
+        frames.forEach(frame => {
+          frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
+       });
+     }
 
       // 1. If Beat Maker sends an audio clip
-    if (event.data.action === 'ADD_TRACK') {
+      if (event.data.action === 'ADD_TRACK') {
+        console.log("Parent received:", event.data); // ADD THIS
         const multitrackFrame = document.getElementById('multitrack');
         if (multitrackFrame) {
+           console.log("Parent forwarding to Multitrack"); // ADD THIS
             // Forward the data specifically to the Multitrack iframe
             multitrackFrame.contentWindow.postMessage(event.data, '*');
         }
-    }
+      }
     });
 
     function switchApp(targetAppId) {
