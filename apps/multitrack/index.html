@@ -267,6 +267,15 @@
   </main>
 
   <script>
+// 1. Audio Message Listener (Keep this separate from SW logic)
+  window.addEventListener('message', (event) => {
+    if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
+      const { audioBlob, trackName } = event.data;
+      console.log("Tracks App: Receiving audio for", trackName);
+      // CALL YOUR FUNCTION HERE: addBlobToTimeline(audioBlob);
+    }
+  });
+    
     // ─── State ────────────────────────────────────────────────────────────────
     let mediaRecorder = null;
     let recordedChunks = [];
