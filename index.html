@@ -57,7 +57,12 @@
 </head>
 <body>
   <!-- Sub-app viewport renders here -->
-  <iframe id="appFrame" src="about:blank"></iframe>
+<div id="app-container">
+  <iframe id="beat-maker" class="app-frame" src="apps/beat-maker/index.html"></iframe>
+  <iframe id="multitrack" class="app-frame" src="apps/multitrack/index.html"></iframe>
+  <iframe id="synth" class="app-frame" src="apps/synth/index.html"></iframe>
+</div>
+  
   <!-- Persistent Global Bottom Navigation Banner -->
   <div class="global-app-banner">
     <a href="#" class="banner-icon active" onclick="loadApp('beat-maker', event)">🎛️ BEAT</a>
@@ -106,29 +111,31 @@
     }
 }
 
-    function loadApp(appName, event) {
-      if (event) event.preventDefault(); // Prevents the href="#" jump
-      document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
+function loadApp(appName, event) {
+    if (event) event.preventDefault();
 
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-      } else {
-        // Programmatic switch (e.g. from SWITCH_APP) — highlight the matching nav icon
-        document.querySelectorAll('.banner-icon').forEach(el => {
-          if (el.getAttribute('onclick')?.includes(`'${appName}'`)) el.classList.add('active');
-        });
-      }
-
-      frame.src = `${window.location.pathname.replace(/\/$/, '')}/apps/${appName}/index.html`;
-
-      // Once the freshly-loaded app is ready, forward any pending audio clip to it
-      frame.onload = () => {
-        if (pendingClip) {
-          frame.contentWindow.postMessage(pendingClip, '*');
-          pendingClip = null;
-        }
-      };
+    // 1. Hide all frames, show only the target one
+    document.querySelectorAll('.app-frame').forEach(frame => {
+        frame.classList.remove('active');
+    });
+    
+    const targetFrame = document.getElementById(appName);
+    if (targetFrame) {
+        targetFrame.classList.add('active');
     }
+
+    // 2. Handle Pending Clips
+    // Instead of waiting for 'onload', you can send the message immediately
+    // if you know the app is already loaded in the DOM.
+    if (pendingClip) {
+        targetFrame.contentWindow.postMessage(pendingClip, '*');
+        pendingClip = null;
+    }
+
+    // 3. Update UI icons
+    document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
+    // (Logic to highlight the correct icon based on appName...)
+}
 
     // Default init app
     loadApp('beat-maker');
