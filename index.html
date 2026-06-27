@@ -59,7 +59,7 @@
     let pendingClip = null; // holds audio waiting to be delivered to the next app
 
     window.addEventListener('message', (event) => {
-      const { action, audioBlob, trackName, mimeType, app } = event.data;
+      const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
 
       // 1. Receive from Beat Maker
       if (action === 'EXPORT_AUDIO_TO_TRACKS') {
@@ -71,6 +71,15 @@
       if (action === 'SWITCH_APP') {
         loadApp(app);
       }
+
+      // Listen for the app requesting a global state change
+  if (action === 'REQUEST_PLAY') {
+    // Broadcast to ALL subapps
+    const frames = document.querySelectorAll('#appFrame'); 
+    frames.forEach(frame => {
+      frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
+    });
+  }
     });
 
     function loadApp(appName, event) {
