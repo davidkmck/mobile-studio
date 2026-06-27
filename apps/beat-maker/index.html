@@ -107,10 +107,16 @@
   <header>
     <h1>BEAT_MAKER//_</h1>
     <div class="controls">
+      
       <div class="bpm-container">
         <label>BPM</label>
         <input type="number" id="bpm" value="120" min="60" max="200">
       </div>
+      <select id="factorySelect">
+  <option value="">-- FACTORY BANK --</option>
+  <option value="techno">Techno</option>
+  <option value="house">House</option>
+</select>
       <button id="playBtn">▶ PLAY</button>
       <button id="clearBtn">CLEAR</button>
       <button id="toggleEditBtn">🎛️ SHOW EDIT CONTROLS</button>
