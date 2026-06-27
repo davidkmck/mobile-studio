@@ -1,1 +1,19 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Synth Engine</title>
+  <style>
+    body { background: #12121c; color: #00e5ff; font-family: 'Share Tech Mono', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div>🎹 SYNTH ENGINE READY</div>
+  
+  <script>
+    // Tell the parent studio we are alive!
+    window.parent.postMessage({ action: 'SYNTH_READY' }, '*');
+  </script>
+</body>
+</html>
