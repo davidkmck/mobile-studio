@@ -74,16 +74,22 @@ button {
 
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    button, select {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 13px;
-      padding: 10px 15px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 4px;
-      cursor: pointer;
-    }
+
+    /* Apply this to all <select> elements in beat-maker/index.html */
+button, select {
+  background-color: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Ensure the dropdown menu itself stays dark */
+select option {
+  background-color: var(--panel);
+  color: var(--text);
+}
 
     .play-btn { border-color: var(--snare); color: var(--snare); font-weight: bold; }
     .save-btn { border-color: var(--bass); color: var(--bass); }
