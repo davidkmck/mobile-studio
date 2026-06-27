@@ -64,7 +64,9 @@ function loadApp(appName) {
     event.currentTarget.classList.add('active');
   }
   
-  frame.src = `/apps/${appName}/index.html`; 
+  //frame.src = `/apps/${appName}/index.html`; 
+  frame.src = `${window.location.pathname.replace(/\/$/, '')}/apps/${appName}/index.html`;
+
 }
 
     // Default init app
