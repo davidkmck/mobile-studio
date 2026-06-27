@@ -499,7 +499,7 @@
           trackName: 'Beat_1',
           mimeType: recording.type || 'audio/wav'
         }, '*');
-        window.parent.postMessage({ action: 'SWITCH_APP', app: 'tracks' }, '*');
+        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
 
         isRecording = false;
         btn.textContent = 'RECORD WAV';
