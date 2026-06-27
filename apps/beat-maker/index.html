@@ -576,12 +576,22 @@ document.getElementById('recordBtn').addEventListener('click', recordWav);
     if (isRecording) {
         // Stop recording
         const recording = await recorder.stop();
+
+      // Send to Parent instead of just local download
+        window.parent.postMessage({ 
+            action: 'EXPORT_AUDIO_TO_TRACKS', 
+            audioBlob: recording,
+            trackName: 'Beat_1' 
+        }, '*');
+
+      /*
         const url = URL.createObjectURL(recording);
         const anchor = document.createElement("a");
         anchor.download = "my-beat.webm";
         anchor.href = url;
         anchor.click();
-        
+        */
+      
         isRecording = false;
         document.getElementById('recordBtn').textContent = 'RECORD WAV';
        document.getElementById('recordBtn').classList.remove('active');
