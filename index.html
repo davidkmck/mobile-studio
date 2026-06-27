@@ -55,14 +55,18 @@
       }
     });
 
-    function loadApp(appName) {
-      // Highlight current tab banner icon
-      document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      
-      // Update iframe source path
-      frame.src = `./apps/${appName}/index.html`; 
-    }
+function loadApp(appName) {
+  // Highlight current tab banner icon
+  document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
+  
+  // Quick safety check for inline clicks
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
+  
+  // FIX: Remove the "/apps" prefix so it points to your real folders
+  frame.src = `./${appName}/index.html`; 
+}
 
     // Default init app
     loadApp('beat-maker');
