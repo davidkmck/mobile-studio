@@ -10,95 +10,96 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-  <style>
-    :root {
-      --bg: #0a0a0f;
-      --panel: #12121c;
-      --border: #26263b;
-      --text: #e2e2e9;
-      --text-dim: #6c6c84;
-      --accent: #00e5ff;
-      --accent-alt: #9d4edd;
-    }
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #12121c;
+    --border: #26263b;
+    --text: #e2e2e9;
+    --accent: #00e5ff;
+    --kick: #ff3366;
+    --snare: #ffee55;
+    --hihat: #00e5ff;
+    --clap: #9d4edd;
+    --bass: #77ff77;
+  }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Share Tech Mono', monospace;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      padding-bottom: 80px;
-    }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 
-    button, select {
-      background-color: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px;
-      border-radius: 4px;
-      font-family: 'Share Tech Mono', monospace;
-      cursor: pointer;
-    }
+  .container {
+    width: 100%;
+    max-width: 950px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
 
-    select option { background-color: var(--panel); color: var(--text); }
+  /* Force the grid to be visible and have layout */
+  #grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    min-height: 200px; /* Ensures space exists even before JS renders */
+  }
 
-    .container {
-      width: 100%;
-      max-width: 950px;
-      margin: 0 auto;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 15px;
-      flex-grow: 1;
-    }
+  .beat-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+  }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 20px;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
+  .track-label { font-weight: bold; font-size: 11px; }
 
-    h1 { font-family: 'Orbitron', sans-serif; font-size: 24px; letter-spacing: 2px; color: #fff; }
-    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .bpm-container { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; }
-    .bpm-container input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 16px; width: 45px; text-align: center; }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
 
-    .sequencer-grid { display: flex; flex-direction: column; gap: 16px; position: relative; }
-    .beat-row { display: grid; grid-template-columns: 80px 1fr; gap: 15px; align-items: center; }
-    .track-label { font-weight: bold; font-size: 11px; letter-spacing: 1px; }
-    .track-controls { display: none; align-items: center; gap: 12px; }
+  .step {
+    height: 38px;
+    background-color: var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+  }
 
-    @media (min-width: 768px) {
-      .beat-row { grid-template-columns: 80px 240px 1fr; }
-      .track-controls { display: flex; }
-    }
+  .step.active {
+    background-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+  }
 
-    .steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 6px; }
-    .step { height: 38px; background-color: var(--border); border-radius: 3px; cursor: pointer; }
-    .step.active { background-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+  }
 
-    .synth-edit-panel { background: var(--border); border-radius: 6px; padding: 15px; margin-top: 25px; display: none; }
-    #recordBtn.active { border: 2px solid #ff3366; box-shadow: 0 0 10px rgba(255, 51, 102, 0.4); }
-
-    #grid {
-  display: block !important;
-  visibility: visible !important;
-  min-height: 200px !important;
-  border: 2px dashed red !important; /* This will help us see if the container exists */
-  background: #f0f0f0;
-}
-    
-  </style>
+  button {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
 
