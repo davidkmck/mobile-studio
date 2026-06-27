@@ -291,7 +291,42 @@ button {
   </main>
 
   <script>
-window.addEventListener('message', (event) => {
+
+    
+    // ─── State ────────────────────────────────────────────────────────────────
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let isCountdownActive = false;
+    let isPlayingMix = false;
+    let localStream = null;
+    
+    let masterPlaybackStartTime = 0; 
+    let progressAnimationId = null;
+    let loopTimeoutId = null;
+    let isScrubbing = false;
+
+    const tracks = [];
+    let audioCtx = null;
+
+    // ─── DOM refs ─────────────────────────────────────────────────────────────
+    const recordBtn       = document.getElementById('record-btn');
+    const importBtn       = document.getElementById('import-btn');
+    const vaultBtn        = document.getElementById('vault-btn');
+    const audioFileInput  = document.getElementById('audio-file-input');
+    const masterPlayBtn   = document.getElementById('master-play-btn');
+    const resetBtn        = document.getElementById('reset-btn');
+    const loopToggle      = document.getElementById('loop-toggle');
+    const latencySlider   = document.getElementById('latency-slider');
+    const latencyVal      = document.getElementById('latency-val');
+    const saveMixBtn      = document.getElementById('save-mix-btn');
+    const mixerBoard      = document.getElementById('mixer-board');
+
+    latencySlider.addEventListener('input', (e) => {
+      latencyVal.textContent = `${e.target.value}ms`;
+    });
+
+    window.addEventListener('message', (event) => {
   // Always verify the origin in a production environment!
   if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
     const { audioBlob, trackName } = event.data;
@@ -336,39 +371,6 @@ async function addAudioToTimeline(name, blobOrUrl) {
   }
 }
     
-    // ─── State ────────────────────────────────────────────────────────────────
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let isRecording = false;
-    let isCountdownActive = false;
-    let isPlayingMix = false;
-    let localStream = null;
-    
-    let masterPlaybackStartTime = 0; 
-    let progressAnimationId = null;
-    let loopTimeoutId = null;
-    let isScrubbing = false;
-
-    const tracks = [];
-    let audioCtx = null;
-
-    // ─── DOM refs ─────────────────────────────────────────────────────────────
-    const recordBtn       = document.getElementById('record-btn');
-    const importBtn       = document.getElementById('import-btn');
-    const vaultBtn        = document.getElementById('vault-btn');
-    const audioFileInput  = document.getElementById('audio-file-input');
-    const masterPlayBtn   = document.getElementById('master-play-btn');
-    const resetBtn        = document.getElementById('reset-btn');
-    const loopToggle      = document.getElementById('loop-toggle');
-    const latencySlider   = document.getElementById('latency-slider');
-    const latencyVal      = document.getElementById('latency-val');
-    const saveMixBtn      = document.getElementById('save-mix-btn');
-    const mixerBoard      = document.getElementById('mixer-board');
-
-    latencySlider.addEventListener('input', (e) => {
-      latencyVal.textContent = `${e.target.value}ms`;
-    });
-
     // ─── AudioContext Bootstrap ───────────────────────────────────────────────
     function getAudioContext() {
       if (!audioCtx) {
@@ -929,6 +931,17 @@ async function addAudioToTimeline(name, blobOrUrl) {
           .catch(err => console.log('SW registration issue:', err));
       });
     }
+
+    // Add this at the end of your script in the Multitrack index.html
+document.addEventListener('DOMContentLoaded', () => {
+  const playBtn = document.getElementById('playBtn');
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+    });
+  }
+});
+    
   </script>
 </body>
 </html>
