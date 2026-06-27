@@ -368,14 +368,20 @@ if (playBtn) {
 }
 
     
-async function addAudioToTimeline(name, blobOrUrl) {
-  // The parent app sends a real Blob, but keep this resilient in case
-  // something upstream ever sends a URL string instead.
-  let blob = blobOrUrl;
-  if (typeof blobOrUrl === 'string') {
-    const res = await fetch(blobOrUrl);
-    blob = await res.blob();
-  }
+async function addAudioToTimeline(url, trackName) {
+  try {
+        // 1. Create a Tone.Player directly with the blob URL
+        const player = new Tone.Player(url).toDestination();
+        
+        // 2. Wait for it to load
+        await player.loaded;
+        
+        console.log("Audio loaded successfully:", trackName);
+        // ... proceed to add to your visual timeline
+    } catch (e) {
+        console.error("Failed to add incoming clip to timeline:", e);
+    }
+
 
   try {
     getAudioContext(); // make sure the AudioContext exists/resumes before decoding
