@@ -204,7 +204,13 @@
     document.getElementById('recordBtn').addEventListener('click', recordWav);
     document.getElementById('factorySelect').addEventListener('change', (e) => triggerFactorySequence(e.target.value));
     
-    buildGridUI(); // Call this immediately on load
+   // buildGridUI(); // Call this immediately on load
+
+  // Replace the last line of your script with this:
+document.addEventListener('DOMContentLoaded', () => {
+    buildGridUI();
+    loadCustomPresetsMenu();
+});
   </script>
 </script>
 </body>
