@@ -291,14 +291,26 @@ button {
   </main>
 
   <script>
-// 1. Audio Message Listener (Keep this separate from SW logic)
-  window.addEventListener('message', (event) => {
-    if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
-      const { audioBlob, trackName } = event.data;
-      console.log("Tracks App: Receiving audio for", trackName);
-      // CALL YOUR FUNCTION HERE: addBlobToTimeline(audioBlob);
-    }
-  });
+window.addEventListener('message', (event) => {
+  // Always verify the origin in a production environment!
+  if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
+    const { audioBlob, trackName } = event.data;
+    console.log("Tracks App: Received audio for", trackName);
+    
+    // Convert the Blob to a URL so your player can use it
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Call your function to actually display/play the clip
+    addAudioToTimeline(trackName, audioUrl);
+  }
+});
+
+function addAudioToTimeline(name, url) {
+  // YOUR EXISTING LOGIC:
+  // Create a new audio element or track node in your timeline 
+  // and set its source to 'url'
+  console.log("Adding to timeline:", url);
+}
     
     // ─── State ────────────────────────────────────────────────────────────────
     let mediaRecorder = null;
