@@ -689,25 +689,25 @@ document.getElementById('recordBtn').addEventListener('click', async () => {
       buildGridUI();
     }
 
-    function saveCustomPreset() {
-      const name = prompt("Enter a name for your custom pattern:");
-      if (!name) return;
-      
-      const formattedName = name.toUpperCase().replace(/\s+/g, '_');
-      const savedPresets = JSON.parse(localStorage.getItem('custom_presets')) || {};
-      
-      savedPresets[formattedName] = {
-        bpm: parseInt(document.getElementById('bpm').value) || 120,
-        grid: grid
-      };
-      
-      localStorage.setItem('custom_presets', JSON.stringify(savedPresets));
-      loadCustomPresetsMenu();
-      
-      document.getElementById('customSelect').value = formattedName;
-      localStorage.setItem('last_custom_selection', formattedName);
-      localStorage.removeItem('last_factory_selection');
-    }
+function saveCustomPreset() {
+  const name = prompt("Enter a name for your custom pattern:");
+  if (!name) return;
+  
+  const formattedName = name.toUpperCase().replace(/\s+/g, '_');
+  
+  const presetData = {
+    bpm: parseInt(document.getElementById('bpm').value) || 120,
+    grid: grid,
+    synthParams: synthParams
+  };
+
+  // Tell the main mobile-studio app to save this globally
+  window.parent.postMessage({
+    action: 'SAVE_DATA',
+    key: `STUDIO_PRESET_${formattedName}`,
+    value: presetData
+  }, '*');
+}
 
     function loadCustomPresetsMenu() {
       const savedPresets = JSON.parse(localStorage.getItem('custom_presets')) || {};
@@ -777,6 +777,37 @@ document.getElementById('recordBtn').addEventListener('click', async () => {
     const storedFactory = localStorage.getItem('last_factory_selection');
     const storedCustom = localStorage.getItem('last_custom_selection');
 
+    // ... your existing select dropdown event listeners ...
+    document.getElementById('customSelect').addEventListener('change', (e) => {
+      // ... existing code inside customSelect listener ...
+    });
+
+    // 1. PLACE THE INCOMING MESSAGE LISTENER HERE:
+    window.addEventListener('message', (event) => {
+      if (event.data.action === 'RETURN_DATA') {
+        const database = event.data.data;
+        if (database) {
+          console.log("Loaded data directly from Mobile Studio Shell:", database);
+          
+          // Ingest your presets into beat-maker's local variables here
+          // e.g., grid = database.grid; bpm = database.bpm;
+          buildGridUI();
+        }
+      }
+    });
+
+    // Request the data from the parent app shell immediately on boot
+    window.parent.postMessage({ action: 'REQUEST_DATA', key: 'ALL_STUDIO_PRESETS' }, '*');
+
+
+    // 2. YOUR EXISTING INITIALIZATION RUNNERS BELOW:
+    buildGridUI();
+    loadCustomPresetsMenu();
+
+    const storedFactory = localStorage.getItem('last_factory_selection');
+    const storedCustom = localStorage.getItem('last_custom_selection');
+    // ... rest of the file ...
+    
     if (storedFactory) {
       document.getElementById('factorySelect').value = storedFactory;
       triggerFactorySequence(storedFactory);
