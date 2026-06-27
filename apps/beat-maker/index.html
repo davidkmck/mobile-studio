@@ -204,6 +204,13 @@ select option {
     .record-btn {
     /* Existing styles */
     border: 1px solid var(--border);
+
+    /* Add to your beat-maker/index.html <style> */
+#recordBtn.active {
+  border: 2px solid #ff3366; /* Your 'kick' color */
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+}
+      
 }
 
 .record-btn.active {
@@ -597,6 +604,12 @@ document.getElementById('recordBtn').addEventListener('click', recordWav);
             trackName: 'Beat_1' 
         }, '*');
 
+      // 2. TELL THE PARENT TO SWITCH APPS
+        window.parent.postMessage({ 
+            action: 'SWITCH_APP', 
+            app: 'multitrack' 
+        }, '*');
+      
       /*
         const url = URL.createObjectURL(recording);
         const anchor = document.createElement("a");
