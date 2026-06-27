@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Beat Maker</title>
+  <link rel="apple-touch-icon" href="./beat-maker.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght=500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -253,7 +254,7 @@
         <button id="clearBtn">CLEAR</button>
         <button class="toggle-edit-btn" id="toggleEditBtn">🎛️ SHOW EDIT CONTROLS</button>
         <button class="save-btn" id="saveBtn">💾 SAVE BEAT</button>
-        <button id="recordBtn">RECORD WAV</button>
+        <button id="recordBtn">EXPORT WAV</button>
       </div>
     </header>
 
@@ -292,57 +293,6 @@
   </footer>
 
   <script>
-    ///////////////////////////////////////////////////////
-    // from copilot:
-        // Ensure Tone.js starts correctly inside iframe
-    document.body.addEventListener('click', async () => {
-      await Tone.start();
-    }, { once: true });
-
-      // Initialize after DOM and iframe are ready
-    requestAnimationFrame(init);
-
-    function init() {
-      buildGrid();
-      setupSequencer();
-      setupMessaging();
-    }
-
-    function buildGrid() {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      const instruments = ['kick', 'snare', 'hihat', 'clap', 'bass'];
-      instruments.forEach(inst => {
-        const row = document.createElement('div');
-        row.textContent = inst.toUpperCase();
-        row.style.color = `var(--${inst})`;
-        grid.appendChild(row);
-      });
-    }
-
- function setupSequencer() {
-      // Example Tone.js setup
-      const synth = new Tone.MembraneSynth().toDestination();
-      const loop = new Tone.Loop(time => synth.triggerAttackRelease('C2', '8n', time), '4n');
-      loop.start(0);
-      Tone.Transport.start();
-    }
-
-    function setupMessaging() {
-      window.addEventListener('message', (event) => {
-        const { action, key, value } = event.data;
-        if (action === 'SAVE_DATA') {
-          localStorage.setItem(key, JSON.stringify(value));
-          window.parent.postMessage({ action: 'SAVE_CONFIRMED', key }, '*');
-        }
-        if (action === 'REQUEST_DATA') {
-          const data = JSON.parse(localStorage.getItem(key)) || null;
-          window.parent.postMessage({ action: 'RETURN_DATA', key, data }, '*');
-        }
-      });
-    }
-///////////////////////////////////////////////////////
-    
     const TRACKS = [
       { id: 'kick',  label: 'KICK',   color: 'kick'  },
       { id: 'snare', label: 'SNARE',  color: 'snare' },
@@ -522,52 +472,6 @@
       }
     }
 
-    // --- EXPORT WAV BUTTON LOGIC ---
-document.getElementById('recordBtn').addEventListener('click', async () => {
-  // Ensure audio is initialized
-  initAudio();
-  await Tone.start();
-
-  if (!isRecording) {
-    // 1. Start recording
-    recorder.start();
-    isRecording = true;
-    document.getElementById('recordBtn').textContent = '⏹️ STOP & DOWNLOAD';
-    document.getElementById('recordBtn').style.borderColor = 'var(--kick)';
-    document.getElementById('recordBtn').style.color = 'var(--kick)';
-    
-    // Optional: Auto-start the sequencer if it isn't playing yet
-    if (!isPlaying) {
-      startStopSequencer();
-    }
-  } else {
-    // 2. Stop recording and capture the resulting file
-    const recording = await recorder.stop();
-    isRecording = false;
-    
-    // Reset button appearance
-    document.getElementById('recordBtn').textContent = 'EXPORT WAV';
-    document.getElementById('recordBtn').style.borderColor = '';
-    document.getElementById('recordBtn').style.color = '';
-
-    // --- ADD THIS CHECK TO STOP THE SEQUENCER ---
-    if (isPlaying) {
-      startStopSequencer();
-    }
-    // ---------------------------------------------
-
-    // 3. Create a download link for the user
-    const url = URL.createObjectURL(recording);
-    const anchor = document.createElement("a");
-    anchor.download = "my_beat.wav";
-    anchor.href = url;
-    anchor.click();
-    
-    // Clean up memory
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-});
-
     function buildGridUI() {
       const container = document.getElementById('grid');
       container.innerHTML = '';
@@ -738,25 +642,25 @@ document.getElementById('recordBtn').addEventListener('click', async () => {
       buildGridUI();
     }
 
-function saveCustomPreset() {
-  const name = prompt("Enter a name for your custom pattern:");
-  if (!name) return;
-  
-  const formattedName = name.toUpperCase().replace(/\s+/g, '_');
-  
-  const presetData = {
-    bpm: parseInt(document.getElementById('bpm').value) || 120,
-    grid: grid,
-    synthParams: synthParams
-  };
-
-  // Tell the main mobile-studio app to save this globally
-  window.parent.postMessage({
-    action: 'SAVE_DATA',
-    key: `STUDIO_PRESET_${formattedName}`,
-    value: presetData
-  }, '*');
-}
+    function saveCustomPreset() {
+      const name = prompt("Enter a name for your custom pattern:");
+      if (!name) return;
+      
+      const formattedName = name.toUpperCase().replace(/\s+/g, '_');
+      const savedPresets = JSON.parse(localStorage.getItem('custom_presets')) || {};
+      
+      savedPresets[formattedName] = {
+        bpm: parseInt(document.getElementById('bpm').value) || 120,
+        grid: grid
+      };
+      
+      localStorage.setItem('custom_presets', JSON.stringify(savedPresets));
+      loadCustomPresetsMenu();
+      
+      document.getElementById('customSelect').value = formattedName;
+      localStorage.setItem('last_custom_selection', formattedName);
+      localStorage.removeItem('last_factory_selection');
+    }
 
     function loadCustomPresetsMenu() {
       const savedPresets = JSON.parse(localStorage.getItem('custom_presets')) || {};
@@ -826,37 +730,6 @@ function saveCustomPreset() {
     const storedFactory = localStorage.getItem('last_factory_selection');
     const storedCustom = localStorage.getItem('last_custom_selection');
 
-    // ... your existing select dropdown event listeners ...
-    document.getElementById('customSelect').addEventListener('change', (e) => {
-      // ... existing code inside customSelect listener ...
-    });
-
-    // 1. PLACE THE INCOMING MESSAGE LISTENER HERE:
-    window.addEventListener('message', (event) => {
-      if (event.data.action === 'RETURN_DATA') {
-        const database = event.data.data;
-        if (database) {
-          console.log("Loaded data directly from Mobile Studio Shell:", database);
-          
-          // Ingest your presets into beat-maker's local variables here
-          // e.g., grid = database.grid; bpm = database.bpm;
-          buildGridUI();
-        }
-      }
-    });
-
-    // Request the data from the parent app shell immediately on boot
-    window.parent.postMessage({ action: 'REQUEST_DATA', key: 'ALL_STUDIO_PRESETS' }, '*');
-
-
-    // 2. YOUR EXISTING INITIALIZATION RUNNERS BELOW:
-    buildGridUI();
-    loadCustomPresetsMenu();
-
-    const storedFactory = localStorage.getItem('last_factory_selection');
-    const storedCustom = localStorage.getItem('last_custom_selection');
-    // ... rest of the file ...
-    
     if (storedFactory) {
       document.getElementById('factorySelect').value = storedFactory;
       triggerFactorySequence(storedFactory);
