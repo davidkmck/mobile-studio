@@ -370,18 +370,26 @@ if (playBtn) {
     
 async function addAudioToTimeline(url, trackName) {
   try {
-    console.log("Loading blob from URL:", url);
+    console.log("Attempting to load:", url);
 
-    // 1. Convert the URL string back into a real Blob
+    // 1. Force a fetch to turn the string URL into a Blob object
     const response = await fetch(url);
-    const blob = await response.blob(); 
+    const blob = await response.blob();
     
-    // 2. Now pass the REAL blob to your existing function
+    console.log("Blob object created:", blob);
+
+    // 2. Ensure AudioContext is ready
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') await ctx.resume();
+
+    // 3. Now pass the actual blob object to createTrackNode
     await createTrackNode(blob, trackName);
     
-    console.log("Audio added successfully:", trackName);
+    console.log("Success: Track added to mixer.");
   } catch (err) {
-    console.error('Failed to add incoming clip to timeline:', err);
+    console.error('CRITICAL ERROR in addAudioToTimeline:', err);
+    // Log the type of 'url' to see why it's failing
+    console.log("The type of URL received was:", typeof url);
   }
 }
     
