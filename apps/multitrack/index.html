@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashmix 4</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --accent: #3b82f6;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    main {
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+    }
+    #controls-sector {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    button {
+      padding: 12px 15px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background-color 0.2s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-record {
+      background-color: var(--accent);
+      color: white;
+      flex: none;
+      width: 100%;
+    }
+    .btn-countdown {
+      background-color: var(--warning);
+      color: white;
+      flex: none;
+      width: 100%;
+    }
+    .btn-recording {
+      background-color: var(--danger);
+      animation: pulse 1.5s infinite;
+      color: white;
+      flex: none;
+      width: 100%;
+    }
+    .btn-global {
+      background-color: #475569;
+      color: white;
+      flex: 1;
+    }
+    .btn-save {
+      background-color: var(--success);
+      color: white;
+      flex: none;
+      width: 100%;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: var(--card-bg);
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-top: 5px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .toggle-label-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #475569;
+      transition: .3s;
+      border-radius: 34px;
+    }
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider-toggle {
+      background-color: var(--accent);
+    }
+    input:checked + .slider-toggle:before {
+      transform: translateX(24px);
+    }
+    .mixer-board {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+    .track-row {
+      background-color: var(--card-bg);
+      padding: 15px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .track-title {
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .btn-delete {
+      background-color: transparent;
+      color: var(--danger);
+      padding: 5px 10px;
+      font-size: 0.85rem;
+      flex: none;
+    }
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    input[type="range"].progress-slider {
+      accent-color: var(--success);
+      cursor: pointer;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <h1>Flashmix 4</h1>
+    <div class="subtitle">A quick 4-track scratchpad for audio ideas</div>
+
+    <section id="controls-sector">
+      <button id="record-btn" class="btn-record">🔴 Record Track 1</button>
+      
+      <button id="import-btn" class="btn-global" style="background-color: #475569; width: 100%; flex: none;">📁 Import Audio File</button>
+      
+      <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+
+      <div class="button-group">
+        <button id="master-play-btn" class="btn-global" disabled>▶️ Play Mix</button>
+        <button id="reset-btn" class="btn-global" disabled>⏮️ Restart</button>
+      </div>
+
+      <div class="toggle-container">
+        <div class="toggle-label-group">
+          <span>🔁</span>
+          <span>Master Loop Repeat</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="loop-toggle" checked>
+          <span class="slider-toggle"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container" style="flex-direction: column; align-items: stretch; gap: 6px;">
+        <div class="slider-label">
+          <span>⏱️ Mic Alignment Latency</span>
+          <span id="latency-val">80ms</span>
+        </div>
+        <input type="range" id="latency-slider" min="0" max="250" step="5" value="80">
+      </div>
+
+      <button id="save-mix-btn" class="btn-save" disabled>💾 Save Mix to File</button>
+    </section>
+
+    <section class="mixer-board" id="mixer-board"></section>
+  </main>
+
+  <script>
+    // ─── State ────────────────────────────────────────────────────────────────
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let isCountdownActive = false;
+    let isPlayingMix = false;
+    let localStream = null;
+    
+    let masterPlaybackStartTime = 0; 
+    let progressAnimationId = null;
+    let loopTimeoutId = null;
+    let isScrubbing = false;
+    const maxTracks = 4;
+
+    const tracks = [];
+    let audioCtx = null;
+
+    // ─── DOM refs ─────────────────────────────────────────────────────────────
+    const recordBtn       = document.getElementById('record-btn');
+    const importBtn       = document.getElementById('import-btn');
+    const audioFileInput  = document.getElementById('audio-file-input');
+    const masterPlayBtn   = document.getElementById('master-play-btn');
+    const resetBtn        = document.getElementById('reset-btn');
+    const loopToggle      = document.getElementById('loop-toggle');
+    const latencySlider   = document.getElementById('latency-slider');
+    const latencyVal      = document.getElementById('latency-val');
+    const saveMixBtn      = document.getElementById('save-mix-btn');
+    const mixerBoard      = document.getElementById('mixer-board');
+
+    latencySlider.addEventListener('input', (e) => {
+      latencyVal.textContent = `${e.target.value}ms`;
+    });
+
+    // ─── AudioContext Bootstrap ───────────────────────────────────────────────
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // ─── Record button ────────────────────────────────────────────────────────
+    recordBtn.addEventListener('click', async () => {
+      if (isCountdownActive) return;
+      getAudioContext();
+
+      if (!isRecording) {
+        if (tracks.length >= maxTracks) return;
+
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          isCountdownActive = true;
+          recordBtn.className = 'btn-countdown';
+          
+          let count = 3;
+          recordBtn.textContent = `⏳ Recording starts in ${count}...`;
+
+          const countdownInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+              recordBtn.textContent = `⏳ Recording starts in ${count}...`;
+            } else {
+              clearInterval(countdownInterval);
+              isCountdownActive = false;
+              startHardwareRecording();
+            }
+          }, 1000);
+
+        } catch (err) {
+          console.error('Microphone access denied:', err);
+          alert('Could not access microphone. Check site permissions.');
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecording = false;
+      }
+    });
+
+    // ─── Import functionality ─────────────────────────────────────────────────
+    if (importBtn && audioFileInput) {
+      importBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (tracks.length >= maxTracks) return;
+        audioFileInput.click();
+      });
+
+      audioFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('audio/')) {
+          alert('Please select a valid audio file.');
+          return;
+        }
+
+        createTrackNode(file);
+        audioFileInput.value = '';
+      });
+    }
+
+    // ─── Recording logic ──────────────────────────────────────────────────────
+    function startHardwareRecording() {
+      recordedChunks = [];
+      
+      if (tracks.length > 0) {
+        startAllTracks({ monitoringOnly: true });
+      }
+
+      const mimeType = getSupportedMimeType();
+      const recorderOptions = mimeType ? { mimeType } : {};
+
+      mediaRecorder = new MediaRecorder(localStream, recorderOptions);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stopAllTracks();
+        let rawBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        
+        const compensationMs = parseInt(latencySlider.value);
+        if (compensationMs > 0 && tracks.length > 0) {
+          rawBlob = await sliceAudioBlobLatency(rawBlob, compensationMs);
+        }
+
+        await createTrackNode(rawBlob);
+
+        if (localStream) {
+          localStream.getTracks().forEach(t => t.stop());
+          localStream = null;
+        }
+        updateUI();
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.textContent = '⏹️ Stop Recording';
+      recordBtn.className = 'btn-recording';
+    }
+
+    function getSupportedMimeType() {
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+      ];
+      return candidates.find(m => MediaRecorder.isTypeSupported(m)) || '';
+    }
+
+    async function sliceAudioBlobLatency(blob, msToRemove) {
+      const tempCtx = getAudioContext();
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+      
+      const sampleRate = audioBuffer.sampleRate;
+      const samplesToRemove = Math.floor((msToRemove / 1000) * sampleRate);
+      
+      if (samplesToRemove >= audioBuffer.length) return blob;
+
+      const newLength = audioBuffer.length - samplesToRemove;
+      const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, newLength, sampleRate);
+      
+      const bufferSource = offlineCtx.createBufferSource();
+      bufferSource.buffer = audioBuffer;
+      bufferSource.connect(offlineCtx.destination);
+      
+      bufferSource.start(0, msToRemove / 1000);
+      
+      const renderedBuffer = await offlineCtx.startRendering();
+      return audioBufferToWav(renderedBuffer);
+    }
+
+    // ─── Track creation ───────────────────────────────────────────────────────
+    async function createTrackNode(blob) {
+      const ctx = getAudioContext();
+      const arrayBuffer = await blob.arrayBuffer();
+      
+      const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+      const trackObject = {
+        id: Date.now(),
+        blob,
+        audioBuffer: decodedBuffer,
+        sourceNode: null,
+        gainNode:   null,
+        panNode:    null,
+        currentPan: 0,
+        currentVolume: 1.0,
+        duration: decodedBuffer.duration || 0,
+        playheadOffset: 0
+      };
+
+      tracks.push(trackObject);
+      renderMixerBoard();
+    }
+
+    // ─── Mixer UI ─────────────────────────────────────────────────────────────
+    function renderMixerBoard() {
+      mixerBoard.innerHTML = '';
+      tracks.forEach((track, index) => {
+        const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
+        const row = document.createElement('div');
+        row.className = 'track-row';
+        row.innerHTML = `
+          <div class="track-header">
+            <span class="track-title">Track ${index + 1}</span>
+            <button class="btn-delete" onclick="deleteTrack(${track.id})">Delete</button>
+          </div>
+          <div class="controls-container">
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Playback Position</span>
+                <div>
+                  <span id="current-time-${track.id}">0.0s</span> / <span>${totalDurationText}</span>
+                </div>
+              </div>
+              <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Volume</span>
+                <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
+              </div>
+              <input type="range" min="0" max="1.5" step="0.05" value="${track.currentVolume}" oninput="updateVolume(${track.id}, this.value)">
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Left</span>
+                <span>Stereo Pan</span>
+                <span>Right</span>
+              </div>
+              <input type="range" min="-1" max="1" step="0.1" value="${track.currentPan}" oninput="updatePan(${track.id}, this.value)">
+            </div>
+          </div>
+        `;
+        mixerBoard.appendChild(row);
+
+        // Bind interactive scrubbing listeners onto the slider layout
+        const progressSlider = row.querySelector(`.progress-slider`);
+        
+        progressSlider.addEventListener('input', (e) => {
+          isScrubbing = true;
+          const targetTime = parseFloat(e.target.value);
+          updateAllProgressUI(targetTime);
+        });
+
+        progressSlider.addEventListener('change', (e) => {
+          const targetTime = parseFloat(e.target.value);
+          scrubPlaybackToTimestamp(targetTime);
+          isScrubbing = false;
+        });
+      });
+      updateUI();
+    }
+
+    function updateVolume(id, val) {
+      const track = tracks.find(t => t.id === id);
+      if (!track) return;
+      track.currentVolume = parseFloat(val);
+      if (track.gainNode) {
+        track.gainNode.gain.setValueAtTime(track.currentVolume, audioCtx.currentTime);
+      }
+      document.getElementById(`vol-txt-${id}`).textContent = `${Math.round(val * 100)}%`;
+    }
+
+    function updatePan(id, val) {
+      const track = tracks.find(t => t.id === id);
+      if (!track) return;
+      track.currentPan = parseFloat(val);
+      if (track.panNode) {
+        track.panNode.pan.setValueAtTime(track.currentPan, audioCtx.currentTime);
+      }
+    }
+
+    function deleteTrack(id) {
+      stopAllTracks();
+      const index = tracks.findIndex(t => t.id === id);
+      if (index !== -1) {
+        tracks.splice(index, 1);
+      }
+      renderMixerBoard();
+    }
+
+    // ─── Playback ─────────────────────────────────────────────────────────────
+    masterPlayBtn.addEventListener('click', () => {
+      getAudioContext();
+      if (isPlayingMix) {
+        stopAllTracks();
+      } else {
+        startAllTracks();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      getAudioContext();
+      stopAllTracks();
+      tracks.forEach(t => t.playheadOffset = 0);
+      resetAllProgressUI();
+    });
+
+    function startAllTracks(options = {}) {
+      if (!tracks || tracks.length === 0) return;
+      const ctx = getAudioContext();
+
+      const scheduleTime = ctx.currentTime + 0.05; 
+      
+      let baseOffset = tracks[0].playheadOffset;
+      const maxDuration = Math.max(...tracks.map(t => t.duration));
+      
+      if (baseOffset >= maxDuration) {
+        baseOffset = 0;
+        tracks.forEach(t => t.playheadOffset = 0);
+      }
+      
+      masterPlaybackStartTime = scheduleTime - baseOffset;
+
+      tracks.forEach(track => {
+        if (track.sourceNode) {
+          try { track.sourceNode.stop(); } catch(e) {}
+          track.sourceNode.disconnect();
+        }
+
+        track.sourceNode = ctx.createBufferSource();
+        track.sourceNode.buffer = track.audioBuffer;
+
+        track.gainNode = ctx.createGain();
+        track.gainNode.gain.setValueAtTime(track.currentVolume, ctx.currentTime);
+
+        track.panNode = ctx.createStereoPanner();
+        track.panNode.pan.setValueAtTime(track.currentPan, ctx.currentTime);
+
+        track.sourceNode.connect(track.gainNode);
+        track.gainNode.connect(track.panNode);
+        track.panNode.connect(ctx.destination);
+
+        if (track.playheadOffset < track.duration) {
+          track.sourceNode.start(scheduleTime, track.playheadOffset);
+        }
+      });
+
+      if (!options.monitoringOnly) {
+        isPlayingMix = true;
+        masterPlayBtn.textContent = '⏸️ Pause Mix';
+        progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+        scheduleMasterLoopTimeout();
+      }
+    }
+
+    function stopAllTracks() {
+      cancelAnimationFrame(progressAnimationId);
+      clearTimeout(loopTimeoutId);
+      
+      if (audioCtx && isPlayingMix) {
+        const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
+        tracks.forEach(track => {
+          track.playheadOffset = elapsed;
+          if (track.sourceNode) {
+            try { track.sourceNode.stop(); } catch(e) {}
+            track.sourceNode.disconnect();
+            track.sourceNode = null;
+          }
+        });
+      } else {
+        tracks.forEach(track => {
+          if (track.sourceNode) {
+            try { track.sourceNode.stop(); } catch(e) {}
+            track.sourceNode.disconnect();
+            track.sourceNode = null;
+          }
+        });
+      }
+
+      isPlayingMix = false;
+      masterPlayBtn.textContent = '▶️ Play Mix';
+    }
+
+    // Dynamic Scrubbing Engine
+    function scrubPlaybackToTimestamp(targetTime) {
+      const originallyPlaying = isPlayingMix;
+      
+      // Clear out active hardware nodes completely
+      stopAllTracks();
+      
+      // Reposition all internal playhead trackers directly onto the timeline target
+      tracks.forEach(track => {
+        track.playheadOffset = targetTime;
+      });
+      
+      updateAllProgressUI(targetTime);
+
+      // Re-trigger the mix fluidly if it was playing beforehand
+      if (originallyPlaying) {
+        startAllTracks();
+      }
+    }
+
+    function resetAllProgressUI() {
+      updateAllProgressUI(0);
+    }
+
+    function updateAllProgressUI(timeInSeconds) {
+      tracks.forEach(track => {
+        const currentPos = Math.min(timeInSeconds, track.duration);
+        const progSlider  = document.getElementById(`progress-${track.id}`);
+        const currentText = document.getElementById(`current-time-${track.id}`);
+        if (progSlider)  progSlider.value       = currentPos;
+        if (currentText) currentText.textContent = currentPos.toFixed(1) + 's';
+      });
+    }
+
+    function updatePlaybackProgressUI() {
+      if (!isPlayingMix || !audioCtx || isScrubbing) return;
+
+      const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
+      updateAllProgressUI(elapsed);
+
+      progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+    }
+
+    function scheduleMasterLoopTimeout() {
+      const maxDuration = Math.max(...tracks.map(t => t.duration));
+      const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
+      const timeRemaining = maxDuration - elapsed;
+
+      clearTimeout(loopTimeoutId);
+      
+      loopTimeoutId = setTimeout(() => {
+        if (!isPlayingMix) return;
+
+        stopAllTracks();
+        tracks.forEach(t => t.playheadOffset = 0);
+        resetAllProgressUI();
+
+        if (loopToggle.checked) {
+          startAllTracks();
+        }
+      }, Math.max(0, timeRemaining * 1000));
+    }
+
+    // ─── UI State ─────────────────────────────────────────────────────────────
+    function updateUI() {
+      const noTracks = tracks.length === 0;
+      masterPlayBtn.disabled = noTracks;
+      resetBtn.disabled      = noTracks;
+      saveMixBtn.disabled    = noTracks;
+
+      if (isRecording || isCountdownActive) return;
+
+      if (tracks.length >= maxTracks) {
+        recordBtn.disabled    = true;
+        recordBtn.textContent = '🚫 Max Tracks Reached';
+        recordBtn.className   = 'btn-record';
+        
+        importBtn.disabled    = true;
+        importBtn.textContent = '🚫 Max Tracks Reached';
+      } else {
+        recordBtn.disabled    = false;
+        recordBtn.textContent = `🔴 Record Track ${tracks.length + 1}`;
+        recordBtn.className   = 'btn-record';
+        
+        importBtn.disabled    = false;
+        importBtn.textContent = '📁 Import Audio File';
+      }
+    }
+
+    // ─── Export ───────────────────────────────────────────────────────────────
+    saveMixBtn.addEventListener('click', async () => {
+      if (!tracks || tracks.length === 0) return;
+      saveMixBtn.disabled    = true;
+      saveMixBtn.textContent = 'Rendering Mix...';
+
+      try {
+        const maxDuration = Math.max(...tracks.map(t => t.duration));
+        const sampleRate  = tracks[0].audioBuffer.sampleRate;
+        const offlineCtx  = new OfflineAudioContext(2, Math.ceil(sampleRate * maxDuration), sampleRate);
+
+        tracks.forEach((track) => {
+          const bufferSource = offlineCtx.createBufferSource();
+          bufferSource.buffer = track.audioBuffer;
+
+          const offlineGain   = offlineCtx.createGain();
+          offlineGain.gain.setValueAtTime(track.currentVolume, 0);
+
+          const offlinePanner = offlineCtx.createStereoPanner();
+          offlinePanner.pan.setValueAtTime(track.currentPan, 0);
+
+          bufferSource.connect(offlineGain);
+          offlineGain.connect(offlinePanner);
+          offlinePanner.connect(offlineCtx.destination);
+          bufferSource.start(0);
+        });
+
+        const renderedBuffer = await offlineCtx.startRendering();
+        const wavBlob        = audioBufferToWav(renderedBuffer);
+        const downloadUrl    = URL.createObjectURL(wavBlob);
+
+        const anchor = document.createElement('a');
+        anchor.href     = downloadUrl;
+        anchor.download = `4track-mix-${Date.now()}.wav`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(downloadUrl);
+
+      } catch (err) {
+        console.error('Export failure:', err);
+        alert('Failed to export the audio mix.');
+      } finally {
+        saveMixBtn.disabled    = false;
+        saveMixBtn.textContent = '💾 Save Mix to File';
+      }
+    });
+
+    // ─── WAV Encoder ──────────────────────────────────────────────────────────
+    function audioBufferToWav(buffer) {
+      const numOfChan = buffer.numberOfChannels;
+      const sampleRate = buffer.sampleRate;
+      const bitDepth   = 16;
+      let result;
+
+      if (numOfChan === 2) {
+        result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
+      } else {
+        result = buffer.getChannelData(0);
+      }
+
+      const bufferArr = new ArrayBuffer(44 + result.length * 2);
+      const view      = new DataView(bufferArr);
+
+      writeString(view, 0,  'RIFF');
+      view.setUint32(4,  36 + result.length * 2, true);
+      writeString(view, 8,  'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1,  true);
+      view.setUint16(22, numOfChan,  true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numOfChan * (bitDepth / 8), true);
+      view.setUint16(32, numOfChan * (bitDepth / 8), true);
+      view.setUint16(34, bitDepth,   true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, result.length * 2, true);
+
+      let offset = 44;
+      for (let i = 0; i < result.length; i++, offset += 2) {
+        const s = Math.max(-1, Math.min(1, result[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      }
+
+      return new Blob([view], { type: 'audio/wav' });
+    }
+
+    function interleave(inputL, inputR) {
+      const length = inputL.length + inputR.length;
+      const result = new Float32Array(length);
+      let index = 0, inputIndex = 0;
+      while (index < length) {
+        result[index++] = inputL[inputIndex];
+        result[index++] = inputR[inputIndex];
+        inputIndex++;
+      }
+      return result;
+    }
+
+    function writeString(view, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+
+    updateUI();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker connected!'))
+          .catch(err => console.log('SW registration issue:', err));
+      });
+    }
+  </script>
+</body>
+</html>
