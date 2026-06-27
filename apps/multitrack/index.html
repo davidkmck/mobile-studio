@@ -310,9 +310,13 @@ window.addEventListener('message', (event) => {
 });
 
     // Send the request when your internal Play button is pressed
-document.getElementById('playBtn').addEventListener('click', () => {
-  window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-});
+const playBtn = document.getElementById('playBtn');
+if (playBtn) {
+  playBtn.addEventListener('click', () => {
+    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+  });
+}
+
     
 async function addAudioToTimeline(name, blobOrUrl) {
   // The parent app sends a real Blob, but keep this resilient in case
