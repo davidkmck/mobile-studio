@@ -4,6 +4,7 @@ const ASSETS = [
   '/index.html',
   '/apps/multitrack/index.html',
   '/apps/beat-maker/index.html',
+  '/apps/synth/index.html',
   '/icon.png',
   '/icon-sml.png'
   // Add all CSS/JS files for the sub-apps here
