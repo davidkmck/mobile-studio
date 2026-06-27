@@ -64,8 +64,7 @@ function loadApp(appName) {
     event.currentTarget.classList.add('active');
   }
   
-  // FIX: Remove the "/apps" prefix so it points to your real folders
-  frame.src = `./${appName}/index.html`; 
+  frame.src = `./apps/${appName}/index.html`; 
 }
 
     // Default init app
