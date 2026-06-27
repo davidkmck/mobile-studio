@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Mobile Studio</title>
   <style>
-<style>
   :root {
     --bg: #0a0a0f;
     --panel: #12121c;
@@ -12,12 +11,9 @@
     --text: #e2e2e9;
     --accent: #00e5ff;
   }
-
   body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
-  
+
   #appFrame { flex: 1; border: none; width: 100%; }
-
-
 .global-app-banner {
   display: flex;
   width: 100%;
@@ -38,67 +34,67 @@
     text-decoration: none;
     border-right: 1px solid var(--border);
   }
-
   .banner-icon:last-child { border-right: none; }
-  
+
   .banner-icon.active {
     color: var(--accent);
     font-weight: bold;
     background: rgba(0, 229, 255, 0.05);
   }
 </style>
-
 </head>
 <body>
-
   <!-- Sub-app viewport renders here -->
   <iframe id="appFrame" src="about:blank"></iframe>
-
   <!-- Persistent Global Bottom Navigation Banner -->
   <div class="global-app-banner">
-
     <a href="#" class="banner-icon active" onclick="loadApp('beat-maker', event)">🎛️ BEAT</a>
 <a href="#" class="banner-icon" onclick="loadApp('multitrack', event)">🎚️ TRACKS</a>
 <a href="#" class="banner-icon" onclick="loadApp('synth', event)">🎹 SYNTH</a>
   </div>
-
   <script>
     const frame = document.getElementById('appFrame');
-
     // Centralized Storage Managed by the Parent App
-window.addEventListener('message', (event) => {
-  const { action, audioBlob, trackName } = event.data;
+    let pendingClip = null; // holds audio waiting to be delivered to the next app
 
-  // 1. Receive from Beat Maker
-  if (action === 'EXPORT_AUDIO_TO_TRACKS') {
-    console.log("Parent: Received audio from Beat Maker. Forwarding to Tracks...");
-    
-    // 2. Forward to the Multitrack iframe (ensure your iframe has id="appFrame")
-    const trackFrame = document.getElementById('appFrame');
-    trackFrame.contentWindow.postMessage({
-      action: 'ADD_CLIP_TO_TIMELINE',
-      audioBlob: audioBlob,
-      trackName: trackName
-    }, '*');
-  }
-  // New logic for navigation
-  if (action === 'SWITCH_APP') {
-    loadApp(app);
-  }
-});
-    
-function loadApp(appName, event) {
-  if (event) event.preventDefault(); // Prevents the href="#" jump
+    window.addEventListener('message', (event) => {
+      const { action, audioBlob, trackName, mimeType, app } = event.data;
 
-  document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
-  
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  }
-  
-  frame.src = `${window.location.pathname.replace(/\/$/, '')}/apps/${appName}/index.html`;
-}
+      // 1. Receive from Beat Maker
+      if (action === 'EXPORT_AUDIO_TO_TRACKS') {
+        console.log("Parent: Received audio from Beat Maker. Queuing for Tracks...");
+        pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
+      }
 
+      // 2. Navigation — switch sub-app, then deliver any queued clip once it's loaded
+      if (action === 'SWITCH_APP') {
+        loadApp(app);
+      }
+    });
+
+    function loadApp(appName, event) {
+      if (event) event.preventDefault(); // Prevents the href="#" jump
+      document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
+
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      } else {
+        // Programmatic switch (e.g. from SWITCH_APP) — highlight the matching nav icon
+        document.querySelectorAll('.banner-icon').forEach(el => {
+          if (el.getAttribute('onclick')?.includes(`'${appName}'`)) el.classList.add('active');
+        });
+      }
+
+      frame.src = `${window.location.pathname.replace(/\/$/, '')}/apps/${appName}/index.html`;
+
+      // Once the freshly-loaded app is ready, forward any pending audio clip to it
+      frame.onload = () => {
+        if (pendingClip) {
+          frame.contentWindow.postMessage(pendingClip, '*');
+          pendingClip = null;
+        }
+      };
+    }
 
     // Default init app
     loadApp('beat-maker');
