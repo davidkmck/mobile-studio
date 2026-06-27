@@ -88,7 +88,16 @@
     .step.active { background-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
 
     .synth-edit-panel { background: var(--border); border-radius: 6px; padding: 15px; margin-top: 25px; display: none; }
-    .recordBtn.active { border: 2px solid #ff3366; box-shadow: 0 0 10px rgba(255, 51, 102, 0.4); }
+    #recordBtn.active { border: 2px solid #ff3366; box-shadow: 0 0 10px rgba(255, 51, 102, 0.4); }
+
+    #grid {
+  display: block !important;
+  visibility: visible !important;
+  min-height: 200px !important;
+  border: 2px dashed red !important; /* This will help us see if the container exists */
+  background: #f0f0f0;
+}
+    
   </style>
 </head>
 <body>
