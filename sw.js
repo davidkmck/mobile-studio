@@ -3,9 +3,13 @@ const CACHE_NAME = 'mobile-studio-v4';
 const ASSETS = [
   '/',
   '/index.html',
-  '/apps/multitrack/index.html',
+
+  // Sub-app HTML
   '/apps/beat-maker/index.html',
+  '/apps/multitrack/index.html',
   '/apps/synth/index.html',
+
+  // Icons
   '/icon.png',
   '/icon-sml.png'
 ];
@@ -32,10 +36,18 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Normalize URLs for matching
+function normalize(request) {
+  const url = new URL(request.url);
+  return url.pathname;
+}
+
 // Fetch handler
 self.addEventListener('fetch', (event) => {
+  const path = normalize(event.request);
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(path).then((cached) => {
       return cached || fetch(event.request);
     })
   );
