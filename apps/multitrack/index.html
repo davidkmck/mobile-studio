@@ -385,7 +385,7 @@ async function addAudioToTimeline(url, trackName) {
 
   try {
     getAudioContext(); // make sure the AudioContext exists/resumes before decoding
-    await createTrackNode(blob, name);
+    await createTrackNode(url, trackName);
   } catch (err) {
     console.error('Failed to add incoming clip to timeline:', err);
     alert('Could not load the recorded beat into the mixer. See console for details.');
