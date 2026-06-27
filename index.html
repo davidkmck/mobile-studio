@@ -1,110 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Studio</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+  <meta charset="UTF-8">
+  <title>Mobile Studio</title>
+  <style>
+    body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Main Viewport for Sub-apps */
+    #appFrame { flex: 1; border: none; width: 100%; height: 100%; }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 5px;
-            color: #00adb5;
-        }
-
-        p {
-            color: #888;
-        }
-
-        .hub-container {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-            max-width: 600px;
-            flex-direction: column;
-        }
-
-        @media (min-width: 480px) {
-            .hub-container {
-                flex-direction: row;
-            }
-        }
-
-        .app-card {
-            flex: 1;
-            background-color: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .app-card:hover {
-            transform: translateY(-5px);
-            border-color: #00adb5;
-        }
-
-        .app-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .app-title {
-            font-size: 1.5rem;
-            margin: 0 0 10px 0;
-        }
-
-        .app-desc {
-            font-size: 0.9rem;
-            color: #aaa;
-            margin: 0;
-        }
-    </style>
+    /* The Persistent Bottom App Banner */
+    .global-app-banner {
+      height: 60px;
+      background: #12121c;
+      border-top: 1px solid #26263b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 10px;
+      z-index: 9999; /* Always stays on top */
+    }
+    .banner-icon { color: #6c6c84; cursor: pointer; font-size: 20px; text-decoration: none; }
+    .banner-icon.active { color: #00e5ff; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>Mobile Studio</h1>
-        <p>Select a tool to start creating</p>
-    </header>
+  <!-- Sub-app viewport renders here -->
+  <iframe id="appFrame" src="about:blank"></iframe>
 
-    <main class="hub-container">
-        <!-- Beat Maker Link -->
-        <a href="./apps/beat-maker/index.html" class="app-card">
-            <div class="app-icon">🥁</div>
-            <h2 class="app-title">Beat Maker</h2>
-            <p class="app-desc">Drop rhythms, sequence loops, and craft your foundation.</p>
-        </a>
+  <!-- Persistent Global Bottom Navigation Banner -->
+  <div class="global-app-banner">
+    <a href="#" class="banner-icon active" onclick="loadApp('beat-maker')">🎛️ BEAT</a>
+    <a href="#" class="banner-icon" onclick="loadApp('multitrack')">🎚️ TRACKS</a>
+    <a href="#" class="banner-icon" onclick="loadApp('synth')">🎹 SYNTH</a>
+  </div>
 
-        <!-- 4-Track Recorder Link -->
-        <a href="./apps/multitrack/index.html" class="app-card">
-            <div class="app-icon">🎚️</div>
-            <h2 class="app-title">Multitrack Mixer</h2>
-            <p class="app-desc">Record, layer, and mix your audio tracks seamlessly.</p>
-        </a>
-    </main>
+  <script>
+    const frame = document.getElementById('appFrame');
 
+    // Centralized Storage Managed by the Parent App
+    window.addEventListener('message', (event) => {
+      const { action, key, value } = event.data;
+
+      if (action === 'SAVE_DATA') {
+        localStorage.setItem(key, JSON.stringify(value));
+        // Acknowledge save back to the sub-app iframe
+        frame.contentWindow.postMessage({ action: 'SAVE_CONFIRMED', key }, '*');
+      }
+
+      if (action === 'REQUEST_DATA') {
+        const data = JSON.parse(localStorage.getItem(key)) || null;
+        frame.contentWindow.postMessage({ action: 'RETURN_DATA', key, data }, '*');
+      }
+    });
+
+    function loadApp(appName) {
+      // Highlight current tab banner icon
+      document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      // Update iframe source path
+      frame.src = `./apps/${appName}/index.html`; 
+    }
+
+    // Default init app
+    loadApp('beat-maker');
+  </script>
 </body>
 </html>
