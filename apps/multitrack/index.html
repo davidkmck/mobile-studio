@@ -351,14 +351,32 @@ button {
         updateUI(); 
      }
       
-     if (event.data.action === 'ADD_TRACK') {
- 
-
-        addAudioToTimeline(event.data.audioUrl, event.data.trackName);
-    }  
+if (event.data.action === 'ADD_TRACK') {
+        const { audioBuffer, trackName } = event.data;
+        
+        // Directly decode the buffer you received
+        const ctx = getAudioContext();
+        const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
+        
+        // Then pass the decoded data to your existing logic
+        await createTrackNodeFromBuffer(decodedBuffer, trackName);
+    }
       
 });
 
+   // Update your create function to accept the already-decoded buffer
+async function createTrackNodeFromBuffer(decodedBuffer, customName) {
+    const trackObject = {
+        id: Date.now(),
+        name: customName,
+        audioBuffer: decodedBuffer,
+        // ... rest of your trackObject properties
+    };
+    tracks.push(trackObject);
+    renderMixerBoard();
+}
+    
+    
     // Send the request when your internal Play button is pressed
 const playBtn = document.getElementById('playBtn');
 if (playBtn) {
