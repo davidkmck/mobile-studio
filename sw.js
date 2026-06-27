@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobile-studio-v5';
+const CACHE_NAME = 'mobile-studio-v7';
 
 const ASSETS = [
   '/',
@@ -8,6 +8,7 @@ const ASSETS = [
   '/mobile-studio/apps/beat-maker/index.html',
   '/mobile-studio/apps/multitrack/index.html',
   '/mobile-studio/apps/synth/index.html',
+  '/mobile-studio/index.html',
 
   // Icons
   '/mobile-studio/icon.png',
