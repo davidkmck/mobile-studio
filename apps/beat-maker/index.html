@@ -119,88 +119,93 @@
 </div>
 
 <script>
-  const TRACKS = [{ id: 'kick', label: 'KICK', color: 'kick' }, { id: 'snare', label: 'SNARE', color: 'snare' }, { id: 'hihat', label: 'HI-HAT', color: 'hihat' }, { id: 'clap', label: 'CLAP', color: 'clap' }, { id: 'bass', label: 'BASS', color: 'bass' }];
-  const STEPS = 16;
-  let bpm = 120;
-  let grid = TRACKS.map(() => Array(STEPS).fill(false));
-  let isPlaying = false, isRecording = false, recorder = null;
+<script>
+    const TRACKS = [{ id: 'kick', label: 'KICK', color: 'kick' }, { id: 'snare', label: 'SNARE', color: 'snare' }, { id: 'hihat', label: 'HI-HAT', color: 'hihat' }, { id: 'clap', label: 'CLAP', color: 'clap' }, { id: 'bass', label: 'BASS', color: 'bass' }];
+    const STEPS = 16;
+    let bpm = 120;
+    let grid = TRACKS.map(() => Array(STEPS).fill(false));
+    let isPlaying = false, isRecording = false, recorder = null;
 
-  function buildGridUI() {
-    const container = document.getElementById('grid');
-    container.innerHTML = '';
-    
-    TRACKS.forEach((track, ti) => {
-      const row = document.createElement('div');
-      row.className = 'beat-row';
-      const label = document.createElement('div');
-      label.className = 'track-label';
-      label.textContent = track.label;
-      row.appendChild(label);
+    function buildGridUI() {
+      const container = document.getElementById('grid');
+      container.innerHTML = '';
       
-      const stepsContainer = document.createElement('div');
-      stepsContainer.className = 'steps';
-      for (let si = 0; si < STEPS; si++) {
-        const step = document.createElement('div');
-        step.className = 'step';
-        if (grid[ti][si]) step.classList.add('active');
-        step.onclick = () => {
-          grid[ti][si] = !grid[ti][si];
-          step.classList.toggle('active');
-        };
-        stepsContainer.appendChild(step);
+      TRACKS.forEach((track, ti) => {
+        const row = document.createElement('div');
+        row.className = 'beat-row';
+        const label = document.createElement('div');
+        label.className = 'track-label';
+        label.textContent = track.label;
+        row.appendChild(label);
+        
+        const stepsContainer = document.createElement('div');
+        stepsContainer.className = 'steps';
+        for (let si = 0; si < STEPS; si++) {
+          const step = document.createElement('div');
+          step.className = 'step';
+          if (grid[ti][si]) step.classList.add('active');
+          step.onclick = () => {
+            grid[ti][si] = !grid[ti][si];
+            step.classList.toggle('active');
+          };
+          stepsContainer.appendChild(step);
+        }
+        row.appendChild(stepsContainer);
+        container.appendChild(row);
+      });
+    }
+
+    function triggerFactorySequence(selection) {
+      const presets = {
+        techno: [
+          [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+          [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+          [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, true],
+          [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false],
+          [true, true, false, true, false, true, false, false, true, false, true, false, false, true, false, false]
+        ],
+        house: [
+          [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+          [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+          [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
+          [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+          [false, false, true, false, false, false, false, true, false, true, false, false, false, false, true, false]
+        ]
+      };
+      
+      if (presets[selection]) {
+        grid = presets[selection];
+        buildGridUI();
       }
-      row.appendChild(stepsContainer);
-      container.appendChild(row);
-    });
-  }
+    }
 
-  function triggerFactorySequence(selection) {
-    const presets = {
-      techno: [
-        [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, true],
-        [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false],
-        [true, true, false, true, false, true, false, false, true, false, true, false, false, true, false, false]
-      ],
-      house: [
-        [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-        [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
-        [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-        [false, false, true, false, false, false, false, true, false, true, false, false, false, false, true, false]
-      ]
-    };
+    async function recordWav() {
+      const btn = document.getElementById('recordBtn');
+      if (!isRecording) {
+        if (!recorder) {
+            recorder = new Tone.Recorder();
+            Tone.Destination.connect(recorder);
+        }
+        recorder.start();
+        isRecording = true;
+        btn.textContent = 'STOP RECORDING';
+        btn.classList.add('active');
+      } else {
+        const recording = await recorder.stop();
+        window.parent.postMessage({ action: 'EXPORT_AUDIO_TO_TRACKS', audioBlob: recording, trackName: 'Beat_1' }, '*');
+        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+        isRecording = false;
+        btn.textContent = 'RECORD WAV';
+        btn.classList.remove('active');
+      }
+    }
+
+    // Initialize UI and Listeners
+    document.getElementById('recordBtn').addEventListener('click', recordWav);
+    document.getElementById('factorySelect').addEventListener('change', (e) => triggerFactorySequence(e.target.value));
     
-    if (presets[selection]) {
-      grid = presets[selection];
-      buildGridUI();
-    }
-  }
-
-  async function recordWav() {
-    const btn = document.getElementById('recordBtn');
-    if (!isRecording) {
-      recorder = new Tone.Recorder();
-      Tone.Destination.connect(recorder);
-      recorder.start();
-      isRecording = true;
-      btn.textContent = 'STOP RECORDING';
-      btn.classList.add('active');
-    } else {
-      const recording = await recorder.stop();
-      window.parent.postMessage({ action: 'EXPORT_AUDIO_TO_TRACKS', audioBlob: recording, trackName: 'Beat_1' }, '*');
-      window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
-      isRecording = false;
-      btn.textContent = 'RECORD WAV';
-      btn.classList.remove('active');
-    }
-  }
-
-  document.getElementById('recordBtn').addEventListener('click', recordWav);
-  document.getElementById('factorySelect').addEventListener('change', (e) => triggerFactorySequence(e.target.value));
-  
-  buildGridUI();
+    buildGridUI(); // Call this immediately on load
+  </script>
 </script>
 </body>
 </html>
