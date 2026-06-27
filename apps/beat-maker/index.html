@@ -473,6 +473,46 @@
       }
     }
 
+    // --- EXPORT WAV BUTTON LOGIC ---
+document.getElementById('recordBtn').addEventListener('click', async () => {
+  // Ensure audio is initialized
+  initAudio();
+  await Tone.start();
+
+  if (!isRecording) {
+    // 1. Start recording
+    recorder.start();
+    isRecording = true;
+    document.getElementById('recordBtn').textContent = '⏹️ STOP & DOWNLOAD';
+    document.getElementById('recordBtn').style.borderColor = 'var(--kick)';
+    document.getElementById('recordBtn').style.color = 'var(--kick)';
+    
+    // Optional: Auto-start the sequencer if it isn't playing yet
+    if (!isPlaying) {
+      startStopSequencer();
+    }
+  } else {
+    // 2. Stop recording and capture the resulting file
+    const recording = await recorder.stop();
+    isRecording = false;
+    
+    // Reset button appearance
+    document.getElementById('recordBtn').textContent = 'EXPORT WAV';
+    document.getElementById('recordBtn').style.borderColor = '';
+    document.getElementById('recordBtn').style.color = '';
+
+    // 3. Create a download link for the user
+    const url = URL.createObjectURL(recording);
+    const anchor = document.createElement("a");
+    anchor.download = "my_beat.wav";
+    anchor.href = url;
+    anchor.click();
+    
+    // Clean up memory
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+});
+
     function buildGridUI() {
       const container = document.getElementById('grid');
       container.innerHTML = '';
