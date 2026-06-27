@@ -327,6 +327,8 @@ button {
     });
 
     window.addEventListener('message', (event) => {
+            console.log("Multitrack received:", event.data); // ADD THIS
+      
       // Always verify the origin in a production environment!
       if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
         const { audioBlob, trackName } = event.data;
@@ -334,20 +336,24 @@ button {
 
         // Hand the incoming blob straight to the real track-creation pipeline
         // (decodes it, adds it to `tracks`, and renders it in the mixer board)
-      addAudioToTimeline(trackName, audioBlob);
-    }
-   if (event.data.action === 'START_AUDIO') {
-    Tone.start(); // Unlock audio
-    Tone.Transport.bpm.value = event.data.bpm;
-    Tone.Transport.start(); // Start the timeline
-   }
+        addAudioToTimeline(trackName, audioBlob);
+      }
+      
+     if (event.data.action === 'START_AUDIO') {
+      Tone.start(); // Unlock audio
+      Tone.Transport.bpm.value = event.data.bpm;
+      Tone.Transport.start(); // Start the timeline
+     }
+     
      if (event.data.action === 'SWITCH_APP') {
         // DO NOT reset your track/timeline variables here!
         // Just call your UI update function to show the correct view.
         updateUI(); 
-    }
-    if (event.data.action === 'ADD_TRACK') {
-        console.log("Multitrack: Received new clip!", event.data.audioUrl);
+     }
+      
+     if (event.data.action === 'ADD_TRACK') {
+ 
+
         addAudioToTimeline(event.data.audioUrl, event.data.trackName);
     }  
       
