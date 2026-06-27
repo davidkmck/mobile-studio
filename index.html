@@ -81,6 +81,10 @@ window.addEventListener('message', (event) => {
       trackName: trackName
     }, '*');
   }
+  // New logic for navigation
+  if (action === 'SWITCH_APP') {
+    loadApp(app);
+  }
 });
     
 function loadApp(appName, event) {
