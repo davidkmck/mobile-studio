@@ -50,20 +50,22 @@
     const frame = document.getElementById('appFrame');
 
     // Centralized Storage Managed by the Parent App
-    window.addEventListener('message', (event) => {
-      const { action, key, value } = event.data;
+window.addEventListener('message', (event) => {
+  const { action, audioBlob, trackName } = event.data;
 
-      if (action === 'SAVE_DATA') {
-        localStorage.setItem(key, JSON.stringify(value));
-        // Acknowledge save back to the sub-app iframe
-        frame.contentWindow.postMessage({ action: 'SAVE_CONFIRMED', key }, '*');
-      }
-
-      if (action === 'REQUEST_DATA') {
-        const data = JSON.parse(localStorage.getItem(key)) || null;
-        frame.contentWindow.postMessage({ action: 'RETURN_DATA', key, data }, '*');
-      }
-    });
+  // 1. Receive from Beat Maker
+  if (action === 'EXPORT_AUDIO_TO_TRACKS') {
+    console.log("Parent: Received audio from Beat Maker. Forwarding to Tracks...");
+    
+    // 2. Forward to the Multitrack iframe (ensure your iframe has id="appFrame")
+    const trackFrame = document.getElementById('appFrame');
+    trackFrame.contentWindow.postMessage({
+      action: 'ADD_CLIP_TO_TIMELINE',
+      audioBlob: audioBlob,
+      trackName: trackName
+    }, '*');
+  }
+});
 
 function loadApp(appName) {
   // Highlight current tab banner icon
