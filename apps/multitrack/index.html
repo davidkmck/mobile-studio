@@ -346,6 +346,10 @@ button {
         // Just call your UI update function to show the correct view.
         updateUI(); 
     }
+    if (event.data.action === 'ADD_TRACK') {
+        console.log("Multitrack: Received new clip!", event.data.audioUrl);
+        addAudioToTimeline(event.data.audioUrl, event.data.trackName);
+    }  
       
 });
 
