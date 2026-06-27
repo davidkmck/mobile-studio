@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flashmix 4</title>
+  <title>Multitrack Studio</title>
   <link rel="manifest" href="./manifest.json">
   <style>
     :root {
@@ -91,6 +91,12 @@
       background-color: #475569;
       color: white;
       flex: 1;
+    }
+    .btn-vault {
+      background-color: #8b5cf6;
+      color: white;
+      width: 100%;
+      flex: none;
     }
     .btn-save {
       background-color: var(--success);
@@ -218,13 +224,16 @@
 <body>
 
   <main>
-    <h1>Flashmix 4</h1>
-    <div class="subtitle">A quick 4-track scratchpad for audio ideas</div>
+    <h1>Multitrack Studio</h1>
+    <div class="subtitle">A dynamic scratchpad for layout and recording music ideas</div>
 
     <section id="controls-sector">
       <button id="record-btn" class="btn-record">🔴 Record Track 1</button>
       
-      <button id="import-btn" class="btn-global" style="background-color: #475569; width: 100%; flex: none;">📁 Import Audio File</button>
+      <div class="button-group" style="flex-direction: column; gap: 10px;">
+        <button id="vault-btn" class="btn-vault">📥 Load from Beat Maker</button>
+        <button id="import-btn" class="btn-global" style="background-color: #475569; width: 100%; flex: none;">📁 Import Local Audio File</button>
+      </div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
 
@@ -271,7 +280,6 @@
     let progressAnimationId = null;
     let loopTimeoutId = null;
     let isScrubbing = false;
-    const maxTracks = 4;
 
     const tracks = [];
     let audioCtx = null;
@@ -279,6 +287,7 @@
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     const recordBtn       = document.getElementById('record-btn');
     const importBtn       = document.getElementById('import-btn');
+    const vaultBtn        = document.getElementById('vault-btn');
     const audioFileInput  = document.getElementById('audio-file-input');
     const masterPlayBtn   = document.getElementById('master-play-btn');
     const resetBtn        = document.getElementById('reset-btn');
@@ -309,8 +318,6 @@
       getAudioContext();
 
       if (!isRecording) {
-        if (tracks.length >= maxTracks) return;
-
         try {
           localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
           isCountdownActive = true;
@@ -346,7 +353,6 @@
     if (importBtn && audioFileInput) {
       importBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        if (tracks.length >= maxTracks) return;
         audioFileInput.click();
       });
 
@@ -359,10 +365,41 @@
           return;
         }
 
-        createTrackNode(file);
+        createTrackNode(file, file.name);
         audioFileInput.value = '';
       });
     }
+
+    // ─── Shared Beat Vault Integration (IndexedDB) ───────────────────────────
+    vaultBtn.addEventListener('click', () => {
+      getAudioContext();
+      const request = indexedDB.open("MobileStudioDB", 1);
+
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains("studio_vault")) {
+          alert("No database found! Export a beat from your Beat Maker app first.");
+          return;
+        }
+
+        const transaction = db.transaction("studio_vault", "readonly");
+        const store = transaction.objectStore("studio_vault");
+        const getRequest = store.get("latest_beat");
+
+        getRequest.onsuccess = () => {
+          const result = getRequest.result;
+          if (result && result.audioBlob) {
+            createTrackNode(result.audioBlob, result.name || "Imported Beat");
+          } else {
+            alert("No exported sequences discovered in the studio vault yet.");
+          }
+        };
+      };
+
+      request.onerror = () => {
+        alert("Failed to connect to the shared studio vault database.");
+      };
+    });
 
     // ─── Recording logic ──────────────────────────────────────────────────────
     function startHardwareRecording() {
@@ -389,7 +426,7 @@
           rawBlob = await sliceAudioBlobLatency(rawBlob, compensationMs);
         }
 
-        await createTrackNode(rawBlob);
+        await createTrackNode(rawBlob, `Recorded Input ${tracks.length + 1}`);
 
         if (localStream) {
           localStream.getTracks().forEach(t => t.stop());
@@ -438,7 +475,7 @@
     }
 
     // ─── Track creation ───────────────────────────────────────────────────────
-    async function createTrackNode(blob) {
+    async function createTrackNode(blob, customName) {
       const ctx = getAudioContext();
       const arrayBuffer = await blob.arrayBuffer();
       
@@ -446,6 +483,7 @@
 
       const trackObject = {
         id: Date.now(),
+        name: customName || `Track ${tracks.length + 1}`,
         blob,
         audioBuffer: decodedBuffer,
         sourceNode: null,
@@ -470,7 +508,7 @@
         row.className = 'track-row';
         row.innerHTML = `
           <div class="track-header">
-            <span class="track-title">Track ${index + 1}</span>
+            <span class="track-title">${track.name}</span>
             <button class="btn-delete" onclick="deleteTrack(${track.id})">Delete</button>
           </div>
           <div class="controls-container">
@@ -502,7 +540,6 @@
         `;
         mixerBoard.appendChild(row);
 
-        // Bind interactive scrubbing listeners onto the slider layout
         const progressSlider = row.querySelector(`.progress-slider`);
         
         progressSlider.addEventListener('input', (e) => {
@@ -641,21 +678,13 @@
       masterPlayBtn.textContent = '▶️ Play Mix';
     }
 
-    // Dynamic Scrubbing Engine
     function scrubPlaybackToTimestamp(targetTime) {
       const originallyPlaying = isPlayingMix;
-      
-      // Clear out active hardware nodes completely
       stopAllTracks();
-      
-      // Reposition all internal playhead trackers directly onto the timeline target
       tracks.forEach(track => {
         track.playheadOffset = targetTime;
       });
-      
       updateAllProgressUI(targetTime);
-
-      // Re-trigger the mix fluidly if it was playing beforehand
       if (originallyPlaying) {
         startAllTracks();
       }
@@ -713,21 +742,9 @@
 
       if (isRecording || isCountdownActive) return;
 
-      if (tracks.length >= maxTracks) {
-        recordBtn.disabled    = true;
-        recordBtn.textContent = '🚫 Max Tracks Reached';
-        recordBtn.className   = 'btn-record';
-        
-        importBtn.disabled    = true;
-        importBtn.textContent = '🚫 Max Tracks Reached';
-      } else {
-        recordBtn.disabled    = false;
-        recordBtn.textContent = `🔴 Record Track ${tracks.length + 1}`;
-        recordBtn.className   = 'btn-record';
-        
-        importBtn.disabled    = false;
-        importBtn.textContent = '📁 Import Audio File';
-      }
+      recordBtn.disabled    = false;
+      recordBtn.textContent = `🔴 Record Track ${tracks.length + 1}`;
+      recordBtn.className   = 'btn-record';
     }
 
     // ─── Export ───────────────────────────────────────────────────────────────
@@ -763,7 +780,7 @@
 
         const anchor = document.createElement('a');
         anchor.href     = downloadUrl;
-        anchor.download = `4track-mix-${Date.now()}.wav`;
+        anchor.download = `multitrack-mix-${Date.now()}.wav`;
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);
