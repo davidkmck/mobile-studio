@@ -471,6 +471,11 @@
       const btn = document.getElementById('recordBtn');
       await Tone.start();
       if (!isRecording) {
+        // --- NEW: Start playback if it's not already running ---
+    if (!isPlaying) {
+      startStopSequencer(); 
+    }
+        
         if (!recorder) {
           recorder = new Tone.Recorder();
           Tone.Destination.connect(recorder);
