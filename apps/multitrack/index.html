@@ -327,21 +327,26 @@ button {
     });
 
     window.addEventListener('message', (event) => {
-  // Always verify the origin in a production environment!
-  if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
-    const { audioBlob, trackName } = event.data;
-    console.log("Tracks App: Received audio for", trackName);
+      // Always verify the origin in a production environment!
+      if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
+        const { audioBlob, trackName } = event.data;
+        console.log("Tracks App: Received audio for", trackName);
 
-    // Hand the incoming blob straight to the real track-creation pipeline
-    // (decodes it, adds it to `tracks`, and renders it in the mixer board)
-    addAudioToTimeline(trackName, audioBlob);
-  }
-
-  if (event.data.action === 'START_AUDIO') {
+        // Hand the incoming blob straight to the real track-creation pipeline
+        // (decodes it, adds it to `tracks`, and renders it in the mixer board)
+      addAudioToTimeline(trackName, audioBlob);
+    }
+   if (event.data.action === 'START_AUDIO') {
     Tone.start(); // Unlock audio
     Tone.Transport.bpm.value = event.data.bpm;
     Tone.Transport.start(); // Start the timeline
-  }
+   }
+     if (event.data.action === 'SWITCH_APP') {
+        // DO NOT reset your track/timeline variables here!
+        // Just call your UI update function to show the correct view.
+        updateUI(); 
+    }
+      
 });
 
     // Send the request when your internal Play button is pressed
