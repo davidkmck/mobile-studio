@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Studio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            color: #00adb5;
+        }
+
+        p {
+            color: #888;
+        }
+
+        .hub-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            flex-direction: column;
+        }
+
+        @media (min-width: 480px) {
+            .hub-container {
+                flex-direction: row;
+            }
+        }
+
+        .app-card {
+            flex: 1;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            border-color: #00adb5;
+        }
+
+        .app-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+        }
+
+        .app-desc {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mobile Studio</h1>
+        <p>Select a tool to start creating</p>
+    </header>
+
+    <main class="hub-container">
+        <!-- Beat Maker Link -->
+        <a href="beat-maker/index.html" class="app-card">
+            <div class="app-icon">🥁</div>
+            <h2 class="app-title">Beat Maker</h2>
+            <p class="app-desc">Drop rhythms, sequence loops, and craft your foundation.</p>
+        </a>
+
+        <!-- 4-Track Recorder Link -->
+        <a href="4-track/index.html" class="app-card">
+            <div class="app-icon">🎚️</div>
+            <h2 class="app-title">4-Track</h2>
+            <p class="app-desc">Record, layer, and mix your audio tracks seamlessly.</p>
+        </a>
+    </main>
+
+</body>
+</html>
