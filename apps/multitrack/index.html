@@ -301,8 +301,19 @@ window.addEventListener('message', (event) => {
     // (decodes it, adds it to `tracks`, and renders it in the mixer board)
     addAudioToTimeline(trackName, audioBlob);
   }
+
+  if (event.data.action === 'START_AUDIO') {
+    Tone.start(); // Unlock audio
+    Tone.Transport.bpm.value = event.data.bpm;
+    Tone.Transport.start(); // Start the timeline
+  }
 });
 
+    // Send the request when your internal Play button is pressed
+document.getElementById('playBtn').addEventListener('click', () => {
+  window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+});
+    
 async function addAudioToTimeline(name, blobOrUrl) {
   // The parent app sends a real Blob, but keep this resilient in case
   // something upstream ever sends a URL string instead.
