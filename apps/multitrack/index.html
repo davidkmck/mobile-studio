@@ -326,7 +326,7 @@ button {
       latencyVal.textContent = `${e.target.value}ms`;
     });
 
-    window.addEventListener('message', (event) => {
+    window.addEventListener('message', async (event) => {
             console.log("Multitrack received:", event.data); // ADD THIS
       
       // Always verify the origin in a production environment!
@@ -351,16 +351,24 @@ button {
         updateUI(); 
      }
       
-if (event.data.action === 'ADD_TRACK') {
-        const { audioBuffer, trackName } = event.data;
-        
-        // Directly decode the buffer you received
-        const ctx = getAudioContext();
-        const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
-        
-        // Then pass the decoded data to your existing logic
-        await createTrackNodeFromBuffer(decodedBuffer, trackName);
+    if (event.data.action === 'ADD_TRACK') {
+      const { audioBuffer, trackName } = event.data;
+    
+      try {
+      console.log("Multitrack received buffer for:", trackName);
+      const ctx = getAudioContext();
+      
+      // Ensure the context is resumed before decoding
+      if (ctx.state === 'suspended') await ctx.resume();
+      
+      const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
+      await createTrackNodeFromBuffer(decodedBuffer, trackName);
+      
+      console.log("Success: Track added to mixer.");
+    } catch (err) {
+      console.error('Failed to add incoming clip:', err);
     }
+  }
       
 });
 
@@ -980,27 +988,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 2. Multitrack Message Listener (The "Handoff")
-window.addEventListener('message', async (event) => {
-  if (event.data.action === 'ADD_TRACK') {
-    const { audioBuffer, trackName } = event.data;
-    
-    try {
-      console.log("Multitrack received buffer for:", trackName);
-      const ctx = getAudioContext();
-      
-      // Ensure the context is resumed before decoding
-      if (ctx.state === 'suspended') await ctx.resume();
-      
-      const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
-      await createTrackNodeFromBuffer(decodedBuffer, trackName);
-      
-      console.log("Success: Track added to mixer.");
-    } catch (err) {
-      console.error('Failed to add incoming clip:', err);
-    }
-  }
-});
 
 // 3. Play Request Listener
 document.addEventListener('DOMContentLoaded', () => {
