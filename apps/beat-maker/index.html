@@ -254,7 +254,7 @@
         <button id="clearBtn">CLEAR</button>
         <button class="toggle-edit-btn" id="toggleEditBtn">🎛️ SHOW EDIT CONTROLS</button>
         <button class="save-btn" id="saveBtn">💾 SAVE BEAT</button>
-        <button id="recordBtn">EXPORT WAV</button>
+        <button id="recordBtn">RECORD WAV</button>
       </div>
     </header>
 
@@ -530,6 +530,9 @@
         });
         panGroup.appendChild(panLabel); panGroup.appendChild(panSlider);
 
+
+document.getElementById('recordBtn').addEventListener('click', recordWav);
+        
         ctrlWrapper.appendChild(muteBtn);
         ctrlWrapper.appendChild(volGroup);
         ctrlWrapper.appendChild(panGroup);
@@ -558,6 +561,29 @@
         container.appendChild(row);
       });
     }
+
+    async function recordWav() {
+    if (isRecording) {
+        // Stop recording
+        const recording = await recorder.stop();
+        const url = URL.createObjectURL(recording);
+        const anchor = document.createElement("a");
+        anchor.download = "my-beat.webm";
+        anchor.href = url;
+        anchor.click();
+        
+        isRecording = false;
+        document.getElementById('recordBtn').textContent = 'EXPORT WAV';
+        document.getElementById('recordBtn').classList.remove('playing');
+    } else {
+        // Start recording
+        initAudio(); // Ensure audio is ready
+        recorder.start();
+        isRecording = true;
+        document.getElementById('recordBtn').textContent = 'STOP RECORDING';
+        document.getElementById('recordBtn').classList.add('playing');
+    }
+}
 
     function updateCursorPosition() {
       const cursor = document.getElementById('cursor');
