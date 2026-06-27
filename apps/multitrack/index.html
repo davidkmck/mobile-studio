@@ -370,18 +370,18 @@ if (playBtn) {
     
 async function addAudioToTimeline(url, trackName) {
   try {
-    console.log("Adding audio to timeline:", trackName);
+    console.log("Loading blob from URL:", url);
+
+    // 1. Convert the URL string back into a real Blob
+    const response = await fetch(url);
+    const blob = await response.blob(); 
     
-    // Ensure the AudioContext is ready
-    getAudioContext(); 
-    
-    // ONLY call this once. It reads the blob, decodes it, and updates the UI.
-    await createTrackNode(url, trackName);
+    // 2. Now pass the REAL blob to your existing function
+    await createTrackNode(blob, trackName);
     
     console.log("Audio added successfully:", trackName);
   } catch (err) {
     console.error('Failed to add incoming clip to timeline:', err);
-    alert('Could not load the recorded beat into the mixer. See console for details.');
   }
 }
     
