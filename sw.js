@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobile-studio-v0';
+const CACHE_NAME = 'mobile-studio-v1';
 const ASSETS = [
   '/',
   '/index.html',
