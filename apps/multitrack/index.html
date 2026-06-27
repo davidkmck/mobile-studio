@@ -970,16 +970,39 @@ async function addAudioToTimeline(url, trackName) {
     }
 
     updateUI();
+// 1. Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Make sure 'sw.js' actually exists in the /apps/multitrack/ folder
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker connected!'))
+      .catch(err => console.error('SW registration issue:', err));
+  });
+}
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service Worker connected!'))
-          .catch(err => console.log('SW registration issue:', err));
-      });
+// 2. Multitrack Message Listener (The "Handoff")
+window.addEventListener('message', async (event) => {
+  if (event.data.action === 'ADD_TRACK') {
+    const { audioBuffer, trackName } = event.data;
+    
+    try {
+      console.log("Multitrack received buffer for:", trackName);
+      const ctx = getAudioContext();
+      
+      // Ensure the context is resumed before decoding
+      if (ctx.state === 'suspended') await ctx.resume();
+      
+      const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
+      await createTrackNodeFromBuffer(decodedBuffer, trackName);
+      
+      console.log("Success: Track added to mixer.");
+    } catch (err) {
+      console.error('Failed to add incoming clip:', err);
     }
+  }
+});
 
-    // Add this at the end of your script in the Multitrack index.html
+// 3. Play Request Listener
 document.addEventListener('DOMContentLoaded', () => {
   const playBtn = document.getElementById('playBtn');
   if (playBtn) {
