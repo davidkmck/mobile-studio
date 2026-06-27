@@ -1,17 +1,17 @@
-const CACHE_NAME = 'mobile-studio-v4';
+const CACHE_NAME = 'mobile-studio-v5';
 
 const ASSETS = [
   '/',
   '/index.html',
 
   // Sub-app HTML
-  '/apps/beat-maker/index.html',
-  '/apps/multitrack/index.html',
-  '/apps/synth/index.html',
+  '/mobile-studio/apps/beat-maker/index.html',
+  '/mobile-studio/apps/multitrack/index.html',
+  '/mobile-studio/apps/synth/index.html',
 
   // Icons
-  '/icon.png',
-  '/icon-sml.png'
+  '/mobile-studio/icon.png',
+  '/mobile-studio/icon-sml.png'
 ];
 
 // Install and cache assets
