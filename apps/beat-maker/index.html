@@ -213,21 +213,8 @@
     document.getElementById('recordBtn').addEventListener('click', recordWav);
     document.getElementById('factorySelect').addEventListener('change', (e) => triggerFactorySequence(e.target.value));
     
-   // buildGridUI(); // Call this immediately on load
+    buildGridUI(); // Call this immediately on load
 
-document.addEventListener('DOMContentLoaded', () => {
-    const recordBtn = document.getElementById('recordBtn');
-    if (recordBtn) {
-        recordBtn.addEventListener('click', recordWav);
-    }
-
-    const factorySelect = document.getElementById('factorySelect');
-    if (factorySelect) {
-        factorySelect.addEventListener('change', (e) => triggerFactorySequence(e.target.value));
-    }
-    
-    buildGridUI();
-});
 
 </script>
 </body>
