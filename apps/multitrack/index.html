@@ -770,16 +770,23 @@ input[type="range"].progress-slider {
 
       const currentTimelinePosition = Tone.Transport.seconds;
       
-      tracks.forEach(track => {
-        track.playheadOffset = currentTimelinePosition;
-        if (track.tonePlayer) {
-          try { 
-            track.tonePlayer.stop(); 
-            track.tonePlayer.dispose(); 
-          } catch(e) {}
-          track.tonePlayer = null;
-        }
-      });
+tracks.forEach(track => {
+    track.playheadOffset = currentTimelinePosition;
+    
+    if (track.tonePlayer) {
+      try { 
+        // 2. CRITICAL FIX: Tell Tone to release its grip on this player's timeline
+        track.tonePlayer.unsync(); 
+        
+        // Now it's safe to halt and tear it down cleanly
+        track.tonePlayer.stop(); 
+        track.tonePlayer.dispose(); 
+      } catch(e) {
+        console.error("Error cleaning up track player:", e);
+      }
+      track.tonePlayer = null;
+    }
+  });
 
       isPlayingMix = false;
       masterPlayBtn.textContent = '▶️ Play Mix';
