@@ -713,18 +713,18 @@ function renderMixerBoard() {
   console.log("Rendering board. Tracks count:", tracks.length);
   
   if (!mixerBoard) {
-    console.error("mixerBoard element variable is not defined or found!");
+    console.error("mixerBoard DOM element is missing!");
     return;
   }
   
   mixerBoard.innerHTML = '';
 
-  tracks.forEach((track, index) => {
+  tracks.forEach((track) => {
     const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
     const row = document.createElement('div');
     row.className = 'track-row';
     
-    // 1. Render the HTML layout shell safely
+    // We use unique ID tags to completely avoid querySelector ambiguity
     row.innerHTML = `
       <div class="track-header">
         <span class="track-title">${track.name}</span>
@@ -745,7 +745,7 @@ function renderMixerBoard() {
             <span>Volume</span>
             <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
           </div>
-          <input type="range" class="volume-slider" min="0" max="1.5" step="0.05" value="${track.currentVolume}">
+          <input type="range" id="volume-${track.id}" min="0" max="1.5" step="0.05" value="${track.currentVolume}">
         </div>
         <div class="slider-container">
           <div class="slider-label">
@@ -753,49 +753,55 @@ function renderMixerBoard() {
             <span>Stereo Pan</span>
             <span>Right</span>
           </div>
-          <input type="range" class="pan-slider" min="-1" max="1" step="0.1" value="${track.currentPan}">
+          <input type="range" id="pan-${track.id}" min="-1" max="1" step="0.1" value="${track.currentPan}">
         </div>
       </div>
     `;
     
-    // 2. Append row immediately to the DOM so querySelectors are guaranteed to find elements
+    // CRITICAL: Append the row to the DOM FIRST so elements are live
     mixerBoard.appendChild(row);
 
-    // 3. Bind Delete Button safely via JavaScript event listener
-    const deleteBtn = row.querySelector(`#delete-btn-${track.id}`);
+    // Now safely look up elements by their strict unique structural IDs
+    const deleteBtn = document.getElementById(`delete-btn-${track.id}`);
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => deleteTrack(track.id));
+      deleteBtn.onclick = () => deleteTrack(track.id);
     }
 
-    // 4. Bind Volume Slider safely via JavaScript listener
-    const volumeSlider = row.querySelector('.volume-slider');
+    const volumeSlider = document.getElementById(`volume-${track.id}`);
     if (volumeSlider) {
-      volumeSlider.addEventListener('input', (e) => updateVolume(track.id, e.target.value));
+      volumeSlider.oninput = (e) => updateVolume(track.id, e.target.value);
     }
 
-    // 5. Bind Pan Slider safely via JavaScript listener
-    const panSlider = row.querySelector('.pan-slider');
+    const panSlider = document.getElementById(`pan-${track.id}`);
     if (panSlider) {
-      panSlider.addEventListener('input', (e) => updatePan(track.id, e.target.value));
+      panSlider.oninput = (e) => updatePan(track.id, e.target.value);
     }
 
-    // 6. Bind Progress Sliders
-    const progressSlider = row.querySelector(`.progress-slider`);
+    const progressSlider = document.getElementById(`progress-${track.id}`);
     if (progressSlider) {
-      progressSlider.addEventListener('input', (e) => {
+      progressSlider.oninput = (e) => {
         isScrubbing = true;
         const targetTime = parseFloat(e.target.value);
-        updateAllProgressUI(targetTime);
-      });
+        if (typeof updateAllProgressUI === 'function') updateAllProgressUI(targetTime);
+      };
 
-      progressSlider.addEventListener('change', (e) => {
+      progressSlider.onchange = (e) => {
         const targetTime = parseFloat(e.target.value);
-        scrubPlaybackToTimestamp(targetTime);
+        if (typeof scrubPlaybackToTimestamp === 'function') scrubPlaybackToTimestamp(targetTime);
         isScrubbing = false;
-      });
+      };
     }
   });
 
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn && !isRecording) {
+    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+  }
+
+  if (typeof updateUI === 'function') updateUI();
+}
+
+    
   // Dynamic Mic recording button update
   const recordBtn = document.getElementById('recordBtn');
   if (recordBtn && !isRecording) {
