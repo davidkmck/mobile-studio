@@ -387,6 +387,7 @@ input[type="range"].progress-slider {
         
         if (Tone.Transport.state !== 'started') {
           Tone.Transport.loop = false;
+          stopAllTracks();
           startAllTracks(); 
           Tone.Transport.start();
         }
@@ -422,7 +423,7 @@ input[type="range"].progress-slider {
 
       const trackObject = {
         id: Date.now(),
-        name: customName || `track ${tracks.length + 1}`,
+        name: customName || `Track ${tracks.length + 1}`,
         audioBuffer: decodedBuffer,
         tonePlayer: null,
         volumeNode: null,
@@ -518,7 +519,7 @@ input[type="range"].progress-slider {
           rawBlob = await sliceAudioBlobLatency(rawBlob, compensationMs);
         }
 
-        await createTrackNode(rawBlob, `recorded input ${tracks.length + 1}`);
+        await createTrackNode(rawBlob, `Recorded Input ${tracks.length + 1}`);
 
         if (localStream) {
           localStream.getTracks().forEach(t => t.stop());
@@ -566,7 +567,7 @@ input[type="range"].progress-slider {
 
       const trackObject = {
         id: Date.now(),
-        name: customName || `track ${tracks.length + 1}`,
+        name: customName || `Track ${tracks.length + 1}`,
         blob: blob,
         audioBuffer: decodedAudio,
         tonePlayer: null,
@@ -592,13 +593,13 @@ input[type="range"].progress-slider {
         
         row.innerHTML = `
           <div class="track-header">
-            <span class="track-title">${track.name.toLowerCase()}</span>
+            <span class="track-title">${track.name}</span>
             <button class="btn-delete" id="delete-btn-${track.id}">🗑️</button>
           </div>
           <div class="controls-container">
             <div class="slider-container">
               <div class="slider-label">
-                <span>playback position</span>
+                <span>Playback Position</span>
                 <span id="pos-val-${track.id}">0.00s</span>
               </div>
               <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
@@ -607,14 +608,14 @@ input[type="range"].progress-slider {
             <div class="sliders-row">
               <div class="slider-container">
                 <div class="slider-label">
-                  <span>volume</span>
+                  <span>Volume</span>
                   <span id="vol-txt-${track.id}">100%</span>
                 </div>
                 <input type="range" id="volume-${track.id}" min="0" max="1" step="0.01" value="${track.currentVolume}">
               </div>
               <div class="slider-container">
                 <div class="slider-label">
-                  <span>pan</span>
+                  <span>Pan</span>
                   <span id="pan-val-${track.id}">${track.currentPan}</span>
                 </div>
                 <input type="range" id="pan-${track.id}" min="-1" max="1" step="0.1" value="${track.currentPan}">
@@ -662,7 +663,7 @@ input[type="range"].progress-slider {
       });
 
       if (recordBtn && !isRecording) {
-        recordBtn.textContent = `🔴 Record track ${tracks.length + 1} from microphone`;
+        recordBtn.textContent = `🔴 Record Track ${tracks.length + 1} from Microphone`;
       }
       updateUI();
     }
@@ -712,7 +713,10 @@ input[type="range"].progress-slider {
 
       tracks.forEach(track => {
         if (track.tonePlayer) {
-          try { track.tonePlayer.dispose(); } catch(e) {}
+          try { 
+            track.tonePlayer.unsync();
+            track.tonePlayer.dispose(); 
+          } catch(e) {}
         }
 
         track.tonePlayer = new Tone.Player(track.audioBuffer);
@@ -731,12 +735,18 @@ input[type="range"].progress-slider {
         isPlayingMix = true;
         masterPlayBtn.textContent = '⏸️ Pause mix';
         
-        Tone.Transport.start();
+        if (Tone.Transport.state !== 'started') {
+          Tone.Transport.start();
+        }
         progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+      } else {
+        if (Tone.Transport.state !== 'started') {
+          Tone.Transport.start();
+        }
       }
     }
 
-function stopAllTracks() {
+    function stopAllTracks() {
       cancelAnimationFrame(progressAnimationId);
 
       if (Tone.Transport.state === 'started') {
@@ -746,7 +756,6 @@ function stopAllTracks() {
       const currentTimelinePosition = Tone.Transport.seconds;
       
       tracks.forEach(track => {
-        // Only update playhead offset if it's a real position change, preventing cumulative stack offsets
         if (isPlayingMix) {
           track.playheadOffset = currentTimelinePosition;
         }
@@ -763,7 +772,7 @@ function stopAllTracks() {
       });
 
       isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ play mix';
+      masterPlayBtn.textContent = '▶️ Play mix';
     }
 
     function scrubPlaybackToTimestamp(targetTime) {
@@ -821,7 +830,7 @@ function stopAllTracks() {
       if (isRecording || isCountdownActive) return;
 
       recordBtn.disabled    = false;
-      recordBtn.textContent = `🔴 Record track ${tracks.length + 1} from microphone`;
+      recordBtn.textContent = `🔴 Record Track ${tracks.length + 1} from Microphone`;
       recordBtn.className   = '';
     }
 
