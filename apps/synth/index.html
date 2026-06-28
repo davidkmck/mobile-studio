@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,11 +67,19 @@
     }
     header {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 25px;
+    }
+    .secondary-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
     }
 /* 1. GLOBAL STYLE (Put this first) */
 h1 {
@@ -226,27 +233,26 @@ h1 {
   <div class="subtitle">Play chords and design retro electronic tones</div>
   <header>
     <div class="controls">
-      <select id="waveSelect">
-        <option value="sawtooth">Sawtooth</option>
-        <option value="square">Square</option>
-        <option value="triangle">Triangle</option>
-        <option value="sine">Sine</option>
-      </select>
-      <button id="octaveDownBtn">Oct −</button>
-      <div class="octave-display" id="octaveDisplay">Octave 4</div>
-      <button id="octaveUpBtn">Oct +</button>
-      <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
-
-
-      <!-- Add this to your header controls -->
       <button id="playBtn">▶ Play</button>
-    <button id="recordBtn">🔴 Record</button>
-      
+      <button id="recordBtn">🔴 Record</button>
     </div>
   </header>
 
   <div class="keyboard-wrap">
     <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <div class="secondary-controls">
+    <select id="waveSelect">
+      <option value="sawtooth">Sawtooth</option>
+      <option value="square">Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="sine">Sine</option>
+    </select>
+    <button id="octaveDownBtn">Oct −</button>
+    <div class="octave-display" id="octaveDisplay">Octave 4</div>
+    <button id="octaveUpBtn">Oct +</button>
+    <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
   </div>
 
   <div class="synth-edit-panel" id="synthEditor">
