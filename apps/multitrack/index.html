@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>tracks</title>
+  <title>Tracks</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
 :root {
@@ -67,7 +67,6 @@ h1 {
   font-size: 2rem;
   letter-spacing: 1px;
   margin-bottom: 5px;
-  text-transform: lowercase;
 }
 
 .subtitle {
@@ -107,13 +106,14 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--card-bg);
+  background-color: var(--panel);
   padding: 12px 15px;
   border-radius: 8px;
   width: 100%;
-  max-width: 320px;
   font-weight: 600;
   font-size: 0.95rem;
+  border: 1px solid var(--border);
+  margin-top: 10px;
 }
 
 .settings-panel {
@@ -211,6 +211,7 @@ input:checked + .slider-toggle:before {
   flex-direction: column;
   gap: 15px;
   width: 100%;
+  margin-bottom: 25px;
 }
 
 .track-row {
@@ -262,6 +263,18 @@ input[type="range"].progress-slider {
   cursor: pointer;
 }
 
+.bottom-actions-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+#save-mix-btn {
+  max-width: 720px;
+  width: 100%;
+}
+
 @media (max-height: 500px) and (orientation: landscape) {
   body {
     padding: 10px;
@@ -301,27 +314,18 @@ input[type="range"].progress-slider {
 <body>
 
   <main>
-    <h1>tracks</h1>
+    <h1>Tracks</h1>
     <div class="subtitle">A dynamic scratchpad for layout and recording music ideas</div>
 
     <div id="controls-sector">
       <div class="button-group">
-        <button id="recordBtn">🔴 Record Track 1 from Microphone</button>
         <button id="master-play-btn" disabled>▶️ Play Mix</button>
         <button id="reset-btn" disabled>⏮️ Restart</button>
-        <button id="save-mix-btn" disabled>💾 Save Mix</button>
+        <button id="recordBtn">🔴 Record Track 1 from Microphone</button>
         <button id="settings-toggle-btn">⚙️ Settings</button>
       </div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
-
-      <div class="toggle-container">
-        <div class="toggle-label-group">🔁 Loop</div>
-        <label class="switch">
-          <input type="checkbox" id="loopToggle">
-          <span class="slider-toggle"></span>
-        </label>
-      </div>
 
       <div id="settingsPanel" class="settings-panel">
         <div class="slider-label">
@@ -329,10 +333,22 @@ input[type="range"].progress-slider {
           <span id="latency-val">80ms</span>
         </div>
         <input type="range" id="latency-slider" min="0" max="250" step="5" value="80">
+
+        <div class="toggle-container">
+          <div class="toggle-label-group">🔁 Loop</div>
+          <label class="switch">
+            <input type="checkbox" id="loopToggle">
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
       </div>
     </div>
 
     <section class="mixer-board" id="mixer-board"></section>
+
+    <div class="bottom-actions-container">
+      <button id="save-mix-btn" disabled>💾 Save Mix</button>
+    </div>
   </main>
 
 <script>
@@ -753,7 +769,6 @@ input[type="range"].progress-slider {
         Tone.Transport.stop();
       }
 
-      // Explicitly wipe out all scheduled events on Tone's master timeline
       Tone.Transport.cancel();
 
       const currentTimelinePosition = Tone.Transport.seconds;
