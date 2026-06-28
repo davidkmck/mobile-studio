@@ -36,16 +36,18 @@
       cursor: pointer;
     }
     button:hover { border-color: var(--accent); }
-/* Replace button.active with these matching mixer styles */
+    
+/* Initial unpressed state: Dark text on glowing cyan background */
 .btn-record {
   background-color: var(--accent);
-  color: #000;
+  color: #0a0a0f !important; /* Forces dark contrast on cyan */
   width: 100%;
 }
 
+/* Active recording state: White text on pulsing red background */
 .btn-recording {
-  background-color: #ef4444; /* Cyberpunk danger red */
-  color: white;
+  background-color: #ef4444 !important; /* Cyberpunk danger red */
+  color: #ffffff !important; /* Forces bright white text contrast */
   animation: pulse 1.5s infinite;
 }
 
@@ -427,7 +429,7 @@
       recorder.start();
       isRecording = true;
       
-      btn.textContent = 'Stop Recording';
+      btn.textContent = '⏹️ Stop Recording';
       btn.className = 'btn-recording';
 
     } else {
@@ -455,7 +457,7 @@
       window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
 
       isRecording = false;
-      btn.textContent = 'Record';
+      btn.textContent = '🔴Record';
       btn.className = 'btn-record';
     }
   }
