@@ -27,15 +27,17 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  /* CHANGE THIS: Ensure it occupies the full height but remains expandable */
+  min-height: 100vh; 
+  overflow-y: auto;   /* Permits vertical scrolling natively when pushed */
+}
 
   .container {
     width: 100%;
@@ -198,6 +200,27 @@
     flex-shrink: 0; /* Prevents the browser from squashing them */
   }
 }
+
+  /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Shrink structural padding to save valuable vertical pixels */
+  }
+  
+  h1 {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none; /* Hide the subtitle completely in short landscape to make room */
+  }
+  
+  #controls-sector {
+    margin-bottom: 15px;
+  }
+}
+  
 </style>
 </head>
 <body>
