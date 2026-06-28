@@ -379,31 +379,27 @@ if (event.data.action === 'ADD_TRACK') {
 async function createTrackNodeFromBuffer(arrayBuffer, customName) {
   const ctx = getAudioContext();
   
-  // 1. Decode the buffer
-  const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+  // 1. Rename to 'buffer' to avoid collision
+  const buffer = await ctx.decodeAudioData(arrayBuffer);
 
-  // 2. Create the track object
+  // 2. Update the track object to use 'buffer'
   const trackObject = {
     id: Date.now(),
     name: customName || `Track ${tracks.length + 1}`,
-    audioBuffer: decodedBuffer,
+    audioBuffer: buffer, // Changed from decodedBuffer
     sourceNode: null,
     gainNode: null,
     panNode: null,
     currentPan: 0,
     currentVolume: 1.0,
-    duration: decodedBuffer.duration || 0,
+    duration: buffer.duration || 0, // Changed from decodedBuffer
     playheadOffset: 0
   };
 
-  // 3. Update state
   tracks.push(trackObject);
-  console.log("Track added to state:", tracks);
-
-  // 4. Force UI refresh
-  // If your renderMixerBoard() doesn't clear the container, 
-  // you might need to do it here manually:
-  const mixerContainer = document.getElementById('mixer-container'); // Update with your actual ID
+  
+  // Clear and re-render
+  const mixerContainer = document.getElementById('mixer-container');
   if (mixerContainer) {
       mixerContainer.innerHTML = ''; 
   }
