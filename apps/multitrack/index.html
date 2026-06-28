@@ -495,6 +495,7 @@ input[type="range"].progress-slider {
     });
 
     function startHardwareRecording() {
+      stopAllTracks();
       recordedChunks = [];
       if (tracks.length > 0) {
         startAllTracks({ monitoringOnly: true });
@@ -735,7 +736,7 @@ input[type="range"].progress-slider {
       }
     }
 
-    function stopAllTracks() {
+function stopAllTracks() {
       cancelAnimationFrame(progressAnimationId);
 
       if (Tone.Transport.state === 'started') {
@@ -745,7 +746,10 @@ input[type="range"].progress-slider {
       const currentTimelinePosition = Tone.Transport.seconds;
       
       tracks.forEach(track => {
-        track.playheadOffset = currentTimelinePosition;
+        // Only update playhead offset if it's a real position change, preventing cumulative stack offsets
+        if (isPlayingMix) {
+          track.playheadOffset = currentTimelinePosition;
+        }
         if (track.tonePlayer) {
           try { 
             track.tonePlayer.unsync(); 
@@ -759,7 +763,7 @@ input[type="range"].progress-slider {
       });
 
       isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ Play mix';
+      masterPlayBtn.textContent = '▶️ play mix';
     }
 
     function scrubPlaybackToTimestamp(targetTime) {
