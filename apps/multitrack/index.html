@@ -5,19 +5,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multitrack Mixer</title>
-  <style>
-    
-    :root {
+<style>
+:root {
   --bg: #0a0a0f;
   --panel: #12121c;
+  --card-bg: #1a1a2e; /* Added to support track-row backgrounds */
   --border: #26263b;
   --text: #e2e2e9;
   --text-dim: #6c6c84;
   --accent: #00e5ff;
   --accent-alt: #9d4edd;
+  
+  /* Status Colors mapped to fit your cyberpunk style */
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
 
 body {
   background-color: var(--bg);
@@ -29,14 +38,28 @@ body {
   min-height: 100vh;
 }
 
+/* Consolidated Duplicate Button Styles */
 button {
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 10px 15px;
-  border-radius: 4px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.2s, opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .container {
   width: 100%;
   max-width: 950px;
@@ -48,228 +71,239 @@ button {
   flex-grow: 1;
 }    
 
-    main {
-      width: 100%;
-      max-width: 500px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 1.75rem;
-      margin-bottom: 5px;
-    }
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      margin-bottom: 25px;
-    }
-    #controls-sector {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
-    button {
-      padding: 12px 15px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background-color 0.2s, opacity 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .btn-record {
-      background-color: var(--accent);
-      color: white;
-      flex: none;
-      width: 100%;
-    }
-    .btn-countdown {
-      background-color: var(--warning);
-      color: white;
-      flex: none;
-      width: 100%;
-    }
-    .btn-recording {
-      background-color: var(--danger);
-      animation: pulse 1.5s infinite;
-      color: white;
-      flex: none;
-      width: 100%;
-    }
-    .btn-global {
-      background-color: #475569;
-      color: white;
-      flex: 1;
-    }
-    .btn-vault {
-      background-color: #8b5cf6;
-      color: white;
-      width: 100%;
-      flex: none;
-    }
-    .btn-save {
-      background-color: var(--success);
-      color: white;
-      flex: none;
-      width: 100%;
-    }
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: var(--card-bg);
-      padding: 12px 15px;
-      border-radius: 8px;
-      margin-top: 5px;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-    .toggle-label-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 26px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider-toggle {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #475569;
-      transition: .3s;
-      border-radius: 34px;
-    }
-    .slider-toggle:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
-    }
-    input:checked + .slider-toggle {
-      background-color: var(--accent);
-    }
-    input:checked + .slider-toggle:before {
-      transform: translateX(24px);
-    }
-    .mixer-board {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 100%;
-    }
-    
+main {
+  width: 100%;
+  /* Removed restrictive max-width to let app containers utilize desktop space correctly */
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+#controls-sector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-record {
+  background-color: var(--accent);
+  color: #000; /* Contrast black text against glowing cyan */
+  flex: none;
+  width: 100%;
+}
+
+.btn-countdown {
+  background-color: var(--warning);
+  color: white;
+  flex: none;
+  width: 100%;
+}
+
+.btn-recording {
+  background-color: var(--danger);
+  animation: pulse 1.5s infinite;
+  color: white;
+  flex: none;
+  width: 100%;
+}
+
+.btn-global {
+  background-color: #475569;
+  color: white;
+  flex: 1;
+}
+
+.btn-vault {
+  background-color: #8b5cf6;
+  color: white;
+  width: 100%;
+  flex: none;
+}
+
+.btn-save {
+  background-color: var(--success);
+  color: white;
+  flex: none;
+  width: 100%;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--card-bg);
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-top: 5px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.toggle-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-toggle {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #475569;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.slider-toggle:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider-toggle {
+  background-color: var(--accent);
+}
+
+input:checked + .slider-toggle:before {
+  transform: translateX(24px);
+}
+
+.mixer-board {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
 .track-row {
   background-color: var(--card-bg);
   padding: 15px;
   border-radius: 12px;
   display: flex;
-  flex-direction: column; /* Keeps internal groupings clean */
+  flex-direction: column;
   gap: 12px;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
-    /* --- THE MOBILE FIX --- */
-/* This media query targets screens narrower than 600px (standard portrait phone) */
+
+.track-title {
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.btn-delete {
+  background-color: transparent;
+  border: none; /* Strip standard button boundaries for inline deletions */
+  color: var(--danger);
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  flex: none;
+}
+
+.controls-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+input[type="range"].progress-slider {
+  accent-color: var(--success);
+  cursor: pointer;
+}
+
+/* --- THE MOBILE FIX --- */
 @media (max-width: 600px) {
   body {
-    padding: 10px; /* Give yourself more screen real estate */
+    padding: 10px;
   }
   
   h1 {
-    font-size: 1.4rem; /* Shrink headers slightly so they don't consume the screen */
+    font-size: 1.4rem;
   }
 
   .controls-container {
     display: flex;
-    flex-direction: column; /* Stack controls vertically instead of crowding horizontally */
+    flex-direction: column;
     gap: 15px;
   }
 
-  /* Make sliders and their touch targets larger for fingers instead of mouse pointers */
   input[type="range"] {
-    height: 24px; /* fatter touch target */
+    height: 24px;
   }
 
-  /* Adjust buttons inside track headers so they don't squash the track title */
   .track-header {
+    display: flex; /* Added display layout to make alignment rules target correctly */
     align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
     margin-bottom: 4px;
   }
 }
 
-    .track-title {
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-    .btn-delete {
-      background-color: transparent;
-      color: var(--danger);
-      padding: 5px 10px;
-      font-size: 0.85rem;
-      flex: none;
-    }
-    .controls-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .slider-container {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .slider-label {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      display: flex;
-      justify-content: space-between;
-    }
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
-    input[type="range"].progress-slider {
-      accent-color: var(--success);
-      cursor: pointer;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-  </style>
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+</style>
 </head>
 <body>
 
