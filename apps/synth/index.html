@@ -142,6 +142,41 @@
     }
     .editor-row label { width: 110px; }
     .editor-row input[type="range"] { flex: 1; }
+
+    @media (max-width: 600px) {
+  /* Stack synth control modules (Oscillator, Filter, Envelope) vertically */
+  .synth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .knob-panel, .adsr-envelope {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Put knobs into a clean 2-column grid instead of a squished row */
+    gap: 10px;
+  }
+
+  /* Make the piano keyboard scrollable so keys stay wide enough to play chords */
+  .keyboard-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+  }
+
+  .piano-keyboard {
+    display: flex;
+    width: max-content; /* Forces the keyboard to maintain its full natural width */
+  }
+
+  .white-key {
+    width: 40px; /* Big enough for a finger tap */
+    height: 120px;
+    flex-shrink: 0;
+  }
+}
   </style>
 </head>
 <body>
