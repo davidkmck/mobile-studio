@@ -168,6 +168,36 @@
   .editor-row input[type="range"] {
     flex: 1;
   }
+
+  @media (max-width: 600px) {
+  /* Let the individual track row stack control headers above the steps if needed */
+  .drum-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    background: var(--panel-alt);
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  /* Force the sequence steps container to scroll horizontally */
+  .steps-container {
+    width: 100%;
+    overflow-x: auto; /* Enables swipe-to-scroll across the 16 steps */
+    display: flex;
+    gap: 4px;
+    padding-bottom: 8px; /* Room for the mobile scrollbar */
+    -webkit-overflow-scrolling: touch; /* Smooth iOS momentum scrolling */
+  }
+
+  /* Keep the step buttons large and fat for thumbs */
+  .step-btn {
+    min-width: 35px;
+    height: 35px;
+    flex-shrink: 0; /* Prevents the browser from squashing them */
+  }
+}
 </style>
 </head>
 <body>
