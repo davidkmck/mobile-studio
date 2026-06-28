@@ -370,11 +370,16 @@ if (event.data && event.data.action === 'ADD_TRACK') {
 });
 
 
-    async function createTrackNodeFromBuffer(arrayBuffer, customName) {
+async function createTrackNodeFromBuffer(arrayBuffer, customName) {
   const ctx = getAudioContext();
   
-  // 1. Properly decode the raw arrayBuffer into an AudioBuffer instance
-  const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+  // FORCE TO ARRAYBUFFER: 
+  // If it's a typed array view, get its underlying buffer.
+  // If it's already an ArrayBuffer, use it directly.
+  const actualBuffer = arrayBuffer.buffer ? arrayBuffer.buffer : arrayBuffer;
+  
+  // 1. Properly decode the verified raw array buffer
+  const decodedBuffer = await ctx.decodeAudioData(actualBuffer);
 
   // 2. Create the track object using the decoded data
   const trackObject = {
