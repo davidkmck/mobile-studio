@@ -306,10 +306,10 @@ input[type="range"].progress-slider {
 
     <div id="controls-sector">
       <div class="button-group">
-        <button id="recordBtn">🔴 Record track 1 from microphone</button>
-        <button id="master-play-btn" disabled>▶️ Play mix</button>
+        <button id="recordBtn">🔴 Record Track 1 from Microphone</button>
+        <button id="master-play-btn" disabled>▶️ Play Mix</button>
         <button id="reset-btn" disabled>⏮️ Restart</button>
-        <button id="save-mix-btn" disabled>💾 Save mix</button>
+        <button id="save-mix-btn" disabled>💾 Save Mix</button>
         <button id="settings-toggle-btn">⚙️ Settings</button>
       </div>
       
@@ -733,7 +733,7 @@ input[type="range"].progress-slider {
 
       if (!options.monitoringOnly) {
         isPlayingMix = true;
-        masterPlayBtn.textContent = '⏸️ Pause mix';
+        masterPlayBtn.textContent = '⏸️ Pause Mix';
         
         if (Tone.Transport.state !== 'started') {
           Tone.Transport.start();
@@ -752,6 +752,9 @@ input[type="range"].progress-slider {
       if (Tone.Transport.state === 'started') {
         Tone.Transport.stop();
       }
+
+      // Explicitly wipe out all scheduled events on Tone's master timeline
+      Tone.Transport.cancel();
 
       const currentTimelinePosition = Tone.Transport.seconds;
       
@@ -772,7 +775,7 @@ input[type="range"].progress-slider {
       });
 
       isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ Play mix';
+      masterPlayBtn.textContent = '▶️ Play Mix';
     }
 
     function scrubPlaybackToTimestamp(targetTime) {
@@ -877,7 +880,7 @@ input[type="range"].progress-slider {
         alert('Failed to export the audio mix.');
       } finally {
         saveMixBtn.disabled    = false;
-        saveMixBtn.textContent = '💾 Save mix';
+        saveMixBtn.textContent = '💾 Save Mix';
       }
     });
 
