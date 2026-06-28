@@ -351,14 +351,13 @@ button {
         updateUI(); 
      }
       
-if (event.data.action === 'ADD_TRACK') {
-        console.log("Multitrack received:", event.data);
+if (event.data && event.data.action === 'ADD_TRACK') {
         let { audioBuffer, trackName } = event.data;
 
         try {
             // RE-CASTING FIX:
-            // If the buffer lost its type during postMessage, 
-            // construct a fresh ArrayBuffer from the underlying data.
+            // Ensure the incoming data is a valid ArrayBuffer instance.
+            // If it arrived as an object, construct a new buffer from the underlying bytes.
             const validBuffer = (audioBuffer instanceof ArrayBuffer) 
                 ? audioBuffer 
                 : new Uint8Array(audioBuffer).buffer;
@@ -369,7 +368,7 @@ if (event.data.action === 'ADD_TRACK') {
             // Now decode the guaranteed, valid ArrayBuffer
             const decodedBuffer = await ctx.decodeAudioData(validBuffer);
             
-            // Pass the decoded data to your track creation pipeline
+            // Proceed with your existing track creation logic
             await createTrackNodeFromBuffer(decodedBuffer, trackName);
             
             console.log("Success: Track successfully added to mixer.");
