@@ -418,12 +418,17 @@
       activeNotes.clear();
       document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
 
+      // ─── CONVERT BLOB TO ARRAYBUFFER ───
+      // Use the built-in arrayBuffer() method on the audio blob
+      const audioBuffer = await recording.arrayBuffer();
+
+      // Use the exact same action and payload structure as the Beat Maker
       window.parent.postMessage({
-        action: 'EXPORT_AUDIO_TO_TRACKS',
-        audioBlob: recording,
-        trackName: 'Synth_1',
-        mimeType: recording.type || 'audio/wav'
+        action: 'ADD_TRACK',
+        audioBuffer: audioBuffer,
+        trackName: `Synth_${Date.now()}` // Dynamic timestamp name so recordings don't overwrite each other
       }, '*');
+      
       window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
 
       isRecording = false;
