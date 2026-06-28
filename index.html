@@ -1,8 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Mobile Studio</title>
   <style>
   :root {
@@ -11,30 +11,74 @@
     --border: #26263b;
     --text: #e2e2e9;
     --accent: #00e5ff;
+    --nav-height: 60px;
   }
-  body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 
-  #appFrame { flex: 1; border: none; width: 100%; }
-.global-app-banner {
-  display: flex;
-  width: 100%;
-  position: fixed;
-  bottom: 0;
-  height: 60px;
-  background: var(--panel); /* Match the app panel color */
-  border-top: 1px solid var(--border);
-}
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    overflow: hidden;
+    /* dvh accounts for mobile browser chrome (address bar) better than vh */
+    height: 100dvh;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* App viewport area: full screen height MINUS the nav bar, so the nav
+     never overlaps app content (this is what was hiding controls in
+     landscape mode). */
+  #app-container {
+    width: 100%;
+    height: calc(100dvh - var(--nav-height));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .app-frame.active {
+    display: block;
+  }
+
+  .global-app-banner {
+    display: flex;
+    width: 100%;
+    height: var(--nav-height);
+    flex: 0 0 var(--nav-height);
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .banner-icon {
     flex: 1;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    gap: 4px;
     color: #6c6c84;
     cursor: pointer;
-    font-size: 14px; /* Slightly smaller for mobile */
+    font-size: 14px;
+    font-weight: 600;
     text-decoration: none;
     border-right: 1px solid var(--border);
+    min-height: 48px; /* touch-target friendly */
   }
+
   .banner-icon:last-child { border-right: none; }
 
   .banner-icon.active {
@@ -42,244 +86,99 @@
     font-weight: bold;
     background: rgba(0, 229, 255, 0.05);
   }
-    .app-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: none; /* Hide by default */
-}
 
-.app-frame.active {
-    display: block; /* Show only when active */
-}
-    #app-container {
-    width: 100vw;   /* Full viewport width */
-    height: 100vh;  /* Full viewport height */
-    position: relative;
-    overflow: hidden;
-}
-
-.app-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: none; /* Keep hidden by default */
-    position: absolute; /* Stack them on top of each other */
-    top: 0;
-    left: 0;
-}
-
-.app-frame.active {
-    display: block; /* Show only the active one */
-}
-
-@media (max-width: 600px) {
-  /* Stack the main application containers vertically */
-  body {
-    padding: 8px;
+  /* Landscape: shrink the nav bar a bit so it eats less of the limited
+     vertical space, while staying comfortably tappable. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    :root { --nav-height: 48px; }
+    .banner-icon { font-size: 12px; min-height: 40px; }
   }
-  
-/* Target the container wrapping your 3 bottom sub-app buttons */
-  .nav-tabs, .app-switcher, .tab-bar {
-    display: flex !important;
-    flex-direction: row !important; /* Keep them inline across the bottom row */
-    width: 100%;
-    gap: 8px;
-    padding: 5px;
-  }
-
-/* Force the buttons to scale safely and prevent shrinking */
-  .nav-tabs button, .app-switcher button, .tab-bar button {
-    flex: 1;            /* Forces them to split available width 3 ways evenly */
-    min-height: 48px;   /* Fat finger tap target standard */
-    font-size: 0.9rem;  /* Keeps font readable */
-    padding: 8px 4px;
-    flex-shrink: 0;     /* STOPS the browser from compressing them to tiny slivers */
-    white-space: nowrap;/* Prevents text from ugly wrapping or clipping */
-  }
-
-  /* Make sure the iframe container stretches to fill the rest of the portrait view */
-  #app-container {
-    height: calc(100vh - 180px); /* Adjust based on your header height */
-  }
-
-  /* Ensure the navigation bar spans cleanly */
-  .nav-container, .tab-bar {
-    display: flex;
-    justify-content: space-around;
-    gap: 10px;
-    padding: 10px;
-    width: 100%;
-  }
-
-  /* Protect the buttons from squishing */
-  .nav-container button, .tab-bar button {
-    flex: 1;            /* Forces them to evenly share all available horizontal space */
-    min-height: 48px;   /* Meets mobile touch-target accessibility standards */
-    font-size: 14px;    /* Keeps text perfectly readable */
-    flex-shrink: 0;     /* ABSOLUTELY stops the browser from squishing them down */
-    padding: 12px 6px;
-  }
-}
-    .nav-tabs-container {
-  display: flex;
-  width: 100%;
-  height: 60px; /* Force a solid, thumb-friendly height */
-  padding-bottom: env(safe-area-inset-bottom); /* Prevents iOS home bar overlap */
-}
-
-.nav-tab-button {
-  flex: 1; /* Forces the 3 tabs to split the width perfectly evenly */
-  font-size: 16px; /* Prevents text from being microscopic */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-    /* 1. Force the main wrapper to span the exact mobile viewport height */
-.main-app-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh; /* Prevents the mobile browser URL bar from hiding layout elements */
-  overflow: hidden;
-}
-
-/* 2. Tell the active subapp area to claim all the empty middle space */
-.subapp-container, iframe, #multitrack-app {
-  flex: 1; /* 🚀 Forces the app content to stretch and fill the remaining 80% of the screen */
-  width: 100%;
-  overflow-y: auto; /* Ensures controls scroll gracefully on narrow viewports */
-}
-
-/* 3. Make the bottom tabs easy to hit with your thumb */
-.nav-tabs-container {
-  display: flex;
-  width: 100%;
-  height: 65px; /* Big, solid height for touch targets */
-  background: #111; /* Or your dark theme color */
-  padding-bottom: env(safe-area-inset-bottom); /* Fix for iOS home indicator bar */
-}
-
-.nav-tab-button {
-  flex: 1; /* Splits the 3 tabs evenly across the width */
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-    
-    
-</style>
+  </style>
 </head>
 <body>
-  <!-- Sub-app viewport renders here -->
-<div id="app-container">
-  <iframe id="beat-maker" class="app-frame" src="apps/beat-maker/index.html"></iframe>
-  <iframe id="multitrack" class="app-frame" src="apps/multitrack/index.html"></iframe>
-  <iframe id="synth" class="app-frame" src="apps/synth/index.html"></iframe>
-</div>
-  
+  <!-- Sub-app viewport renders here. Each sub-app gets its own persistent
+       iframe (never reloaded), shown/hidden via the .active class, so
+       playback/recording state survives switching tabs. -->
+  <div id="app-container">
+    <iframe id="beat-maker" class="app-frame active" src="apps/beat-maker/index.html"></iframe>
+    <iframe id="multitrack" class="app-frame" src="apps/multitrack/index.html"></iframe>
+    <iframe id="synth" class="app-frame" src="apps/synth/index.html"></iframe>
+  </div>
+
   <!-- Persistent Global Bottom Navigation Banner -->
   <div class="global-app-banner">
-    <a href="#" class="banner-icon active" onclick="loadApp('beat-maker', event)">🎛️ BEAT</a>
-<a href="#" class="banner-icon" onclick="loadApp('multitrack', event)">🎚️ TRACKS</a>
-<a href="#" class="banner-icon" onclick="loadApp('synth', event)">🎹 SYNTH</a>
+    <a href="#" class="banner-icon active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">🎛️ BEAT</a>
+    <a href="#" class="banner-icon" data-app="multitrack" onclick="loadApp('multitrack', event)">🎚️ TRACKS</a>
+    <a href="#" class="banner-icon" data-app="synth" onclick="loadApp('synth', event)">🎹 SYNTH</a>
   </div>
+
   <script>
-    const frame = document.getElementById('appFrame');
-    // Centralized Storage Managed by the Parent App
-    let pendingClip = null; // holds audio waiting to be delivered to the next app
+    let pendingClip = null; // holds audio waiting to be delivered to the Tracks app
 
-window.addEventListener('message', (event) => {
-  const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
+    window.addEventListener('message', (event) => {
+      const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
 
-  // 1. Receive from Beat Maker (Legacy or background worker)
-  if (action === 'EXPORT_AUDIO_TO_TRACKS') {
-    console.log("Parent: Received audio from Beat Maker. Queuing for Tracks...");
-    pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
-  }
+      // 1. Receive from Beat Maker / Synth (legacy blob-based export path)
+      if (action === 'EXPORT_AUDIO_TO_TRACKS') {
+        console.log("Parent: Received audio. Queuing for Tracks...");
+        pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
+      }
 
-  // 2. Navigation — switch sub-app
-  if (action === 'SWITCH_APP') {
-    switchApp(app);
-  }
+      // 2. Navigation — switch which sub-app is visible
+      if (action === 'SWITCH_APP') {
+        switchApp(app);
+      }
 
-  // 3. Global Play Sync (Triggered by Synth App recording or playback requests)
-  if (action === 'REQUEST_PLAY') {
-    console.log("Parent: Broadcasting START_AUDIO to all apps at BPM:", bpm);
-    // Fixed selector to target your actual class name '.app-frame'
-    const frames = document.querySelectorAll('.app-frame'); 
-    frames.forEach(frame => {
-      if (frame.contentWindow) {
-        frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
+      // 3. Global Play Sync (e.g. triggered by Synth recording)
+      if (action === 'REQUEST_PLAY') {
+        console.log("Parent: Broadcasting START_AUDIO to all apps at BPM:", bpm);
+        document.querySelectorAll('.app-frame').forEach(frame => {
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm }, '*');
+          }
+        });
+      }
+
+      // 4. Global Stop Sync
+      if (action === 'REQUEST_STOP') {
+        console.log("Parent: Broadcasting STOP_AUDIO to all apps");
+        document.querySelectorAll('.app-frame').forEach(frame => {
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ action: 'STOP_AUDIO' }, '*');
+          }
+        });
+      }
+
+      // 5. Forward raw audio tracks (ArrayBuffer-based handoff) to Tracks
+      if (action === 'ADD_TRACK') {
+        console.log("Parent received ADD_TRACK, forwarding to Tracks:", trackName);
+        const multitrackFrame = document.getElementById('multitrack');
+        if (multitrackFrame && multitrackFrame.contentWindow) {
+          multitrackFrame.contentWindow.postMessage(event.data, '*');
+        }
       }
     });
-  }
-
-  // 4. Global Stop Sync (Added to stop Multitrack timeline when Synth stops recording)
-  if (action === 'REQUEST_STOP') {
-    console.log("Parent: Broadcasting STOP_AUDIO to all apps");
-    const frames = document.querySelectorAll('.app-frame');
-    frames.forEach(frame => {
-      if (frame.contentWindow) {
-        frame.contentWindow.postMessage({ action: 'STOP_AUDIO' }, '*');
-      }
-    });
-  }
-
-  // 5. Forward Raw Audio Tracks to Multitrack Mixer
-  if (action === 'ADD_TRACK') {
-    console.log("Parent received ADD_TRACK, forwarding to Multitrack:", trackName);
-    // Targeting your exact iframe ID '#multitrack'
-    const multitrackFrame = document.getElementById('multitrack');
-    if (multitrackFrame && multitrackFrame.contentWindow) {
-      multitrackFrame.contentWindow.postMessage(event.data, '*');
-    }
-  }
-});
 
     function switchApp(targetAppId) {
-    // 1. Hide all frames
-    document.querySelectorAll('.app-frame').forEach(frame => {
-        frame.classList.remove('active');
-    });
+      document.querySelectorAll('.app-frame').forEach(frame => frame.classList.remove('active'));
+      const activeFrame = document.getElementById(targetAppId);
+      if (activeFrame) activeFrame.classList.add('active');
 
-    // 2. Show the targeted frame
-    const activeFrame = document.getElementById(targetAppId);
-    if (activeFrame) {
-        activeFrame.classList.add('active');
-    }
-}
+      document.querySelectorAll('.banner-icon').forEach(el => {
+        el.classList.toggle('active', el.dataset.app === targetAppId);
+      });
 
-function loadApp(appName, event) {
-    if (event) event.preventDefault();
-
-    // 1. Hide all frames, show only the target one
-    document.querySelectorAll('.app-frame').forEach(frame => {
-        frame.classList.remove('active');
-    });
-    
-    const targetFrame = document.getElementById(appName);
-    if (targetFrame) {
-        targetFrame.classList.add('active');
-    }
-
-    // 2. Handle Pending Clips
-    // Instead of waiting for 'onload', you can send the message immediately
-    // if you know the app is already loaded in the DOM.
-    if (pendingClip) {
-        targetFrame.contentWindow.postMessage(pendingClip, '*');
+      // Deliver any audio clip that was waiting for Tracks to be visible
+      if (targetAppId === 'multitrack' && pendingClip && activeFrame) {
+        activeFrame.contentWindow.postMessage(pendingClip, '*');
         pendingClip = null;
+      }
     }
 
-    // 3. Update UI icons
-    document.querySelectorAll('.banner-icon').forEach(el => el.classList.remove('active'));
-    // (Logic to highlight the correct icon based on appName...)
-}
-
-    // Default init app
-    loadApp('beat-maker');
+    function loadApp(appName, event) {
+      if (event) event.preventDefault(); // Prevents the href="#" jump
+      switchApp(appName);
+    }
   </script>
 </body>
 </html>
