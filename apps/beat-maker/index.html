@@ -678,25 +678,13 @@ playBtn.addEventListener('click', () => {
       saveSession();
     });
 
-window.addEventListener('message', (event) => {
-  // 1. Handle Global Play
-  if (event.data.action === 'START_AUDIO') {
-    if (!isPlaying) {
-      if (event.data.bpm) {
-        document.getElementById('bpm').value = event.data.bpm;
-        bpm = event.data.bpm;
-      }
-      startStopSequencer();
-    }
-  }
-
-  // 2. Handle Global Stop (Add this to reset the state!)
-  if (event.data.action === 'STOP_AUDIO') {
-    if (isPlaying) {
-      startStopSequencer(); // Toggles the sequencer off and resets isPlaying to false cleanly
-    }
-  }
-});
+    // NOTE: Beat Maker intentionally does NOT listen for the global
+    // START_AUDIO / STOP_AUDIO sync broadcast. That broadcast is meant to
+    // control playback of the *recorded* mixer tracks in Tracks, not to make
+    // every instrument app replay its own live pattern. If Beat Maker also
+    // restarted its own sequencer here, you'd hear two copies of the beat at
+    // once: the already-recorded clip in the mixer, and this live replay.
+    // Beat Maker only plays when its own Play button is pressed.
 
     // ---- Boot ----
     refreshCustomSelectOptions();
