@@ -387,62 +387,48 @@ input[type="range"].progress-slider {
       latencyVal.textContent = `${e.target.value}ms`;
     });
 
-    window.addEventListener('message', async (event) => {
-            console.log("Multitrack received:", event.data); // ADD THIS
+window.addEventListener('message', async (event) => {
+  console.log("Multitrack received:", event.data);
+  
+  if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
+    const { audioBlob, trackName } = event.data;
+    addAudioToTimeline(trackName, audioBlob);
+  }
+  
+  if (event.data.action === 'START_AUDIO') {
+    await Tone.start(); 
+    Tone.Transport.bpm.value = event.data.bpm || 120;
+    
+    if (Tone.Transport.state !== 'started') {
+      Tone.Transport.loop = false; // Prevent backing tracks from looping globally
       
-      // Always verify the origin in a production environment!
-      if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
-        const { audioBlob, trackName } = event.data;
-        console.log("Tracks App: Received audio for", trackName);
+      // Kicks off our Tone-linked track nodes and starts the clock
+      startAllTracks(); 
+      Tone.Transport.start();
+    }
+  }
 
-        // Hand the incoming blob straight to the real track-creation pipeline
-        // (decodes it, adds it to `tracks`, and renders it in the mixer board)
-        addAudioToTimeline(trackName, audioBlob);
-      }
-      
-     if (event.data.action === 'START_AUDIO') {
-      Tone.start(); // Unlock audio
-      Tone.Transport.bpm.value = event.data.bpm || 120;
-      
-      // ─── THE PLAY FIX ───
-      // Only call start if Tone's transport isn't already actively running
-      if (Tone.Transport.state !== 'started') {
-        Tone.Transport.start();
-        // If you have a local state variable like isPlaying, sync it here:
-        // isPlaying = true; 
-      }
-     }
-
-      if (event.data.action === 'STOP_AUDIO') {
-        // Only call stop if it's actually running
-        if (Tone.Transport.state === 'started') {
-          Tone.Transport.stop();
-          // isPlaying = false;
-        }
-      }
-      
-     if (event.data.action === 'SWITCH_APP') {
-        // DO NOT reset your track/timeline variables here!
-        // Just call your UI update function to show the correct view.
-        updateUI(); 
-     }
-      
-if (event.data && event.data.action === 'ADD_TRACK') {
+  if (event.data.action === 'STOP_AUDIO') {
+    if (Tone.Transport.state === 'started') {
+      Tone.Transport.stop();
+      stopAllTracks(); // Cleans up active player nodes
+    }
+  }
+  
+  if (event.data.action === 'SWITCH_APP') {
+    updateUI(); 
+  }
+  
+  if (event.data && event.data.action === 'ADD_TRACK') {
     const { audioBuffer, trackName } = event.data;
-
     try {
-        const ctx = getAudioContext();
-        if (ctx.state === 'suspended') await ctx.resume();
-        
-        
+        await Tone.start();
         await createTrackNodeFromBuffer(audioBuffer, trackName);
-        
         console.log("Success: Track successfully added to mixer.");
     } catch (err) {
         console.error('Failed to add incoming clip:', err);
     }
-}
-      
+  }
 });
 
 
@@ -841,81 +827,94 @@ function renderMixerBoard() {
       resetAllProgressUI();
     });
 
-    function startAllTracks(options = {}) {
-      if (!tracks || tracks.length === 0) return;
-      const ctx = getAudioContext();
+function startAllTracks(options = {}) {
+  if (!tracks || tracks.length === 0) return;
 
-      const scheduleTime = ctx.currentTime + 0.05; 
-      
-      let baseOffset = tracks[0].playheadOffset;
-      const maxDuration = Math.max(...tracks.map(t => t.duration));
-      
-      if (baseOffset >= maxDuration) {
-        baseOffset = 0;
-        tracks.forEach(t => t.playheadOffset = 0);
-      }
-      
-      masterPlaybackStartTime = scheduleTime - baseOffset;
+  let baseOffset = tracks[0].playheadOffset;
+  const maxDuration = Math.max(...tracks.map(t => t.duration));
+  
+  if (baseOffset >= maxDuration) {
+    baseOffset = 0;
+    tracks.forEach(t => t.playheadOffset = 0);
+  }
 
-      tracks.forEach(track => {
-        if (track.sourceNode) {
-          try { track.sourceNode.stop(); } catch(e) {}
-          track.sourceNode.disconnect();
-        }
-
-        track.sourceNode = ctx.createBufferSource();
-        track.sourceNode.buffer = track.audioBuffer;
-
-        track.gainNode = ctx.createGain();
-        track.gainNode.gain.setValueAtTime(track.currentVolume, ctx.currentTime);
-
-        track.panNode = ctx.createStereoPanner();
-        track.panNode.pan.setValueAtTime(track.currentPan, ctx.currentTime);
-
-        track.sourceNode.connect(track.gainNode);
-        track.gainNode.connect(track.panNode);
-        track.panNode.connect(ctx.destination);
-
-        if (track.playheadOffset < track.duration) {
-          track.sourceNode.start(scheduleTime, track.playheadOffset);
-        }
-      });
-
-      if (!options.monitoringOnly) {
-        isPlayingMix = true;
-        masterPlayBtn.textContent = '⏸️ Pause Mix';
-        progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
-        scheduleMasterLoopTimeout();
-      }
+  tracks.forEach(track => {
+    // 1. Clean up old Tone players for this track if they exist
+    if (track.tonePlayer) {
+      try { track.tonePlayer.dispose(); } catch(e) {}
     }
 
-    function stopAllTracks() {
-      cancelAnimationFrame(progressAnimationId);
-      clearTimeout(loopTimeoutId);
-      
-      if (audioCtx && isPlayingMix) {
-        const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
-        tracks.forEach(track => {
-          track.playheadOffset = elapsed;
-          if (track.sourceNode) {
-            try { track.sourceNode.stop(); } catch(e) {}
-            track.sourceNode.disconnect();
-            track.sourceNode = null;
-          }
-        });
-      } else {
-        tracks.forEach(track => {
-          if (track.sourceNode) {
-            try { track.sourceNode.stop(); } catch(e) {}
-            track.sourceNode.disconnect();
-            track.sourceNode = null;
-          }
-        });
-      }
+    // 2. Create a Tone Player using your stored audioBuffer
+    track.tonePlayer = new Tone.Player(track.audioBuffer);
+    
+    // ─── STRICT LINEAR PLAYBACK (NO LOOPING) ───
+    track.tonePlayer.loop = false; 
 
-      isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ Play Mix';
+    // 3. Re-create your Volume and Pan controls using Tone.js modules
+    // Note: Tone.Volume takes Decibels (dB). Tone.gainToDb converts 1.0 -> 0dB cleanly.
+    track.volumeNode = new Tone.Volume(Tone.gainToDb(track.currentVolume));
+    track.pannerNode = new Tone.Panner(track.currentPan);
+
+    // 4. Chain them together: Player -> Volume -> Panner -> Master Output
+    track.tonePlayer.chain(track.volumeNode, track.pannerNode, Tone.Destination);
+
+    // 5. Sync the player directly to Tone.Transport's clock timeline
+    if (track.playheadOffset < track.duration) {
+      // Starts automatically at 0 on the timeline, adjusted by your offset
+      track.tonePlayer.sync().start(0, track.playheadOffset);
     }
+  });
+
+  if (!options.monitoringOnly) {
+    isPlayingMix = true;
+    masterPlayBtn.textContent = '⏸️ Pause Mix';
+    progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+    
+    // ─── NO MORE TIMEOUT LOOPS ───
+    // Deleting scheduleMasterLoopTimeout() prevents tracks from repeating automatically!
+  }
+}
+
+function stopAllTracks() {
+  cancelAnimationFrame(progressAnimationId);
+  // clearTimeout(loopTimeoutId); // No longer needed as Tone.Transport handles timeline limits
+
+  if (isPlayingMix) {
+    // ─── TONE.JS POSITION CAPTURE ───
+    // Tone tracks time cleanly in seconds on its timeline. 
+    // We capture it here to update the playhead before resetting.
+    const currentTimelinePosition = Tone.Transport.seconds;
+    
+    tracks.forEach(track => {
+      // Keep track of where the song paused so we can resume smoothly
+      track.playheadOffset = currentTimelinePosition;
+
+      // Clean up the active Tone.Player instance
+      if (track.tonePlayer) {
+        try { 
+          track.tonePlayer.stop(); 
+          track.tonePlayer.dispose(); // Crucial to prevent duplicate synced audio clips
+        } catch(e) {
+          console.error("Error stopping track player:", e);
+        }
+        track.tonePlayer = null;
+      }
+    });
+  } else {
+    tracks.forEach(track => {
+      if (track.tonePlayer) {
+        try { 
+          track.tonePlayer.stop(); 
+          track.tonePlayer.dispose();
+        } catch(e) {}
+        track.tonePlayer = null;
+      }
+    });
+  }
+
+  isPlayingMix = false;
+  masterPlayBtn.textContent = '▶️ Play Mix';
+}
 
     function scrubPlaybackToTimestamp(targetTime) {
       const originallyPlaying = isPlayingMix;
