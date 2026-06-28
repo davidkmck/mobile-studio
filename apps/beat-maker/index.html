@@ -629,12 +629,12 @@ body {
         // 1. Convert the blob to an ArrayBuffer immediately
         const arrayBuffer = await recording.arrayBuffer();
 
-        // 2. Send the raw ArrayBuffer to the parent
+        // 2. Send the raw ArrayBuffer to the parent, adding the transfer list for mobile support
         window.parent.postMessage({ 
             action: 'ADD_TRACK', 
             audioBuffer: arrayBuffer, 
             trackName: 'Beat_' + Date.now() 
-        }, '*');
+        }, '*', [arrayBuffer]); // <--- Added [arrayBuffer] here
 
         // 3. Reset UI and stop transport
         if (isPlaying) {
