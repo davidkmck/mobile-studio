@@ -72,6 +72,30 @@
 .app-frame.active {
     display: block; /* Show only the active one */
 }
+
+    @media (max-width: 600px) {
+  /* Stack the main application containers vertically */
+  body {
+    padding: 8px;
+  }
+  
+  /* If you have a top navigation bar or app-switcher tabs */
+  .nav-tabs, .app-switcher {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .nav-tabs button, .app-switcher button {
+    width: 100%; /* Full width buttons are much easier to tap on mobile */
+    padding: 12px;
+  }
+
+  /* Make sure the iframe container stretches to fill the rest of the portrait view */
+  #app-container {
+    height: calc(100vh - 180px); /* Adjust based on your header height */
+  }
+}
     
 </style>
 </head>
