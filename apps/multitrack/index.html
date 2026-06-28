@@ -369,10 +369,14 @@ if (event.data && event.data.action === 'ADD_TRACK') {
       
 });
 
-function createTrackNodeFromBuffer(decodedBuffer, customName) {
-  // 1. REMOVED the extra await ctx.decodeAudioData step entirely
 
-  // 2. Create the track object using the already-decoded buffer
+    async function createTrackNodeFromBuffer(arrayBuffer, customName) {
+  const ctx = getAudioContext();
+  
+  // 1. Properly decode the raw arrayBuffer into an AudioBuffer instance
+  const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+  // 2. Create the track object using the decoded data
   const trackObject = {
     id: Date.now(),
     name: customName || `Track ${tracks.length + 1}`,
@@ -391,14 +395,13 @@ function createTrackNodeFromBuffer(decodedBuffer, customName) {
   console.log("Track added to state:", tracks);
 
   // 4. Force UI refresh
-  const mixerContainer = document.getElementById('mixer-container'); 
+  const mixerContainer = document.getElementById('mixer-container');
   if (mixerContainer) {
       mixerContainer.innerHTML = ''; 
   }
   
   renderMixerBoard();
 }
-    
     
     // Send the request when your internal Play button is pressed
 const playBtn = document.getElementById('playBtn');
