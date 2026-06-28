@@ -11,148 +11,94 @@
       --border: #26263b;
       --text: #e2e2e9;
       --accent: #00e5ff;
-      --success: #10b981;
       --danger: #ef4444;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: sans-serif;
-      padding: 10px;
-      min-height: 100vh;
-    }
-
-    main {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    h1 { text-align: center; font-size: 1.5rem; margin-bottom: 1rem; }
-
-    .control-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    button {
-      padding: 15px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .btn-record { background-color: var(--accent); color: #000; width: 100%; }
-    .btn-global { background-color: #334155; color: white; flex: 1; }
-    
-    .mixer-board { display: flex; flex-direction: column; gap: 15px; }
-    
-    .track-row {
-      background-color: var(--panel);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    .slider-container { margin-top: 10px; }
+    * { box-sizing: border-box; }
+    body { background-color: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; }
+    main { width: 100%; max-width: 600px; margin: 0 auto; }
+    .control-panel { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .btn-record { background-color: var(--accent); color: #000; }
+    .track-row { background-color: var(--panel); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+    .slider-group { margin-top: 10px; }
     input[type="range"] { width: 100%; margin-top: 5px; }
+    .label-row { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; }
   </style>
 </head>
 <body>
-
   <main>
     <h1>Studio</h1>
     <section class="control-panel">
       <button id="record-btn" class="btn-record">🔴 Record New Track</button>
-      <div style="display:flex; gap: 10px;">
-        <button id="master-play-btn" class="btn-global" disabled>▶️ Play</button>
-        <button id="save-mix-btn" class="btn-global" disabled>💾 Export</button>
-      </div>
     </section>
-    <section class="mixer-board" id="mixer-board"></section>
+    <div id="mixer-board" class="mixer-board"></div>
   </main>
 
   <script>
     const tracks = [];
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // 1. Unified Listener for incoming tracks
     window.addEventListener('message', async (event) => {
         if (event.data.action === 'ADD_TRACK') {
             let { audioBuffer, trackName } = event.data;
             try {
-                if (!(audioBuffer instanceof ArrayBuffer)) {
-                    audioBuffer = new Uint8Array(audioBuffer).buffer;
-                }
+                if (!(audioBuffer instanceof ArrayBuffer)) audioBuffer = new Uint8Array(audioBuffer).buffer;
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
-                
                 const decodedBuffer = await audioCtx.decodeAudioData(audioBuffer);
-                await createTrackNodeFromBuffer(decodedBuffer, trackName);
-            } catch (err) {
-                console.error('Failed to add incoming clip:', err);
-            }
+                createTrackNode(decodedBuffer, trackName);
+            } catch (err) { console.error('Load error:', err); }
         }
     });
 
-    // 2. Core Track Logic
-    async function createTrackNodeFromBuffer(buffer, name) {
-      const trackObject = {
+    function createTrackNode(buffer, name) {
+      const track = {
         id: Date.now(),
         name: name || `Track ${tracks.length + 1}`,
-        audioBuffer: buffer,
-        currentVolume: 1.0,
-        currentPan: 0,
-        duration: buffer.duration
+        buffer: buffer,
+        volume: 1.0,
+        pan: 0
       };
-
-      tracks.push(trackObject);
+      tracks.push(track);
       renderMixerBoard();
-      updateUI();
     }
 
-    // 3. UI Rendering
     function renderMixerBoard() {
-      const mixerBoard = document.getElementById('mixer-board');
-      mixerBoard.innerHTML = '';
-      
-      tracks.forEach(track => {
+      const board = document.getElementById('mixer-board');
+      board.innerHTML = '';
+      tracks.forEach(t => {
         const row = document.createElement('div');
         row.className = 'track-row';
         row.innerHTML = `
-          <div style="display:flex; justify-content:space-between;">
-            <span>${track.name}</span>
-            <button onclick="deleteTrack(${track.id})" style="background:none; color:var(--danger); cursor:pointer;">Delete</button>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <strong>${t.name}</strong>
+            <button onclick="deleteTrack(${t.id})" style="background:none; color:var(--danger)">Delete</button>
           </div>
-          <div class="slider-container">
-            <label>Volume</label>
-            <input type="range" min="0" max="1" step="0.1" value="${track.currentVolume}" oninput="updateVol(${track.id}, this.value)">
+          <div class="slider-group">
+            <div class="label-row"><span>Volume</span><span>${Math.round(t.volume * 100)}%</span></div>
+            <input type="range" min="0" max="1" step="0.1" value="${t.volume}" oninput="updateVol(${t.id}, this.value)">
+          </div>
+          <div class="slider-group">
+            <div class="label-row"><span>Left</span><span>Pan</span><span>Right</span></div>
+            <input type="range" min="-1" max="1" step="0.1" value="${t.pan}" oninput="updatePan(${t.id}, this.value)">
           </div>
         `;
-        mixerBoard.appendChild(row);
+        board.appendChild(row);
       });
     }
 
     function updateVol(id, val) {
-      const track = tracks.find(t => t.id === id);
-      if (track) track.currentVolume = parseFloat(val);
+      const t = tracks.find(t => t.id == id);
+      if(t) { t.volume = parseFloat(val); renderMixerBoard(); }
+    }
+
+    function updatePan(id, val) {
+      const t = tracks.find(t => t.id == id);
+      if(t) t.pan = parseFloat(val);
     }
 
     function deleteTrack(id) {
-      const idx = tracks.findIndex(t => t.id === id);
-      if (idx > -1) tracks.splice(idx, 1);
-      renderMixerBoard();
-      updateUI();
-    }
-
-    function updateUI() {
-      document.getElementById('master-play-btn').disabled = tracks.length === 0;
-      document.getElementById('save-mix-btn').disabled = tracks.length === 0;
+      const idx = tracks.findIndex(t => t.id == id);
+      if(idx > -1) { tracks.splice(idx, 1); renderMixerBoard(); }
     }
   </script>
 </body>
