@@ -171,7 +171,39 @@ body {
     flex: 1;
   }
 
-  @media (max-width: 600px) {
+    h1 {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+  
+/* --- LANDSCAPE MODE OPTIMIZATIONS --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Keeps padding tight to save screen real estate */
+  }
+
+  /* 1. Keeps titles consistent & responsive when flipped sideways */
+  h1 {
+    font-size: 1.3rem; 
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none; /* Hides the subtitle to prioritize the workspace */
+  }
+  
   /* Let the individual track row stack control headers above the steps if needed */
   .drum-row {
     display: flex;
@@ -200,42 +232,7 @@ body {
     flex-shrink: 0; /* Prevents the browser from squashing them */
   }
 }
-  h1 {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 2rem;
-  letter-spacing: 1px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-}
 
-.subtitle {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  margin-bottom: 25px;
-}
-
-  /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
-@media (max-height: 500px) and (orientation: landscape) {
-  body {
-    padding: 8px; /* Shrink structural padding to save valuable vertical pixels */
-  }
-  
-  h1 {
-    font-size: 1.3rem;
-    margin-bottom: 2px;
-  }
-  
-  .subtitle {
-    display: none; /* Hide the subtitle completely in short landscape to make room */
-  }
-  
-  #controls-sector {
-    margin-bottom: 15px;
-  }
-}
   
 </style>
 </head>
