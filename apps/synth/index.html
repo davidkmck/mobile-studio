@@ -12,7 +12,7 @@
       --panel: #12121c;
       --border: #26263b;
       --text: #e2e2e9;
-      --text-dim: #6c6c84;
+      --text-dim: #6c6c84;'m
       --accent: #00e5ff;
       --accent-alt: #9d4edd;
     }
@@ -448,14 +448,14 @@
 window.addEventListener('message', (event) => {
   if (event.data.action === 'START_AUDIO') {
     Tone.start(); // Unlock audio
-    Tone.Transport.bpm.value = event.data.bpm;
+    Tone.Transport.bpm.value = event.data.bpm || 120
     Tone.Transport.start(); // Start the timeline
   }
 
   if (event.data.action === 'STOP_AUDIO') {
-    // ─── THE CRITICAL CHECK ───
-    // If THIS app is currently recording, let recordWav() handle the stop state natively.
-    // Don't let the global broadcast choke Tone.js early!
+// ─── THE FIX ───
+    // Always stop the local timeline transport cleanly when requested globally.
+    // If we were recording, recordWav() has already captured the buffer, so it is safe to halt!
     if (isRecording) return; 
 
     Tone.Transport.stop();
