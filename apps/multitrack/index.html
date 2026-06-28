@@ -379,33 +379,42 @@ if (event.data.action === 'ADD_TRACK') {
 async function createTrackNodeFromBuffer(arrayBuffer, customName) {
   const ctx = getAudioContext();
   
-  // 1. Rename to 'buffer' to avoid collision
+  // 1. Decode
   const buffer = await ctx.decodeAudioData(arrayBuffer);
 
-  // 2. Update the track object to use 'buffer'
+  // 2. Add to global tracks array
   const trackObject = {
     id: Date.now(),
     name: customName || `Track ${tracks.length + 1}`,
-    audioBuffer: buffer, // Changed from decodedBuffer
+    audioBuffer: buffer,
     sourceNode: null,
     gainNode: null,
     panNode: null,
     currentPan: 0,
     currentVolume: 1.0,
-    duration: buffer.duration || 0, // Changed from decodedBuffer
+    duration: buffer.duration || 0,
     playheadOffset: 0
   };
 
   tracks.push(trackObject);
   
-  // Clear and re-render
-  const mixerContainer = document.getElementById('mixer-container');
-  if (mixerContainer) {
-      mixerContainer.innerHTML = ''; 
+  // 3. DEBUG: Verify the state
+  console.log("State check - Total tracks now:", tracks.length);
+
+  // 4. Force DOM update
+  const container = document.getElementById('mixer-container'); 
+  if (container) {
+      // Clear current UI to prevent duplication/ghosting
+      container.innerHTML = ''; 
+      
+      // Re-render based on the updated 'tracks' array
+      renderMixerBoard();
+      console.log("renderMixerBoard() called.");
+  } else {
+      console.error("Critical: Could not find 'mixer-container' in the DOM.");
   }
-  
-  renderMixerBoard();
 }
+    
     
     
     // Send the request when your internal Play button is pressed
