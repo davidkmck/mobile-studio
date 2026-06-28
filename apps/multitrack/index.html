@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tracks</title>
-  <!-- 🚀 ADD THIS SCRIPT TAG TO IMPORT TONE.JS -->
+  <title>tracks</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
 :root {
   --bg: #0a0a0f;
   --panel: #12121c;
-  --card-bg: #1a1a2e; /* Added to support track-row backgrounds */
+  --card-bg: #1a1a2e; 
   --border: #26263b;
   --text: #e2e2e9;
   --text-dim: #6c6c84;
   --accent: #00e5ff;
   --accent-alt: #9d4edd;
-  
-  /* Status Colors mapped to fit your cyberpunk style */
   --danger: #ef4444;
   --warning: #f59e0b;
   --success: #10b981;
@@ -39,7 +36,6 @@ body {
   min-height: 100vh;
 }
 
-/* Consolidated Duplicate Button Styles */
 button {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -79,14 +75,16 @@ main {
 
 h1 {
   text-align: center;
-  font-size: 1.75rem;
+  font-size: 2rem;
+  letter-spacing: 1px;
   margin-bottom: 5px;
+  text-transform: lowercase;
 }
 
 .subtitle {
   text-align: center;
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   margin-bottom: 25px;
 }
 
@@ -99,7 +97,6 @@ h1 {
   width: 100%;
 }
 
-/* 1. Lines up all control buttons horizontally in a clean fluid row layout */
 .button-group {
   display: flex;
   flex-direction: row; 
@@ -117,7 +114,6 @@ h1 {
   box-sizing: border-box;
 }
   
-/* 2. Tightens the toggle panel constraint */
 .toggle-container {
   display: flex;
   align-items: center;
@@ -131,7 +127,22 @@ h1 {
   font-size: 0.95rem;
 }
 
-/* 3. Forces Volume & Pan controls side-by-side underneath the playback slider */
+.settings-panel {
+  display: none; /* Hidden by default */
+  width: 100%;
+  max-width: 720px;
+  background-color: var(--card-bg);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-panel.active {
+  display: flex;
+}
+
 .controls-container {
   display: flex;
   flex-direction: column;
@@ -145,21 +156,21 @@ h1 {
 }
 
 .sliders-row .slider-container {
-  flex: 1; /* Splits the space 50/50 evenly */
+  flex: 1;
 }
   
 .btn-record {
-  background: var(--panel) !important; /* Reverts to the dark theme panel color */
+  background: var(--panel) !important;
   border: 1px solid var(--border);
-  color: var(--text) !important;       /* Clean off-white text color */
+  color: var(--text) !important;       
   padding: 12px 24px;        
   border-radius: 8px;
   display: inline-flex;
 }
 
 .btn-recording {
-  background-color: #ef4444 !important; /* Cyberpunk danger red when active */
-  color: #ffffff !important;           /* Clear white text contrast */
+  background-color: #ef4444 !important;
+  color: #ffffff !important;           
   padding: 12px 24px;
   border-radius: 8px;
   display: inline-flex;
@@ -190,13 +201,6 @@ h1 {
   border-radius: 8px;
   font-weight: 600;
   display: inline-flex;
-}
-
-.btn-vault {
-  background-color: #8b5cf6;
-  color: white;
-  width: 100%;
-  flex: none;
 }
 
 .toggle-label-group {
@@ -276,6 +280,7 @@ input:checked + .slider-toggle:before {
 .track-title {
   font-weight: 600;
   color: #cbd5e1;
+  text-transform: lowercase;
 }
 
 .btn-delete {
@@ -305,25 +310,6 @@ input[type="range"].progress-slider {
   cursor: pointer;
 }
 
-/* 1. GLOBAL STYLE (Put this first) */
-h1 {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 2rem;       /* Big and clean on desktop/portrait */
-  letter-spacing: 1px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-}
-
-.subtitle {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  margin-bottom: 25px;
-}
-
-/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
 @media (max-height: 500px) and (orientation: landscape) {
   body {
     padding: 10px;
@@ -335,7 +321,7 @@ h1 {
   }
   
   .subtitle {
-    display: none;       /* Hides the subtitle to preserve vertical room */
+    display: none;       
   }
   .controls-container {
     display: flex;
@@ -367,29 +353,32 @@ h1 {
 <body>
 
   <main>
-    <h1>Tracks</h1>
-    <div class="subtitle">A dynamic scratchpad for layout and recording music ideas</div>
+    <h1>tracks</h1>
+    <div class="subtitle">a dynamic scratchpad for layout and recording music ideas</div>
 
     <div id="controls-sector">
       <div class="button-group">
-        <button id="recordBtn" class="btn-record">🔴 RECORD TRACK 1 FROM MICROPHONE</button>
-        <button id="master-play-btn" class="btn-global" disabled>▶️ PLAY MIX</button>
-        <button id="reset-btn" class="btn-global" disabled>⏮️ RESTART</button>
-        <button id="save-mix-btn" class="btn-save" disabled>💾 SAVE MIX</button>
+        <button id="recordBtn" class="btn-record">🔴 record track 1 from microphone</button>
+        <button id="master-play-btn" class="btn-global" disabled>▶️ play mix</button>
+        <button id="reset-btn" class="btn-global" disabled>⏮️ restart</button>
+        <button id="save-mix-btn" class="btn-save" disabled>💾 save mix</button>
+        <button id="settings-toggle-btn" class="btn-global">⚙️ settings</button>
       </div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
 
       <div class="toggle-container">
-        <div class="toggle-label-group">🔁 MASTER LOOP</div>
+        <div class="toggle-label-group">🔁 loop</div>
         <label class="switch">
           <input type="checkbox" id="loopToggle">
+          <span class="slider-toggle"></span>
         </label>
       </div>
 
-      <div class="toggle-container" style="flex-direction: column; align-items: stretch; gap: 6px; max-width: 720px;">
+      <!-- Hidden Alignment Panel Container -->
+      <div id="settingsPanel" class="settings-panel">
         <div class="slider-label">
-          <span>⏱️ MIC ALIGNMENT LATENCY</span>
+          <span>⏱️ mic alignment latency</span>
           <span id="latency-val">80ms</span>
         </div>
         <input type="range" id="latency-slider" min="0" max="250" step="5" value="80">
@@ -400,7 +389,6 @@ h1 {
   </main>
 
 <script>
-    // ─── State ────────────────────────────────────────────────────────────────
     let mediaRecorder = null;
     let recordedChunks = [];
     let isRecording = false;
@@ -414,24 +402,30 @@ h1 {
     const tracks = [];
     let audioCtx = null;
 
-    // ─── DOM refs ─────────────────────────────────────────────────────────────
-    const recordBtn       = document.getElementById('recordBtn');
-    const audioFileInput  = document.getElementById('audio-file-input');
-    const masterPlayBtn   = document.getElementById('master-play-btn');
-    const resetBtn        = document.getElementById('reset-btn');
-    const loopToggle      = document.getElementById('loopToggle');
-    const latencySlider   = document.getElementById('latency-slider');
-    const latencyVal      = document.getElementById('latency-val');
-    const saveMixBtn      = document.getElementById('save-mix-btn');
-    const mixerBoard      = document.getElementById('mixer-board');
+    const recordBtn         = document.getElementById('recordBtn');
+    const audioFileInput    = document.getElementById('audio-file-input');
+    const masterPlayBtn     = document.getElementById('master-play-btn');
+    const resetBtn          = document.getElementById('reset-btn');
+    const loopToggle        = document.getElementById('loopToggle');
+    const latencySlider     = document.getElementById('latency-slider');
+    const latencyVal        = document.getElementById('latency-val');
+    const saveMixBtn        = document.getElementById('save-mix-btn');
+    const mixerBoard        = document.getElementById('mixer-board');
+    const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+    const settingsPanel     = document.getElementById('settingsPanel');
 
     if (latencySlider && latencyVal) {
       latencySlider.addEventListener('input', (e) => {
         latencyVal.textContent = `${e.target.value}ms`;
       });
     }
+
+    if (settingsToggleBtn && settingsPanel) {
+      settingsToggleBtn.addEventListener('click', () => {
+        settingsPanel.classList.toggle('active');
+      });
+    }
   
-    // ─── PostMessage Iframe Handlers ──────────────────────────────────────────
     window.addEventListener('message', async (event) => {
       console.log("Multitrack received:", event.data);
       
@@ -481,7 +475,7 @@ h1 {
 
       const trackObject = {
         id: Date.now(),
-        name: customName || `TRACK ${tracks.length + 1}`,
+        name: customName || `track ${tracks.length + 1}`,
         audioBuffer: decodedBuffer,
         tonePlayer: null,
         volumeNode: null,
@@ -507,7 +501,6 @@ h1 {
       }
     }
     
-    // ─── AudioContext Bootstrap ───────────────────────────────────────────────
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -518,7 +511,6 @@ h1 {
       return audioCtx;
     }
 
-    // ─── Record button ────────────────────────────────────────────────────────
     recordBtn.addEventListener('click', async () => {
       if (isCountdownActive) return;
       getAudioContext();
@@ -530,12 +522,12 @@ h1 {
           recordBtn.className = 'btn-countdown';
           
           let count = 3;
-          recordBtn.textContent = `⏳ Recording starts in ${count}...`;
+          recordBtn.textContent = `⏳ recording starts in ${count}...`;
 
           const countdownInterval = setInterval(() => {
             count--;
             if (count > 0) {
-              recordBtn.textContent = `⏳ Recording starts in ${count}...`;
+              recordBtn.textContent = `⏳ recording starts in ${count}...`;
             } else {
               clearInterval(countdownInterval);
               isCountdownActive = false;
@@ -555,7 +547,6 @@ h1 {
       }
     });
 
-    // ─── Recording logic ──────────────────────────────────────────────────────
     function startHardwareRecording() {
       recordedChunks = [];
       if (tracks.length > 0) {
@@ -579,7 +570,7 @@ h1 {
           rawBlob = await sliceAudioBlobLatency(rawBlob, compensationMs);
         }
 
-        await createTrackNode(rawBlob, `RECORDED INPUT ${tracks.length + 1}`);
+        await createTrackNode(rawBlob, `recorded input ${tracks.length + 1}`);
 
         if (localStream) {
           localStream.getTracks().forEach(t => t.stop());
@@ -590,7 +581,7 @@ h1 {
 
       mediaRecorder.start();
       isRecording = true;
-      recordBtn.textContent = '⏹️ STOP RECORDING';
+      recordBtn.textContent = '⏹️ stop recording';
       recordBtn.className = 'btn-recording';
     }
 
@@ -627,7 +618,7 @@ h1 {
 
       const trackObject = {
         id: Date.now(),
-        name: customName || `TRACK ${tracks.length + 1}`,
+        name: customName || `track ${tracks.length + 1}`,
         blob: blob,
         audioBuffer: decodedAudio,
         tonePlayer: null,
@@ -643,7 +634,6 @@ h1 {
       renderMixerBoard();
     }
 
-    // ─── Mixer UI ─────────────────────────────────────────────────────────────
     function renderMixerBoard() {
       if (!mixerBoard) return;
       mixerBoard.innerHTML = '';
@@ -654,30 +644,29 @@ h1 {
         
         row.innerHTML = `
           <div class="track-header">
-            <span class="track-title">${track.name.toUpperCase()}</span>
+            <span class="track-title">${track.name.toLowerCase()}</span>
             <button class="btn-delete" id="delete-btn-${track.id}">🗑️</button>
           </div>
           <div class="controls-container">
             <div class="slider-container">
               <div class="slider-label">
-                <span>Playback Position</span>
+                <span>playback position</span>
                 <span id="pos-val-${track.id}">0.00s</span>
               </div>
               <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
             </div>
 
-            <!-- Side-By-Side Parameters Split Row -->
             <div class="sliders-row">
               <div class="slider-container">
                 <div class="slider-label">
-                  <span>Volume</span>
+                  <span>volume</span>
                   <span id="vol-txt-${track.id}">100%</span>
                 </div>
                 <input type="range" id="volume-${track.id}" min="0" max="1" step="0.01" value="${track.currentVolume}">
               </div>
               <div class="slider-container">
                 <div class="slider-label">
-                  <span>Pan</span>
+                  <span>pan</span>
                   <span id="pan-val-${track.id}">${track.currentPan}</span>
                 </div>
                 <input type="range" id="pan-${track.id}" min="-1" max="1" step="0.1" value="${track.currentPan}">
@@ -725,7 +714,7 @@ h1 {
       });
 
       if (recordBtn && !isRecording) {
-        recordBtn.textContent = `🔴 RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+        recordBtn.textContent = `🔴 record track ${tracks.length + 1} from microphone`;
       }
       updateUI();
     }
@@ -737,7 +726,6 @@ h1 {
       renderMixerBoard();
     }
 
-    // ─── Playback Controls ────────────────────────────────────────────────────
     if (masterPlayBtn) {
       masterPlayBtn.addEventListener('click', async () => {
         await Tone.start();
@@ -793,7 +781,7 @@ h1 {
 
       if (!options.monitoringOnly) {
         isPlayingMix = true;
-        masterPlayBtn.textContent = '⏸️ PAUSE MIX';
+        masterPlayBtn.textContent = '⏸️ pause mix';
         
         Tone.Transport.start();
         progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
@@ -824,7 +812,7 @@ h1 {
       });
 
       isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ PLAY MIX';
+      masterPlayBtn.textContent = '▶️ play mix';
     }
 
     function scrubPlaybackToTimestamp(targetTime) {
@@ -873,7 +861,6 @@ h1 {
       progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
     }
 
-    // ─── UI State ─────────────────────────────────────────────────────────────
     function updateUI() {
       const noTracks = tracks.length === 0;
       masterPlayBtn.disabled = noTracks;
@@ -883,15 +870,14 @@ h1 {
       if (isRecording || isCountdownActive) return;
 
       recordBtn.disabled    = false;
-      recordBtn.textContent = `🔴 RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+      recordBtn.textContent = `🔴 record track ${tracks.length + 1} from microphone`;
       recordBtn.className   = 'btn-record';
     }
 
-    // ─── Export ───────────────────────────────────────────────────────────────
     saveMixBtn.addEventListener('click', async () => {
       if (!tracks || tracks.length === 0) return;
       saveMixBtn.disabled    = true;
-      saveMixBtn.textContent = 'RENDERING MIX...';
+      saveMixBtn.textContent = 'rendering mix...';
 
       try {
         const maxDuration = Math.max(...tracks.map(t => t.duration));
@@ -931,11 +917,10 @@ h1 {
         alert('Failed to export the audio mix.');
       } finally {
         saveMixBtn.disabled    = false;
-        saveMixBtn.textContent = '💾 SAVE MIX';
+        saveMixBtn.textContent = '💾 save mix';
       }
     });
 
-    // ─── WAV Encoder ──────────────────────────────────────────────────────────
     function audioBufferToWav(buffer) {
       const numOfChan = buffer.numberOfChannels;
       const sampleRate = buffer.sampleRate;
