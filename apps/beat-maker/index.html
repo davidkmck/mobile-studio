@@ -402,7 +402,7 @@ body {
     }
 
     const playBtn = document.getElementById('playBtn');
-
+/*
     playBtn.addEventListener('click', () => {
         // 1. Trigger internal audio logic
         startStopSequencer();
@@ -412,6 +412,25 @@ body {
         if (!isPlaying) {
             window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
         }
+      */
+
+      // ---- Init: listeners ----  replacement
+      // Combined playBtn logic into a single event listener to prevent duplicate triggers
+      playBtn.addEventListener('click', () => {
+        // 1. Sync external app only when necessary (before flipping state internally)
+        if (!isPlaying) {
+          window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+        }
+        
+        // 2. Trigger internal audio logic
+        startStopSequencer();
+      });
+      
+      document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
+      document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
+      document.getElementById('recordBtn').addEventListener('click', recordWav);
+      
+      // ---- Init: listeners ----
     });
 
   
