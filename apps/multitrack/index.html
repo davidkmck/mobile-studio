@@ -107,11 +107,12 @@ h1 {
 }
 
 .btn-record {
-  background-color: var(--accent);
-  color: #0a0a0f !important; /* Forces clean dark text contrast */
-  padding: 12px 24px;        /* Gives it a clean, substantial button shape */
+  background: var(--panel) !important; /* Reverts to the dark theme panel color */
+  border: 1px solid var(--border);
+  color: var(--text) !important;       /* Clean off-white text color */
+  padding: 12px 24px;        
   border-radius: 8px;
-  width: auto;               /* Stops it from spanning 100% width */
+  width: auto;               
   display: inline-flex;
 }
 
