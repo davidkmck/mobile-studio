@@ -11,94 +11,150 @@
       --border: #26263b;
       --text: #e2e2e9;
       --accent: #00e5ff;
+      --success: #10b981;
       --danger: #ef4444;
     }
+
     * { box-sizing: border-box; }
-    body { background-color: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; }
-    main { width: 100%; max-width: 600px; margin: 0 auto; }
-    .control-panel { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .btn-record { background-color: var(--accent); color: #000; }
-    .track-row { background-color: var(--panel); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
-    .slider-group { margin-top: 10px; }
-    input[type="range"] { width: 100%; margin-top: 5px; }
-    .label-row { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      padding: 10px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    main { width: 100%; max-width: 500px; }
+
+    h1 { text-align: center; font-size: 1.5rem; margin-bottom: 1rem; }
+
+    button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .mixer-board { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+    
+    .track-row {
+      background-color: var(--panel);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .track-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    
+    .slider-container { margin-bottom: 10px; }
+    .slider-label { font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; margin-bottom: 4px; }
+    
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    input[type="range"].progress-slider { accent-color: var(--success); }
   </style>
 </head>
 <body>
+
   <main>
-    <h1>Studio</h1>
-    <section class="control-panel">
-      <button id="record-btn" class="btn-record">🔴 Record New Track</button>
+    <h1>Multitrack Studio</h1>
+    <section id="controls-sector" style="display: flex; gap: 10px;">
+      <button id="master-play-btn" style="flex:1" disabled>▶️ Play Mix</button>
+      <button id="save-mix-btn" style="flex:1" disabled>💾 Save</button>
     </section>
-    <div id="mixer-board" class="mixer-board"></div>
+
+    <div class="mixer-board" id="mixer-board"></div>
   </main>
 
   <script>
     const tracks = [];
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+    // 1. Listen for data from Beat Maker
     window.addEventListener('message', async (event) => {
         if (event.data.action === 'ADD_TRACK') {
             let { audioBuffer, trackName } = event.data;
             try {
-                if (!(audioBuffer instanceof ArrayBuffer)) audioBuffer = new Uint8Array(audioBuffer).buffer;
+                if (!(audioBuffer instanceof ArrayBuffer)) {
+                    audioBuffer = new Uint8Array(audioBuffer).buffer;
+                }
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 const decodedBuffer = await audioCtx.decodeAudioData(audioBuffer);
-                createTrackNode(decodedBuffer, trackName);
-            } catch (err) { console.error('Load error:', err); }
+                
+                // Add to state
+                tracks.push({
+                    id: Date.now(),
+                    name: trackName || `Track ${tracks.length + 1}`,
+                    audioBuffer: decodedBuffer,
+                    duration: decodedBuffer.duration,
+                    currentVolume: 1.0,
+                    currentPan: 0
+                });
+                
+                renderMixerBoard();
+                updateUI();
+            } catch (err) { console.error('Add track error:', err); }
         }
     });
 
-    function createTrackNode(buffer, name) {
-      const track = {
-        id: Date.now(),
-        name: name || `Track ${tracks.length + 1}`,
-        buffer: buffer,
-        volume: 1.0,
-        pan: 0
-      };
-      tracks.push(track);
-      renderMixerBoard();
-    }
-
+    // 2. Full Render Logic (Includes Progress, Volume, Pan, Delete)
     function renderMixerBoard() {
-      const board = document.getElementById('mixer-board');
-      board.innerHTML = '';
-      tracks.forEach(t => {
+      const mixerBoard = document.getElementById('mixer-board');
+      mixerBoard.innerHTML = '';
+      
+      tracks.forEach(track => {
         const row = document.createElement('div');
         row.className = 'track-row';
         row.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <strong>${t.name}</strong>
-            <button onclick="deleteTrack(${t.id})" style="background:none; color:var(--danger)">Delete</button>
+          <div class="track-header">
+            <span style="font-weight:bold">${track.name}</span>
+            <button onclick="deleteTrack(${track.id})" style="color:var(--danger); border:none; padding:5px;">Delete</button>
           </div>
-          <div class="slider-group">
-            <div class="label-row"><span>Volume</span><span>${Math.round(t.volume * 100)}%</span></div>
-            <input type="range" min="0" max="1" step="0.1" value="${t.volume}" oninput="updateVol(${t.id}, this.value)">
+          
+          <div class="slider-container">
+            <div class="slider-label"><span>Playback Position</span><span>${track.duration.toFixed(1)}s</span></div>
+            <input type="range" class="progress-slider" min="0" max="${track.duration}" step="0.1" value="0">
           </div>
-          <div class="slider-group">
-            <div class="label-row"><span>Left</span><span>Pan</span><span>Right</span></div>
-            <input type="range" min="-1" max="1" step="0.1" value="${t.pan}" oninput="updatePan(${t.id}, this.value)">
+          
+          <div class="slider-container">
+            <div class="slider-label"><span>Volume</span><span>${Math.round(track.currentVolume * 100)}%</span></div>
+            <input type="range" min="0" max="1.5" step="0.1" value="${track.currentVolume}" oninput="updateVol(${track.id}, this.value)">
+          </div>
+
+          <div class="slider-container">
+            <div class="slider-label"><span>L</span><span>Pan</span><span>R</span></div>
+            <input type="range" min="-1" max="1" step="0.1" value="${track.currentPan}" oninput="updatePan(${track.id}, this.value)">
           </div>
         `;
-        board.appendChild(row);
+        mixerBoard.appendChild(row);
       });
     }
 
+    // 3. Control Functions
     function updateVol(id, val) {
       const t = tracks.find(t => t.id == id);
-      if(t) { t.volume = parseFloat(val); renderMixerBoard(); }
+      if(t) { t.currentVolume = parseFloat(val); renderMixerBoard(); }
     }
 
     function updatePan(id, val) {
       const t = tracks.find(t => t.id == id);
-      if(t) t.pan = parseFloat(val);
+      if(t) t.currentPan = parseFloat(val);
     }
 
     function deleteTrack(id) {
       const idx = tracks.findIndex(t => t.id == id);
-      if(idx > -1) { tracks.splice(idx, 1); renderMixerBoard(); }
+      if(idx > -1) { tracks.splice(idx, 1); renderMixerBoard(); updateUI(); }
+    }
+
+    function updateUI() {
+      const active = tracks.length > 0;
+      document.getElementById('master-play-btn').disabled = !active;
+      document.getElementById('save-mix-btn').disabled = !active;
     }
   </script>
 </body>
