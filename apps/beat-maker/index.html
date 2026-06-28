@@ -201,19 +201,24 @@ header {
   
 /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
 @media (max-height: 500px) and (orientation: landscape) {
-body {
-    padding: 8px;
+/* 1. Reset the outer viewport so the window can expand and scroll */
+  html, body {
     height: auto !important;
-    min-height: 100vh;
-    overflow-y: auto !important; /* Forces the main screen window to scroll */
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
   }
 
-  /* CRITICAL PORT RESIZER: Prevents the app framework from freezing to the viewport height */
+/* 2. Break the fixed container sizing so it stretches down instead of creating gaps */
   .container {
     height: auto !important;
     max-height: none !important;
+    min-height: calc(100vh - 20px) !important; /* Forces it to fill the page cleanly */
     overflow-y: visible !important; 
-    padding-bottom: 30px; /* Gives extra space at the bottom so elements don't hit the screen edge */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-bottom: 60px !important; /* Pushes content up comfortably past the navigation bar */
   }
   /* 1. Keeps titles consistent & responsive when flipped sideways */
   h1 {
@@ -226,9 +231,23 @@ body {
   }
 
   header {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+  }
+
+  /* 4. Let the drum grid breathe and stack controls nicely */
+  .beat-row {
+    grid-template-columns: 70px 1fr; /* Slightly narrower label space for width */
+    gap: 10px;
   }
   
+  .step {
+    height: 32px; /* Marginally lower profile for easier vertical scrolling */
+  }
+  /* 5. Force the sequencer grid layout area to keep normal document flow */
+  .sequencer-grid, #grid {
+    height: auto !important;
+    flex-grow: 1;
+  }
   /* Let the individual track row stack control headers above the steps if needed */
   .drum-row {
     display: flex;
