@@ -362,10 +362,10 @@ body {
 
     // ---- Grid UI ----
     function buildGridUI() {
-      const container = document.getElementById('grid');
-      container.innerHTML = '';
+          const container = document.getElementById('grid');
+          container.innerHTML = '';
 
-      TRACKS.forEach((track, ti) => {
+        TRACKS.forEach((track, ti) => {
         const row = document.createElement('div');
         row.className = 'beat-row';
         const label = document.createElement('div');
@@ -401,18 +401,18 @@ body {
       });
     }
 
-const playBtn = document.getElementById('playBtn');
+    const playBtn = document.getElementById('playBtn');
 
-playBtn.addEventListener('click', () => {
-    // 1. Trigger internal audio logic
-    startStopSequencer();
-    
-    // 2. Sync external app only when necessary
-    // Only send if you are starting (isPlaying is false before this click)
-    if (!isPlaying) {
-        window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-    }
-});
+    playBtn.addEventListener('click', () => {
+        // 1. Trigger internal audio logic
+        startStopSequencer();
+        
+        // 2. Sync external app only when necessary
+        // Only send if you are starting (isPlaying is false before this click)
+        if (!isPlaying) {
+            window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+        }
+    });
 
   
     // ---- Playback ----
@@ -637,7 +637,7 @@ playBtn.addEventListener('click', () => {
     }
 
     // ---- Init: listeners ----
-    document.getElementById('playBtn').addEventListener('click', startStopSequencer);
+
     document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
     document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
     document.getElementById('recordBtn').addEventListener('click', recordWav);
