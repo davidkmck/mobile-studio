@@ -991,15 +991,7 @@ async function addAudioToTimeline(url, trackName) {
     }
 
     updateUI();
-// 1. Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Make sure 'sw.js' actually exists in the /apps/multitrack/ folder
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker connected!'))
-      .catch(err => console.error('SW registration issue:', err));
-  });
-}
+    
 
 
 // 3. Play Request Listener
