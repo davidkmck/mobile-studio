@@ -352,30 +352,22 @@ button {
      }
       
 if (event.data && event.data.action === 'ADD_TRACK') {
-        let { audioBuffer, trackName } = event.data;
+    const { audioBuffer, trackName } = event.data;
 
-        try {
-            // RE-CASTING FIX:
-            // Ensure the incoming data is a valid ArrayBuffer instance.
-            // If it arrived as an object, construct a new buffer from the underlying bytes.
-            const validBuffer = (audioBuffer instanceof ArrayBuffer) 
-                ? audioBuffer 
-                : new Uint8Array(audioBuffer).buffer;
-
-            const ctx = getAudioContext();
-            if (ctx.state === 'suspended') await ctx.resume();
-            
-            // Now decode the guaranteed, valid ArrayBuffer
-            const decodedBuffer = await ctx.decodeAudioData(validBuffer);
-            
-            // Proceed with your existing track creation logic
-            await createTrackNodeFromBuffer(decodedBuffer, trackName);
-            
-            console.log("Success: Track successfully added to mixer.");
-        } catch (err) {
-            console.error('Failed to add incoming clip:', err);
-        }
+    try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') await ctx.resume();
+        
+        // Pass the buffer directly, as we did in the working version
+        const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
+        
+        await createTrackNodeFromBuffer(decodedBuffer, trackName);
+        
+        console.log("Success: Track successfully added to mixer.");
+    } catch (err) {
+        console.error('Failed to add incoming clip:', err);
     }
+}
       
 });
 
