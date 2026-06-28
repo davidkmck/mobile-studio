@@ -455,9 +455,10 @@ async function createTrackNodeFromBuffer(arrayBuffer, customName) {
   tracks.push(trackObject);
   console.log("Track added to state:", tracks);
 
-  const mixerContainer = document.getElementById('mixer-container');
-  if (mixerContainer) {
-      mixerContainer.innerHTML = ''; 
+// ─── ALIGN DOM REFERENCES HERE ───
+  // Use mixerBoard directly instead of mixerContainer
+  if (typeof mixerBoard !== 'undefined' && mixerBoard) {
+      mixerBoard.innerHTML = ''; 
   }
   
   renderMixerBoard();
