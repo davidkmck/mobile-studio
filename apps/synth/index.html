@@ -406,6 +406,10 @@
         recorder = new Tone.Recorder();
         Tone.Destination.connect(recorder);
       }
+      // 1. Tell the parent frame to broadcast a START_AUDIO signal 
+    // so Multitrack starts playing back your timeline tracks immediately!
+    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
+      
       recorder.start();
       isRecording = true;
       btn.textContent = 'STOP RECORDING';
@@ -413,6 +417,9 @@
     } else {
       const recording = await recorder.stop();
 
+      // 2. Tell the parent frame to pause/stop playback now that recording is finished
+    window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      
       // Release any held notes so nothing rings on after recording stops
       activeNotes.forEach(note => synth.triggerRelease(note));
       activeNotes.clear();
