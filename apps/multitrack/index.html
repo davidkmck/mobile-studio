@@ -435,33 +435,26 @@ window.addEventListener('message', async (event) => {
 async function createTrackNodeFromBuffer(arrayBuffer, customName) {
   const ctx = getAudioContext();
   
-  // FORCE TO ARRAYBUFFER: 
-  // If it's a typed array view, get its underlying buffer.
-  // If it's already an ArrayBuffer, use it directly.
   const actualBuffer = arrayBuffer.buffer ? arrayBuffer.buffer : arrayBuffer;
-  
-  // 1. Properly decode the verified raw array buffer
   const decodedBuffer = await ctx.decodeAudioData(actualBuffer);
 
-  // 2. Create the track object using the decoded data
   const trackObject = {
     id: Date.now(),
     name: customName || `Track ${tracks.length + 1}`,
     audioBuffer: decodedBuffer,
-    sourceNode: null,
-    gainNode: null,
-    panNode: null,
+    // ─── TONE PLAYBACK PROPERTIES ───
+    tonePlayer: null,
+    volumeNode: null,
+    pannerNode: null,
     currentPan: 0,
     currentVolume: 1.0,
     duration: decodedBuffer.duration || 0,
     playheadOffset: 0
   };
 
-  // 3. Update state
   tracks.push(trackObject);
   console.log("Track added to state:", tracks);
 
-  // 4. Force UI refresh
   const mixerContainer = document.getElementById('mixer-container');
   if (mixerContainer) {
       mixerContainer.innerHTML = ''; 
