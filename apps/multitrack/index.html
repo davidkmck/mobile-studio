@@ -639,6 +639,7 @@ async function addAudioToTimeline(url, trackName) {
 
     // ─── Mixer UI ─────────────────────────────────────────────────────────────
     function renderMixerBoard() {
+      console.log("Rendering board. Tracks count:", tracks.length);
       mixerBoard.innerHTML = '';
       tracks.forEach((track, index) => {
         const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
