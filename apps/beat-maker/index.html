@@ -201,10 +201,20 @@ header {
   
 /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
 @media (max-height: 500px) and (orientation: landscape) {
-  body {
-    padding: 8px; /* Keeps padding tight to save screen real estate */
+body {
+    padding: 8px;
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto !important; /* Forces the main screen window to scroll */
   }
 
+  /* CRITICAL PORT RESIZER: Prevents the app framework from freezing to the viewport height */
+  .container {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important; 
+    padding-bottom: 30px; /* Gives extra space at the bottom so elements don't hit the screen edge */
+  }
   /* 1. Keeps titles consistent & responsive when flipped sideways */
   h1 {
     font-size: 1.3rem; 
@@ -213,6 +223,10 @@ header {
   
   .subtitle {
     display: none; /* Hides the subtitle to prioritize the workspace */
+  }
+
+  header {
+    margin-bottom: 15px;
   }
   
   /* Let the individual track row stack control headers above the steps if needed */
