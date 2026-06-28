@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multitrack Mixer</title>
+  <title>Mixer</title>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -35,9 +35,7 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  /* CHANGE THIS: Ensure it occupies the full height but remains expandable */
-  min-height: 100vh; 
-  overflow-y: auto;   /* Permits vertical scrolling natively when pushed */
+  min-height: 100vh;
 }
 
 /* Consolidated Duplicate Button Styles */
@@ -299,27 +297,7 @@ input[type="range"].progress-slider {
     margin-bottom: 4px;
   }
 }
-  
-/* --- LANDSCAPE MODE OPTIMIZATIONS --- */
-@media (max-height: 500px) and (orientation: landscape) {
-  body {
-    padding: 8px; /* Shrink structural padding to save valuable vertical pixels */
-  }
-  
-  h1 {
-    font-size: 1.2rem;
-    margin-bottom: 2px;
-  }
-  
-  .subtitle {
-    display: none; /* Hide the subtitle completely in short landscape to make room */
-  }
-  
-  #controls-sector {
-    margin-bottom: 15px;
-  }
-}
-  
+
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.6; }
@@ -422,39 +400,24 @@ input[type="range"].progress-slider {
         addAudioToTimeline(trackName, audioBlob);
       }
       
-      if (event.data.action === 'START_AUDIO') {
-          const ctx = getAudioContext();
-          if (ctx.state === 'suspended') await ctx.resume();
-
-        // SAFETY CHECK: Only spin up your custom mixer nodes if it's not already playing
-    if (!isPlayingMix) {
-      startAllTracks();
-    }
-        /*
-          Tone.Transport.bpm.value = event.data.bpm || 120;
-          
-          // SAFETY CHECK: Only start the transport if it isn't already running
-          if (Tone.Transport.state !== 'started') {
-            // Force linear, non-looping timeline playback during recording passes
-            Tone.Transport.loop = false; 
-            
-            // Start playback of your tracks via your local start playback logic
-            // (e.g., triggering your track audio source nodes/players)
-            Tone.Transport.start(); 
-          }
-          */
-        }
+     if (event.data.action === 'START_AUDIO') {
+      Tone.start(); // Unlock audio
+      Tone.Transport.bpm.value = event.data.bpm || 120;
+      
+      // ─── THE PLAY FIX ───
+      // Only call start if Tone's transport isn't already actively running
+      if (Tone.Transport.state !== 'started') {
+        Tone.Transport.start();
+        // If you have a local state variable like isPlaying, sync it here:
+        // isPlaying = true; 
+      }
+     }
 
       if (event.data.action === 'STOP_AUDIO') {
-
-          // Check if your custom engine mix is actively playing, then bring it down cleanly
-    if (isPlayingMix) {
-      stopAllTracks(); // Swaps out the dead Tone.Transport.stop() for your real teardown!
-    }
-          /*
+        // Only call stop if it's actually running
+        if (Tone.Transport.state === 'started') {
           Tone.Transport.stop();
           // isPlaying = false;
-          */
         }
       }
       
@@ -525,13 +488,7 @@ async function createTrackNodeFromBuffer(arrayBuffer, customName) {
 const playBtn = document.getElementById('playBtn');
 if (playBtn) {
   playBtn.addEventListener('click', () => {
-    // Only send the play request if the timeline isn't already running
-    if (Tone.Transport.state !== 'started') {
-      window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-    } else {
-      // If it's already playing, clicking it acts as a pause/stop
-      window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-    }
+    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
   });
 }
 
@@ -909,9 +866,6 @@ function renderMixerBoard() {
         track.sourceNode = ctx.createBufferSource();
         track.sourceNode.buffer = track.audioBuffer;
 
-        // ─── FIX 1: FORCE NO LOOPING ON CHANNELS ───
-        track.sourceNode.loop = false;
-        
         track.gainNode = ctx.createGain();
         track.gainNode.gain.setValueAtTime(track.currentVolume, ctx.currentTime);
 
@@ -930,10 +884,8 @@ function renderMixerBoard() {
       if (!options.monitoringOnly) {
         isPlayingMix = true;
         masterPlayBtn.textContent = '⏸️ Pause Mix';
-
-        
-        //progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
-        //scheduleMasterLoopTimeout();
+        progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+        scheduleMasterLoopTimeout();
       }
     }
 
