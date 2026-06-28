@@ -370,10 +370,10 @@ input[type="range"].progress-slider {
     const tracks = [];
     let audioCtx = null;
 
-    // ─── DOM refs ─────────────────────────────────────────────────────────────
-    const recordBtn       = document.getElementById('record-btn');
-    const importBtn       = document.getElementById('import-btn');
-    const vaultBtn        = document.getElementById('vault-btn');
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────
+    // FIX: Match exact ID case-sensitivity ('recordBtn' in HTML, not 'record-btn')
+    const recordBtn       = document.getElementById('recordBtn');
     const audioFileInput  = document.getElementById('audio-file-input');
     const masterPlayBtn   = document.getElementById('master-play-btn');
     const resetBtn        = document.getElementById('reset-btn');
@@ -383,9 +383,19 @@ input[type="range"].progress-slider {
     const saveMixBtn      = document.getElementById('save-mix-btn');
     const mixerBoard      = document.getElementById('mixer-board');
 
-    latencySlider.addEventListener('input', (e) => {
-      latencyVal.textContent = `${e.target.value}ms`;
-    });
+    // SAFEGUARD DELETED HTML ELEMENTS:
+    // These buttons were removed from your HTML markup. We initialize them as null
+    // so any old background listeners attached to them won't crash the script thread!
+    const importBtn       = null;
+    const vaultBtn        = null;
+
+    // Attach listener safely only if the slider exists
+    if (latencySlider && latencyVal) {
+      latencySlider.addEventListener('input', (e) => {
+        latencyVal.textContent = `${e.target.value}ms`;
+      });
+    }
+  
 
 window.addEventListener('message', async (event) => {
   console.log("Multitrack received:", event.data);
