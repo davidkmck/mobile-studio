@@ -178,6 +178,7 @@ body {
   letter-spacing: 1px;
   margin-bottom: 5px;
   text-transform: uppercase;
+  width: 100%; /* Ensures alignment spans full width */
 }
 
 .subtitle {
@@ -186,7 +187,17 @@ body {
   color: #94a3b8;
   font-size: 0.95rem;
   margin-bottom: 25px;
+  width: 100%;
 }
+/* Modify your existing header rule so controls align nicely below the centered title */
+header {
+  display: flex;
+  justify-content: center; /* Center-aligns the control row under the title */
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 10px;
+}  
   
 /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
 @media (max-height: 500px) and (orientation: landscape) {
@@ -239,8 +250,9 @@ body {
 <body>
 
 <div class="container">
+      <h1>Beats</h1>
+    <div class="subtitle">Create and sequence custom rhythms</div>
   <header>
-    <h1>Beats</h1>
     <div class="controls">
 
       <div class="bpm-container">
