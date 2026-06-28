@@ -353,9 +353,7 @@ input[type="range"].progress-slider {
     <section class="mixer-board" id="mixer-board"></section>
   </main>
 
-  <script>
-
-    
+<script>
     // ─── State ────────────────────────────────────────────────────────────────
     let mediaRecorder = null;
     let recordedChunks = [];
@@ -364,17 +362,13 @@ input[type="range"].progress-slider {
     let isPlayingMix = false;
     let localStream = null;
     
-    let masterPlaybackStartTime = 0; 
     let progressAnimationId = null;
-    let loopTimeoutId = null;
     let isScrubbing = false;
 
     const tracks = [];
     let audioCtx = null;
 
-
-// ─── DOM refs ─────────────────────────────────────────────────────────────
-    // FIX: Match exact ID case-sensitivity ('recordBtn' in HTML, not 'record-btn')
+    // ─── DOM refs ─────────────────────────────────────────────────────────────
     const recordBtn       = document.getElementById('recordBtn');
     const audioFileInput  = document.getElementById('audio-file-input');
     const masterPlayBtn   = document.getElementById('master-play-btn');
@@ -385,126 +379,90 @@ input[type="range"].progress-slider {
     const saveMixBtn      = document.getElementById('save-mix-btn');
     const mixerBoard      = document.getElementById('mixer-board');
 
-    // SAFEGUARD DELETED HTML ELEMENTS:
-    // These buttons were removed from your HTML markup. We initialize them as null
-    // so any old background listeners attached to them won't crash the script thread!
     const importBtn       = null;
     const vaultBtn        = null;
 
-    // Attach listener safely only if the slider exists
     if (latencySlider && latencyVal) {
       latencySlider.addEventListener('input', (e) => {
         latencyVal.textContent = `${e.target.value}ms`;
       });
     }
   
-
-window.addEventListener('message', async (event) => {
-  console.log("Multitrack received:", event.data);
-  
-  if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
-    const { audioBlob, trackName } = event.data;
-    addAudioToTimeline(trackName, audioBlob);
-  }
-  
-  if (event.data.action === 'START_AUDIO') {
-    await Tone.start(); 
-    Tone.Transport.bpm.value = event.data.bpm || 120;
-    
-    if (Tone.Transport.state !== 'started') {
-      Tone.Transport.loop = false; // Prevent backing tracks from looping globally
+    // ─── PostMessage Iframe Handlers ──────────────────────────────────────────
+    window.addEventListener('message', async (event) => {
+      console.log("Multitrack received:", event.data);
       
-      // Kicks off our Tone-linked track nodes and starts the clock
-      startAllTracks(); 
-      Tone.Transport.start();
+      if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
+        const { audioBlob, trackName } = event.data;
+        addAudioToTimeline(trackName, audioBlob);
+      }
+      
+      if (event.data.action === 'START_AUDIO') {
+        await Tone.start(); 
+        Tone.Transport.bpm.value = event.data.bpm || 120;
+        
+        if (Tone.Transport.state !== 'started') {
+          Tone.Transport.loop = false;
+          startAllTracks(); 
+          Tone.Transport.start();
+        }
+      }
+
+      if (event.data.action === 'STOP_AUDIO') {
+        if (Tone.Transport.state === 'started') {
+          Tone.Transport.stop();
+          stopAllTracks();
+        }
+      }
+      
+      if (event.data.action === 'SWITCH_APP') {
+        updateUI(); 
+      }
+      
+      if (event.data && event.data.action === 'ADD_TRACK') {
+        const { audioBuffer, trackName } = event.data;
+        try {
+            await Tone.start();
+            await createTrackNodeFromBuffer(audioBuffer, trackName);
+            console.log("Success: Track successfully added to mixer.");
+        } catch (err) {
+            console.error('Failed to add incoming clip:', err);
+        }
+      }
+    });
+
+    async function createTrackNodeFromBuffer(arrayBuffer, customName) {
+      const ctx = getAudioContext();
+      const actualBuffer = arrayBuffer.buffer ? arrayBuffer.buffer : arrayBuffer;
+      const decodedBuffer = await ctx.decodeAudioData(actualBuffer);
+
+      const trackObject = {
+        id: Date.now(),
+        name: customName || `Track ${tracks.length + 1}`,
+        audioBuffer: decodedBuffer,
+        tonePlayer: null,
+        volumeNode: null,
+        pannerNode: null,
+        currentPan: 0,
+        currentVolume: 1.0,
+        duration: decodedBuffer.duration || 0,
+        playheadOffset: 0
+      };
+
+      tracks.push(trackObject);
+      if (mixerBoard) { mixerBoard.innerHTML = ''; }
+      renderMixerBoard();
     }
-  }
-
-  if (event.data.action === 'STOP_AUDIO') {
-    if (Tone.Transport.state === 'started') {
-      Tone.Transport.stop();
-      stopAllTracks(); // Cleans up active player nodes
+    
+    async function addAudioToTimeline(url, trackName) {
+      try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        await createTrackNodeFromBuffer(arrayBuffer, trackName);
+      } catch (err) {
+        console.error('CRITICAL ERROR in addAudioToTimeline:', err);
+      }
     }
-  }
-  
-  if (event.data.action === 'SWITCH_APP') {
-    updateUI(); 
-  }
-  
-  if (event.data && event.data.action === 'ADD_TRACK') {
-    const { audioBuffer, trackName } = event.data;
-    try {
-        await Tone.start();
-        await createTrackNodeFromBuffer(audioBuffer, trackName);
-        console.log("Success: Track successfully added to mixer.");
-    } catch (err) {
-        console.error('Failed to add incoming clip:', err);
-    }
-  }
-});
-
-
-async function createTrackNodeFromBuffer(arrayBuffer, customName) {
-  const ctx = getAudioContext();
-  
-  const actualBuffer = arrayBuffer.buffer ? arrayBuffer.buffer : arrayBuffer;
-  const decodedBuffer = await ctx.decodeAudioData(actualBuffer);
-
-  const trackObject = {
-    id: Date.now(),
-    name: customName || `Track ${tracks.length + 1}`,
-    audioBuffer: decodedBuffer,
-    // ─── TONE PLAYBACK PROPERTIES ───
-    tonePlayer: null,
-    volumeNode: null,
-    pannerNode: null,
-    currentPan: 0,
-    currentVolume: 1.0,
-    duration: decodedBuffer.duration || 0,
-    playheadOffset: 0
-  };
-
-  tracks.push(trackObject);
-  console.log("Track added to state:", tracks);
-
-// ─── ALIGN DOM REFERENCES HERE ───
-  // Use mixerBoard directly instead of mixerContainer
-  if (typeof mixerBoard !== 'undefined' && mixerBoard) {
-      mixerBoard.innerHTML = ''; 
-  }
-  
-  renderMixerBoard();
-}
-    
-    // Send the request when your internal Play button is pressed
-const playBtn = document.getElementById('playBtn');
-if (playBtn) {
-  playBtn.addEventListener('click', () => {
-    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-  });
-}
-
-    
-async function addAudioToTimeline(url, trackName) {
-  try {
-    console.log("Loading data for:", trackName);
-
-    // 1. Fetch the data
-    const response = await fetch(url);
-    
-    // 2. Convert directly to ArrayBuffer (This is what decodeAudioData needs)
-    const arrayBuffer = await response.arrayBuffer();
-    
-    console.log("ArrayBuffer ready. Size:", arrayBuffer.byteLength);
-
-    // 3. Update your function to accept an ArrayBuffer instead of a Blob
-    await createTrackNodeFromBuffer(arrayBuffer, trackName);
-    
-    console.log("Success: Track added to mixer.");
-  } catch (err) {
-    console.error('CRITICAL ERROR in addAudioToTimeline:', err);
-  }
-}
     
     // ─── AudioContext Bootstrap ───────────────────────────────────────────────
     function getAudioContext() {
@@ -554,62 +512,9 @@ async function addAudioToTimeline(url, trackName) {
       }
     });
 
-    // ─── Import functionality ─────────────────────────────────────────────────
-    if (importBtn && audioFileInput) {
-      importBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        audioFileInput.click();
-      });
-
-      audioFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith('audio/')) {
-          alert('Please select a valid audio file.');
-          return;
-        }
-
-        createTrackNode(file, file.name);
-        audioFileInput.value = '';
-      });
-    }
-
-    // ─── Shared Beat Vault Integration (IndexedDB) ───────────────────────────
-    vaultBtn.addEventListener('click', () => {
-      getAudioContext();
-      const request = indexedDB.open("MobileStudioDB", 1);
-
-      request.onsuccess = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains("studio_vault")) {
-          alert("No database found! Export a beat from your Beat Maker app first.");
-          return;
-        }
-
-        const transaction = db.transaction("studio_vault", "readonly");
-        const store = transaction.objectStore("studio_vault");
-        const getRequest = store.get("latest_beat");
-
-        getRequest.onsuccess = () => {
-          const result = getRequest.result;
-          if (result && result.audioBlob) {
-            createTrackNode(result.audioBlob, result.name || "Imported Beat");
-          } else {
-            alert("No exported sequences discovered in the studio vault yet.");
-          }
-        };
-      };
-
-      request.onerror = () => {
-        alert("Failed to connect to the shared studio vault database.");
-      };
-    });
-
     // ─── Recording logic ──────────────────────────────────────────────────────
     function startHardwareRecording() {
       recordedChunks = [];
-      
       if (tracks.length > 0) {
         startAllTracks({ monitoringOnly: true });
       }
@@ -647,12 +552,7 @@ async function addAudioToTimeline(url, trackName) {
     }
 
     function getSupportedMimeType() {
-      const candidates = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-      ];
+      const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
       return candidates.find(m => MediaRecorder.isTypeSupported(m)) || '';
     }
 
@@ -663,7 +563,6 @@ async function addAudioToTimeline(url, trackName) {
       
       const sampleRate = audioBuffer.sampleRate;
       const samplesToRemove = Math.floor((msToRemove / 1000) * sampleRate);
-      
       if (samplesToRemove >= audioBuffer.length) return blob;
 
       const newLength = audioBuffer.length - samplesToRemove;
@@ -672,161 +571,135 @@ async function addAudioToTimeline(url, trackName) {
       const bufferSource = offlineCtx.createBufferSource();
       bufferSource.buffer = audioBuffer;
       bufferSource.connect(offlineCtx.destination);
-      
       bufferSource.start(0, msToRemove / 1000);
       
       const renderedBuffer = await offlineCtx.startRendering();
       return audioBufferToWav(renderedBuffer);
     }
 
-    // ─── Track creation ───────────────────────────────────────────────────────
-async function createTrackNode(blob, customName) {
-  const ctx = getAudioContext();
-  
-  // 1. Convert the blob to an ArrayBuffer
-  const arrayBuffer = await blob.arrayBuffer();
-  
-  // 2. Decode the buffer (using a new name: decodedAudio)
-  const decodedAudio = await ctx.decodeAudioData(arrayBuffer);
+    async function createTrackNode(blob, customName) {
+      const ctx = getAudioContext();
+      const arrayBuffer = await blob.arrayBuffer();
+      const decodedAudio = await ctx.decodeAudioData(arrayBuffer);
 
-  // 3. Create the track object
-  const trackObject = {
-    id: Date.now(),
-    name: customName || `Track ${tracks.length + 1}`,
-    blob: blob, // Store the blob
-    audioBuffer: decodedAudio, // Use the decoded data
-    sourceNode: null,
-    gainNode: null,
-    panNode: null,
-    currentPan: 0,
-    currentVolume: 1.0,
-    duration: decodedAudio.duration || 0,
-    playheadOffset: 0
-  };
+      const trackObject = {
+        id: Date.now(),
+        name: customName || `Track ${tracks.length + 1}`,
+        blob: blob,
+        audioBuffer: decodedAudio,
+        tonePlayer: null,
+        volumeNode: null,
+        pannerNode: null,
+        currentPan: 0,
+        currentVolume: 1.0,
+        duration: decodedAudio.duration || 0,
+        playheadOffset: 0
+      };
 
-  tracks.push(trackObject);
-  
-  // 4. Trigger the UI refresh
-  renderMixerBoard();
-}
+      tracks.push(trackObject);
+      renderMixerBoard();
+    }
 
-function updateRecordButtonText() {
-  const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn && !isRecording) {
-    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
-  }
-}
-
-// Call updateRecordButtonText() inside your renderMixerBoard() 
-// and after any track deletion to keep it accurate!
     // ─── Mixer UI ─────────────────────────────────────────────────────────────
+    function renderMixerBoard() {
+      if (!mixerBoard) return;
+      mixerBoard.innerHTML = '';
 
-function renderMixerBoard() {
-  console.log("Rendering board. Tracks count:", tracks.length);
-  
-  if (!mixerBoard) {
-    console.error("mixerBoard DOM element is missing!");
-    return;
-  }
-  
-  mixerBoard.innerHTML = '';
-
-  tracks.forEach((track) => {
-    const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
-    const row = document.createElement('div');
-    row.className = 'track-row';
-    
-    // We use unique ID tags to completely avoid querySelector ambiguity
-    row.innerHTML = `
-      <div class="track-header">
-        <span class="track-title">${track.name}</span>
-        <button class="btn-delete" id="delete-btn-${track.id}">Delete</button>
-      </div>
-      <div class="controls-container">
-        <div class="slider-container">
-          <div class="slider-label">
-            <span>Playback Position</span>
-            <div>
-              <span id="current-time-${track.id}">0.0s</span> / <span>${totalDurationText}</span>
+      tracks.forEach((track) => {
+        const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
+        const row = document.createElement('div');
+        row.className = 'track-row';
+        
+        row.innerHTML = `
+          <div class="track-header">
+            <span class="track-title">${track.name}</span>
+            <button class="btn-delete" id="delete-btn-${track.id}">Delete</button>
+          </div>
+          <div class="controls-container">
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Playback Position</span>
+                <div>
+                  <span id="current-time-${track.id}">0.0s</span> / <span>${totalDurationText}</span>
+                </div>
+              </div>
+              <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Volume</span>
+                <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
+              </div>
+              <input type="range" id="volume-${track.id}" min="0" max="1.5" step="0.05" value="${track.currentVolume}">
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Left</span>
+                <span>Stereo Pan</span>
+                <span>Right</span>
+              </div>
+              <input type="range" id="pan-${track.id}" min="-1" max="1" step="0.1" value="${track.currentPan}">
             </div>
           </div>
-          <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
-        </div>
-        <div class="slider-container">
-          <div class="slider-label">
-            <span>Volume</span>
-            <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
-          </div>
-          <input type="range" id="volume-${track.id}" min="0" max="1.5" step="0.05" value="${track.currentVolume}">
-        </div>
-        <div class="slider-container">
-          <div class="slider-label">
-            <span>Left</span>
-            <span>Stereo Pan</span>
-            <span>Right</span>
-          </div>
-          <input type="range" id="pan-${track.id}" min="-1" max="1" step="0.1" value="${track.currentPan}">
-        </div>
-      </div>
-    `;
-    
-    // CRITICAL: Append the row to the DOM FIRST so elements are live
-    mixerBoard.appendChild(row);
+        `;
+        
+        mixerBoard.appendChild(row);
 
-    // Now safely look up elements by their strict unique structural IDs
-    const deleteBtn = document.getElementById(`delete-btn-${track.id}`);
-    if (deleteBtn) {
-      deleteBtn.onclick = () => deleteTrack(track.id);
+        document.getElementById(`delete-btn-${track.id}`).onclick = () => deleteTrack(track.id);
+        
+        document.getElementById(`volume-${track.id}`).oninput = (e) => {
+          const val = parseFloat(e.target.value);
+          track.currentVolume = val;
+          document.getElementById(`vol-txt-${track.id}`).textContent = `${Math.round(val * 100)}%`;
+          if (track.volumeNode) {
+            track.volumeNode.volume.value = Tone.gainToDb(val);
+          }
+        };
+
+        document.getElementById(`pan-${track.id}`).oninput = (e) => {
+          const val = parseFloat(e.target.value);
+          track.currentPan = val;
+          if (track.pannerNode) {
+            track.pannerNode.pan.value = val;
+          }
+        };
+
+        const progressSlider = document.getElementById(`progress-${track.id}`);
+        if (progressSlider) {
+          progressSlider.oninput = (e) => {
+            isScrubbing = true;
+            const targetTime = parseFloat(e.target.value);
+            updateAllProgressUI(targetTime);
+          };
+
+          progressSlider.onchange = (e) => {
+            const targetTime = parseFloat(e.target.value);
+            scrubPlaybackToTimestamp(targetTime);
+            isScrubbing = false;
+          };
+        }
+      });
+
+      if (recordBtn && !isRecording) {
+        recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+      }
+      updateUI();
     }
-
-    const volumeSlider = document.getElementById(`volume-${track.id}`);
-    if (volumeSlider) {
-      volumeSlider.oninput = (e) => updateVolume(track.id, e.target.value);
-    }
-
-    const panSlider = document.getElementById(`pan-${track.id}`);
-    if (panSlider) {
-      panSlider.oninput = (e) => updatePan(track.id, e.target.value);
-    }
-
-    const progressSlider = document.getElementById(`progress-${track.id}`);
-    if (progressSlider) {
-      progressSlider.oninput = (e) => {
-        isScrubbing = true;
-        const targetTime = parseFloat(e.target.value);
-        if (typeof updateAllProgressUI === 'function') updateAllProgressUI(targetTime);
-      };
-
-      progressSlider.onchange = (e) => {
-        const targetTime = parseFloat(e.target.value);
-        if (typeof scrubPlaybackToTimestamp === 'function') scrubPlaybackToTimestamp(targetTime);
-        isScrubbing = false;
-      };
-    }
-  });
-
-  const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn && !isRecording) {
-    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
-  }
-
-  if (typeof updateUI === 'function') updateUI();
-}
-
 
     function deleteTrack(id) {
       stopAllTracks();
       const index = tracks.findIndex(t => t.id === id);
-      if (index !== -1) {
-        tracks.splice(index, 1);
-      }
+      if (index !== -1) { tracks.splice(index, 1); }
       renderMixerBoard();
     }
 
-    // ─── Playback ─────────────────────────────────────────────────────────────
+    // ─── Playback Controls ────────────────────────────────────────────────────
     if (masterPlayBtn) {
-      masterPlayBtn.addEventListener('click', () => {
+      masterPlayBtn.addEventListener('click', async () => {
+        // Clear mobile autoplay boundaries
+        await Tone.start();
         getAudioContext();
+
         if (isPlayingMix) {
           stopAllTracks();
         } else {
@@ -839,107 +712,84 @@ function renderMixerBoard() {
       resetBtn.addEventListener('click', () => {
         getAudioContext();
         stopAllTracks();
+        Tone.Transport.seconds = 0;
         tracks.forEach(t => t.playheadOffset = 0);
         resetAllProgressUI();
       });
     }
 
+    function startAllTracks(options = {}) {
+      if (!tracks || tracks.length === 0) return;
 
-function startAllTracks(options = {}) {
-  if (!tracks || tracks.length === 0) return;
+      let baseOffset = tracks[0].playheadOffset;
+      const maxDuration = Math.max(...tracks.map(t => t.duration));
+      
+      if (baseOffset >= maxDuration) {
+        baseOffset = 0;
+        tracks.forEach(t => t.playheadOffset = 0);
+      }
 
-  let baseOffset = tracks[0].playheadOffset;
-  const maxDuration = Math.max(...tracks.map(t => t.duration));
-  
-  if (baseOffset >= maxDuration) {
-    baseOffset = 0;
-    tracks.forEach(t => t.playheadOffset = 0);
-  }
+      // Sync master timeline clock to our shared playhead offset
+      Tone.Transport.seconds = baseOffset;
 
-  tracks.forEach(track => {
-    // 1. Clean up old Tone players for this track if they exist
-    if (track.tonePlayer) {
-      try { track.tonePlayer.dispose(); } catch(e) {}
-    }
-
-    // 2. Create a Tone Player using your stored audioBuffer
-    track.tonePlayer = new Tone.Player(track.audioBuffer);
-    
-    // ─── STRICT LINEAR PLAYBACK (NO LOOPING) ───
-    track.tonePlayer.loop = false; 
-
-    // 3. Re-create your Volume and Pan controls using Tone.js modules
-    // Note: Tone.Volume takes Decibels (dB). Tone.gainToDb converts 1.0 -> 0dB cleanly.
-    track.volumeNode = new Tone.Volume(Tone.gainToDb(track.currentVolume));
-    track.pannerNode = new Tone.Panner(track.currentPan);
-
-    // 4. Chain them together: Player -> Volume -> Panner -> Master Output
-    track.tonePlayer.chain(track.volumeNode, track.pannerNode, Tone.Destination);
-
-    // 5. Sync the player directly to Tone.Transport's clock timeline
-    if (track.playheadOffset < track.duration) {
-      // Starts automatically at 0 on the timeline, adjusted by your offset
-      track.tonePlayer.sync().start(0, track.playheadOffset);
-    }
-  });
-
-  if (!options.monitoringOnly) {
-    isPlayingMix = true;
-    masterPlayBtn.textContent = '⏸️ Pause Mix';
-    progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
-    
-    // ─── NO MORE TIMEOUT LOOPS ───
-    // Deleting scheduleMasterLoopTimeout() prevents tracks from repeating automatically!
-  }
-}
-
-function stopAllTracks() {
-  cancelAnimationFrame(progressAnimationId);
-  // clearTimeout(loopTimeoutId); // No longer needed as Tone.Transport handles timeline limits
-
-  if (isPlayingMix) {
-    // ─── TONE.JS POSITION CAPTURE ───
-    // Tone tracks time cleanly in seconds on its timeline. 
-    // We capture it here to update the playhead before resetting.
-    const currentTimelinePosition = Tone.Transport.seconds;
-    
-    tracks.forEach(track => {
-      // Keep track of where the song paused so we can resume smoothly
-      track.playheadOffset = currentTimelinePosition;
-
-      // Clean up the active Tone.Player instance
-      if (track.tonePlayer) {
-        try { 
-          track.tonePlayer.stop(); 
-          track.tonePlayer.dispose(); // Crucial to prevent duplicate synced audio clips
-        } catch(e) {
-          console.error("Error stopping track player:", e);
+      tracks.forEach(track => {
+        if (track.tonePlayer) {
+          try { track.tonePlayer.dispose(); } catch(e) {}
         }
-        track.tonePlayer = null;
-      }
-    });
-  } else {
-    tracks.forEach(track => {
-      if (track.tonePlayer) {
-        try { 
-          track.tonePlayer.stop(); 
-          track.tonePlayer.dispose();
-        } catch(e) {}
-        track.tonePlayer = null;
-      }
-    });
-  }
 
-  isPlayingMix = false;
-  masterPlayBtn.textContent = '▶️ Play Mix';
-}
+        track.tonePlayer = new Tone.Player(track.audioBuffer);
+        track.tonePlayer.loop = false; 
+
+        track.volumeNode = new Tone.Volume(Tone.gainToDb(track.currentVolume));
+        track.pannerNode = new Tone.Panner(track.currentPan);
+        track.tonePlayer.chain(track.volumeNode, track.pannerNode, Tone.Destination);
+
+        if (track.playheadOffset < track.duration) {
+          // Sync tells Tone.js to let Tone.Transport clock run the playhead
+          track.tonePlayer.sync().start(0, track.playheadOffset);
+        }
+      });
+
+      if (!options.monitoringOnly) {
+        isPlayingMix = true;
+        masterPlayBtn.textContent = '⏸️ Pause Mix';
+        
+        // START THE TONE CLOCK
+        Tone.Transport.start();
+        progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
+      }
+    }
+
+    function stopAllTracks() {
+      cancelAnimationFrame(progressAnimationId);
+
+      // PAUSE THE TONE CLOCK
+      if (Tone.Transport.state === 'started') {
+        Tone.Transport.stop();
+      }
+
+      const currentTimelinePosition = Tone.Transport.seconds;
+      
+      tracks.forEach(track => {
+        track.playheadOffset = currentTimelinePosition;
+        if (track.tonePlayer) {
+          try { 
+            track.tonePlayer.stop(); 
+            track.tonePlayer.dispose(); 
+          } catch(e) {}
+          track.tonePlayer = null;
+        }
+      });
+
+      isPlayingMix = false;
+      masterPlayBtn.textContent = '▶️ Play Mix';
+    }
 
     function scrubPlaybackToTimestamp(targetTime) {
       const originallyPlaying = isPlayingMix;
       stopAllTracks();
-      tracks.forEach(track => {
-        track.playheadOffset = targetTime;
-      });
+      Tone.Transport.seconds = targetTime;
+      tracks.forEach(track => { track.playheadOffset = targetTime; });
       updateAllProgressUI(targetTime);
       if (originallyPlaying) {
         startAllTracks();
@@ -961,32 +811,25 @@ function stopAllTracks() {
     }
 
     function updatePlaybackProgressUI() {
-      if (!isPlayingMix || !audioCtx || isScrubbing) return;
+      if (!isPlayingMix || isScrubbing) return;
 
-      const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
+      // Track the clock using the accurate Transport timeline position instead of audioCtx
+      const elapsed = Tone.Transport.seconds;
       updateAllProgressUI(elapsed);
 
-      progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
-    }
-
-    function scheduleMasterLoopTimeout() {
       const maxDuration = Math.max(...tracks.map(t => t.duration));
-      const elapsed = audioCtx.currentTime - masterPlaybackStartTime;
-      const timeRemaining = maxDuration - elapsed;
-
-      clearTimeout(loopTimeoutId);
-      
-      loopTimeoutId = setTimeout(() => {
-        if (!isPlayingMix) return;
-
+      if (elapsed >= maxDuration) {
         stopAllTracks();
+        Tone.Transport.seconds = 0;
         tracks.forEach(t => t.playheadOffset = 0);
         resetAllProgressUI();
-
-        if (loopToggle.checked) {
+        if (loopToggle && loopToggle.checked) {
           startAllTracks();
         }
-      }, Math.max(0, timeRemaining * 1000));
+        return;
+      }
+
+      progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
     }
 
     // ─── UI State ─────────────────────────────────────────────────────────────
@@ -1109,18 +952,7 @@ function stopAllTracks() {
     }
 
     updateUI();
-    
 
-
-// 3. Play Request Listener
-document.addEventListener('DOMContentLoaded', () => {
-  const playBtn = document.getElementById('playBtn');
-  if (playBtn) {
-    playBtn.addEventListener('click', () => {
-      window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-    });
-  }
-});
     
   </script>
 </body>
