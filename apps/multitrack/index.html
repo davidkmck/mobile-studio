@@ -358,10 +358,8 @@ if (event.data && event.data.action === 'ADD_TRACK') {
         const ctx = getAudioContext();
         if (ctx.state === 'suspended') await ctx.resume();
         
-        // Pass the buffer directly, as we did in the working version
-        const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
         
-        await createTrackNodeFromBuffer(decodedBuffer, trackName);
+        await createTrackNodeFromBuffer(audioBuffer, trackName);
         
         console.log("Success: Track successfully added to mixer.");
     } catch (err) {
