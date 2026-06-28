@@ -135,6 +135,24 @@
   align-items: center;
   justify-content: center;
 }
+/* The ultimate mobile layout wrapper */
+.main-app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* Dynamic VH fixes mobile browser URL bar jumping */
+  overflow: hidden;
+}
+
+/* The container holding your active subapp (Synth / Beat Maker / Multitrack) */
+.subapp-container {
+  flex: 1;          /* 🚀 CRITICAL: Tells the app to claim 100% of the empty middle space */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Lets long control panels scroll gracefully on small screens */
+}
+    
 </style>
 </head>
 <body>
