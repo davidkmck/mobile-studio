@@ -135,23 +135,40 @@
   align-items: center;
   justify-content: center;
 }
-/* The ultimate mobile layout wrapper */
+
+    /* 1. Force the main wrapper to span the exact mobile viewport height */
 .main-app-wrapper {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh; /* Dynamic VH fixes mobile browser URL bar jumping */
+  height: 100dvh; /* Prevents the mobile browser URL bar from hiding layout elements */
   overflow: hidden;
 }
 
-/* The container holding your active subapp (Synth / Beat Maker / Multitrack) */
-.subapp-container {
-  flex: 1;          /* 🚀 CRITICAL: Tells the app to claim 100% of the empty middle space */
+/* 2. Tell the active subapp area to claim all the empty middle space */
+.subapp-container, iframe, #multitrack-app {
+  flex: 1; /* 🚀 Forces the app content to stretch and fill the remaining 80% of the screen */
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto; /* Lets long control panels scroll gracefully on small screens */
+  overflow-y: auto; /* Ensures controls scroll gracefully on narrow viewports */
 }
+
+/* 3. Make the bottom tabs easy to hit with your thumb */
+.nav-tabs-container {
+  display: flex;
+  width: 100%;
+  height: 65px; /* Big, solid height for touch targets */
+  background: #111; /* Or your dark theme color */
+  padding-bottom: env(safe-area-inset-bottom); /* Fix for iOS home indicator bar */
+}
+
+.nav-tab-button {
+  flex: 1; /* Splits the 3 tabs evenly across the width */
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+    
     
 </style>
 </head>
