@@ -121,7 +121,20 @@
     padding: 12px 6px;
   }
 }
-    
+    .nav-tabs-container {
+  display: flex;
+  width: 100%;
+  height: 60px; /* Force a solid, thumb-friendly height */
+  padding-bottom: env(safe-area-inset-bottom); /* Prevents iOS home bar overlap */
+}
+
+.nav-tab-button {
+  flex: 1; /* Forces the 3 tabs to split the width perfectly evenly */
+  font-size: 16px; /* Prevents text from being microscopic */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>
 </head>
 <body>
