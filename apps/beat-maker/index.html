@@ -613,17 +613,22 @@ playBtn.addEventListener('click', () => {
       saveSession();
     });
 
-  window.addEventListener('message', (event) => {
-  // Check for the action broadcasted by the Parent
+window.addEventListener('message', (event) => {
+  // 1. Handle Global Play
   if (event.data.action === 'START_AUDIO') {
-    // Only trigger if we aren't already playing to avoid toggling off
     if (!isPlaying) {
-      // You may want to update the BPM if it was passed in the message
       if (event.data.bpm) {
         document.getElementById('bpm').value = event.data.bpm;
         bpm = event.data.bpm;
       }
       startStopSequencer();
+    }
+  }
+
+  // 2. Handle Global Stop (Add this to reset the state!)
+  if (event.data.action === 'STOP_AUDIO') {
+    if (isPlaying) {
+      startStopSequencer(); // Toggles the sequencer off and resets isPlaying to false cleanly
     }
   }
 });
