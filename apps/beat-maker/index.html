@@ -484,7 +484,7 @@ playBtn.addEventListener('click', () => {
     function refreshCustomSelectOptions() {
       const select = document.getElementById('customSelect');
       const presets = getCustomPresets();
-      select.innerHTML = '<option value="">-- MY BEATS --</option>';
+      select.innerHTML = '<option value="">-- My Beats --</option>';
       Object.keys(presets).forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
@@ -551,7 +551,7 @@ playBtn.addEventListener('click', () => {
         }
         recorder.start();
         isRecording = true;
-        btn.textContent = 'Stop Recording';
+        btn.textContent = '⏹️ Stop Recording';
         btn.classList.add('active');
       } else {
         // stop recording
@@ -579,7 +579,7 @@ playBtn.addEventListener('click', () => {
         }
 
         isRecording = false;
-        btn.textContent = 'Record';
+        btn.textContent = '🔴 Record';
         btn.classList.remove('active');
 
         /*
