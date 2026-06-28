@@ -377,7 +377,7 @@ playBtn.addEventListener('click', () => {
         if (sequence) { sequence.dispose(); sequence = null; }
         Tone.Transport.cancel();
         isPlaying = false;
-        btn.textContent = '▶ PLAY';
+        btn.textContent = '▶ Play';
         document.querySelectorAll('.step.playing').forEach(el => el.classList.remove('playing'));
         currentStep = -1;
         return;
@@ -399,7 +399,7 @@ playBtn.addEventListener('click', () => {
       sequence.start(0);
       Tone.Transport.start();
       isPlaying = true;
-      btn.textContent = '■ STOP';
+      btn.textContent = '■ Stop';
     }
 
     // ---- Edit panel ----
@@ -433,7 +433,7 @@ playBtn.addEventListener('click', () => {
       const btn = document.getElementById('toggleEditBtn');
       const willShow = !panel.classList.contains('visible');
       panel.classList.toggle('visible');
-      btn.textContent = willShow ? '🎛️ HIDE EDIT CONTROLS' : '🎛️ SHOW EDIT CONTROLS';
+      btn.textContent = willShow ? '🎛️ Hide Edit Controls' : '🎛️ Show Edit Controls';
       if (willShow && !wrap_filled()) buildEditorControls();
     }
 
@@ -551,7 +551,7 @@ playBtn.addEventListener('click', () => {
         }
         recorder.start();
         isRecording = true;
-        btn.textContent = 'STOP RECORDING';
+        btn.textContent = 'Stop Recording';
         btn.classList.add('active');
       } else {
         // stop recording
@@ -573,13 +573,13 @@ playBtn.addEventListener('click', () => {
           if (sequence) { sequence.dispose(); sequence = null; }
           Tone.Transport.cancel();
           isPlaying = false;
-          document.getElementById('playBtn').textContent = '▶ PLAY';
+          document.getElementById('playBtn').textContent = '▶ Play';
           document.querySelectorAll('.step.playing').forEach(el => el.classList.remove('playing'));
           currentStep = -1;
         }
 
         isRecording = false;
-        btn.textContent = 'RECORD WAV';
+        btn.textContent = 'Record';
         btn.classList.remove('active');
 
         /*
