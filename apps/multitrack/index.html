@@ -402,10 +402,25 @@ input[type="range"].progress-slider {
       
      if (event.data.action === 'START_AUDIO') {
       Tone.start(); // Unlock audio
-      Tone.Transport.bpm.value = event.data.bpm;
-      Tone.Transport.start(); // Start the timeline
+      Tone.Transport.bpm.value = event.data.bpm || 120;
+      
+      // ─── THE PLAY FIX ───
+      // Only call start if Tone's transport isn't already actively running
+      if (Tone.Transport.state !== 'started') {
+        Tone.Transport.start();
+        // If you have a local state variable like isPlaying, sync it here:
+        // isPlaying = true; 
+      }
      }
-     
+
+      if (event.data.action === 'STOP_AUDIO') {
+        // Only call stop if it's actually running
+        if (Tone.Transport.state === 'started') {
+          Tone.Transport.stop();
+          // isPlaying = false;
+        }
+      }
+      
      if (event.data.action === 'SWITCH_APP') {
         // DO NOT reset your track/timeline variables here!
         // Just call your UI update function to show the correct view.
