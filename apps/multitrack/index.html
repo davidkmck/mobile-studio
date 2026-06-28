@@ -107,21 +107,21 @@ h1 {
 
 .btn-record {
   background-color: var(--accent);
-  color: #000; /* Contrast black text against glowing cyan */
+  color: #0a0a0f !important; /* Forces sharp dark text contrast against glowing cyan */
+  flex: none;
+  width: 100%;
+}
+
+.btn-recording {
+  background-color: #ef4444 !important; /* Cyberpunk danger red */
+  color: #ffffff !important; /* Forces bright white text contrast */
+  animation: pulse 1.5s infinite;
   flex: none;
   width: 100%;
 }
 
 .btn-countdown {
   background-color: var(--warning);
-  color: white;
-  flex: none;
-  width: 100%;
-}
-
-.btn-recording {
-  background-color: var(--danger);
-  animation: pulse 1.5s infinite;
   color: white;
   flex: none;
   width: 100%;
