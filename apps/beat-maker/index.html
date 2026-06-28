@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,9 +33,8 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  /* CHANGE THIS: Ensure it occupies the full height but remains expandable */
   min-height: 100vh; 
-  overflow-y: auto;   /* Permits vertical scrolling natively when pushed */
+  overflow-y: auto;
 }
 
   .container {
@@ -93,7 +91,7 @@ body {
 
   header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 25px;
     flex-wrap: wrap;
@@ -105,6 +103,15 @@ body {
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  .secondary-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
   }
 
   button {
@@ -171,37 +178,27 @@ body {
     flex: 1;
   }
 
-    h1 {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 2rem;
-  letter-spacing: 1px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  width: 100%; /* Ensures alignment spans full width */
-}
+  h1 {
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2rem;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    width: 100%;
+  }
 
-.subtitle {
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  margin-bottom: 25px;
-  width: 100%;
-}
-/* Modify your existing header rule so controls align nicely below the centered title */
-header {
-  display: flex;
-  justify-content: center; /* Center-aligns the control row under the title */
-  align-items: center;
-  margin-bottom: 25px;
-  flex-wrap: wrap;
-  gap: 10px;
-}  
-  
+  .subtitle {
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    width: 100%;
+  }
+
 /* --- LANDSCAPE MODE OPTIMIZATIONS --- */
 @media (max-height: 500px) and (orientation: landscape) {
-/* 1. Reset the outer viewport so the window can expand and scroll */
   html, body {
     height: auto !important;
     min-height: 100vh !important;
@@ -209,46 +206,41 @@ header {
     padding: 10px !important;
   }
 
-/* 2. Break the fixed container sizing so it stretches down instead of creating gaps */
   .container {
     height: auto !important;
     max-height: none !important;
-    min-height: calc(100vh - 20px) !important; /* Forces it to fill the page cleanly */
+    min-height: calc(100vh - 20px) !important;
     overflow-y: visible !important; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding-bottom: 60px !important; /* Pushes content up comfortably past the navigation bar */
+    padding-bottom: 60px !important;
   }
-  /* 1. Keeps titles consistent & responsive when flipped sideways */
   h1 {
     font-size: 1.3rem; 
     margin-bottom: 2px;
   }
   
   .subtitle {
-    display: none; /* Hides the subtitle to prioritize the workspace */
+    display: none;
   }
 
   header {
     margin-bottom: 12px;
   }
 
-  /* 4. Let the drum grid breathe and stack controls nicely */
   .beat-row {
-    grid-template-columns: 70px 1fr; /* Slightly narrower label space for width */
+    grid-template-columns: 70px 1fr;
     gap: 10px;
   }
   
   .step {
-    height: 32px; /* Marginally lower profile for easier vertical scrolling */
+    height: 32px;
   }
-  /* 5. Force the sequencer grid layout area to keep normal document flow */
   .sequencer-grid, #grid {
     height: auto !important;
     flex-grow: 1;
   }
-  /* Let the individual track row stack control headers above the steps if needed */
   .drum-row {
     display: flex;
     flex-direction: column;
@@ -259,21 +251,19 @@ header {
     border-radius: 8px;
   }
 
-  /* Force the sequence steps container to scroll horizontally */
   .steps-container {
     width: 100%;
-    overflow-x: auto; /* Enables swipe-to-scroll across the 16 steps */
+    overflow-x: auto;
     display: flex;
     gap: 4px;
-    padding-bottom: 8px; /* Room for the mobile scrollbar */
-    -webkit-overflow-scrolling: touch; /* Smooth iOS momentum scrolling */
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Keep the step buttons large and fat for thumbs */
   .step-btn {
     min-width: 35px;
     height: 35px;
-    flex-shrink: 0; /* Prevents the browser from squashing them */
+    flex-shrink: 0;
   }
 }
 
@@ -283,36 +273,38 @@ header {
 <body>
 
 <div class="container">
-      <h1>Beats</h1>
+      <h1>Beat</h1>
     <div class="subtitle">Create and sequence custom rhythms</div>
   <header>
     <div class="controls">
-
-      <div class="bpm-container">
-        <label>BPM</label>
-        <input type="number" id="bpm" value="120" min="60" max="200">
-      </div>
-      <select id="factorySelect">
-        <option value="">-- Factory Bank --</option>
-        <option value="techno">Techno</option>
-        <option value="house">House</option>
-        <option value="hiphop">Hiphop</option>
-        <option value="synthwave">Synthwave</option>
-        <option value="chill">Chill</option>
-      </select>
-      <select id="customSelect">
-        <option value="">-- My Beats --</option>
-      </select>
       <button id="playBtn">▶ Play</button>
       <button id="clearBtn">Clear</button>
-      <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
-      <button id="saveBtn">💾 Save Beat</button>
       <button id="recordBtn">🔴 Record</button>
     </div>
   </header>
 
   <div class="sequencer-grid">
     <div id="grid"></div>
+  </div>
+
+  <div class="secondary-controls">
+    <div class="bpm-container">
+      <label>BPM</label>
+      <input type="number" id="bpm" value="120" min="60" max="200">
+    </div>
+    <select id="factorySelect">
+      <option value="">-- Factory Bank --</option>
+      <option value="techno">Techno</option>
+      <option value="house">House</option>
+      <option value="hiphop">Hiphop</option>
+      <option value="synthwave">Synthwave</option>
+      <option value="chill">Chill</option>
+    </select>
+    <select id="customSelect">
+      <option value="">-- My Beats --</option>
+    </select>
+    <button id="saveBtn">💾 Save Beat</button>
+    <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
   </div>
 
   <div class="synth-edit-panel" id="synthEditor">
@@ -640,14 +632,6 @@ playBtn.addEventListener('click', () => {
         btn.textContent = '🔴 Record';
         btn.classList.remove('active');
 
-        /*
-        window.parent.postMessage({
-          action: 'EXPORT_AUDIO_TO_TRACKS',
-          audioBlob: recording,
-          trackName: 'Beat_1',
-          mimeType: recording.type || 'audio/wav'
-        }, '*');
-        */
         window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
       }
     }
