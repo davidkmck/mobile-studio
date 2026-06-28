@@ -35,7 +35,9 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* CHANGE THIS: Ensure it occupies the full height but remains expandable */
+  min-height: 100vh; 
+  overflow-y: auto;   /* Permits vertical scrolling natively when pushed */
 }
 
 /* Consolidated Duplicate Button Styles */
@@ -297,7 +299,27 @@ input[type="range"].progress-slider {
     margin-bottom: 4px;
   }
 }
-
+  
+/* --- LANDSCAPE MODE OPTIMIZATIONS --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Shrink structural padding to save valuable vertical pixels */
+  }
+  
+  h1 {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none; /* Hide the subtitle completely in short landscape to make room */
+  }
+  
+  #controls-sector {
+    margin-bottom: 15px;
+  }
+}
+  
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.6; }
