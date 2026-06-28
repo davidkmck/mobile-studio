@@ -40,7 +40,7 @@ button {
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 12px 15px;
+  padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -56,17 +56,6 @@ button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-
-.container {
-  width: 100%;
-  max-width: 950px;
-  margin: 0 auto;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 15px;
-  flex-grow: 1;
-}    
 
 main {
   width: 100%;
@@ -108,7 +97,7 @@ h1 {
   flex-wrap: wrap;
 }
 
-.button-group button, .btn-record, .btn-global, .btn-save {
+.button-group button {
   flex: 1;
   min-width: 140px;
   box-sizing: border-box;
@@ -128,7 +117,7 @@ h1 {
 }
 
 .settings-panel {
-  display: none; /* Hidden by default */
+  display: none; 
   width: 100%;
   max-width: 720px;
   background-color: var(--card-bg);
@@ -158,22 +147,10 @@ h1 {
 .sliders-row .slider-container {
   flex: 1;
 }
-  
-.btn-record {
-  background: var(--panel) !important;
-  border: 1px solid var(--border);
-  color: var(--text) !important;       
-  padding: 12px 24px;        
-  border-radius: 8px;
-  display: inline-flex;
-}
 
 .btn-recording {
   background-color: #ef4444 !important;
   color: #ffffff !important;           
-  padding: 12px 24px;
-  border-radius: 8px;
-  display: inline-flex;
   animation: pulse 1.5s infinite;
 }
 
@@ -182,31 +159,6 @@ h1 {
   color: white;
   flex: none;
   width: 100%;
-}
-
-.btn-global {
-  background: var(--panel) !important;
-  border: 1px solid var(--border);
-  color: var(--text) !important;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.btn-save {
-  background: var(--panel) !important;
-  border: 1px solid var(--border);
-  color: var(--text) !important;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  display: inline-flex;
-}
-
-.toggle-label-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .switch {
@@ -323,9 +275,8 @@ input[type="range"].progress-slider {
   .subtitle {
     display: none;       
   }
+  
   .controls-container {
-    display: flex;
-    flex-direction: column;
     gap: 15px;
   }
 
@@ -334,9 +285,6 @@ input[type="range"].progress-slider {
   }
 
   .track-header {
-    display: flex; 
-    align-items: center;
-    justify-content: space-between;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
     margin-bottom: 4px;
@@ -354,28 +302,27 @@ input[type="range"].progress-slider {
 
   <main>
     <h1>tracks</h1>
-    <div class="subtitle">a dynamic scratchpad for layout and recording music ideas</div>
+    <div class="subtitle">A dynamic scratchpad for layout and recording music ideas</div>
 
     <div id="controls-sector">
       <div class="button-group">
-        <button id="recordBtn" class="btn-record">🔴 record track 1 from microphone</button>
-        <button id="master-play-btn" class="btn-global" disabled>▶️ play mix</button>
-        <button id="reset-btn" class="btn-global" disabled>⏮️ restart</button>
-        <button id="save-mix-btn" class="btn-save" disabled>💾 save mix</button>
-        <button id="settings-toggle-btn" class="btn-global">⚙️ settings</button>
+        <button id="recordBtn">🔴 Record track 1 from microphone</button>
+        <button id="master-play-btn" disabled>▶️ Play mix</button>
+        <button id="reset-btn" disabled>⏮️ Restart</button>
+        <button id="save-mix-btn" disabled>💾 Save mix</button>
+        <button id="settings-toggle-btn">⚙️ Settings</button>
       </div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
 
       <div class="toggle-container">
-        <div class="toggle-label-group">🔁 loop</div>
+        <div class="toggle-label-group">🔁 Loop</div>
         <label class="switch">
           <input type="checkbox" id="loopToggle">
           <span class="slider-toggle"></span>
         </label>
       </div>
 
-      <!-- Hidden Alignment Panel Container -->
       <div id="settingsPanel" class="settings-panel">
         <div class="slider-label">
           <span>⏱️ mic alignment latency</span>
@@ -522,12 +469,12 @@ input[type="range"].progress-slider {
           recordBtn.className = 'btn-countdown';
           
           let count = 3;
-          recordBtn.textContent = `⏳ recording starts in ${count}...`;
+          recordBtn.textContent = `⏳ Recording starts in ${count}...`;
 
           const countdownInterval = setInterval(() => {
             count--;
             if (count > 0) {
-              recordBtn.textContent = `⏳ recording starts in ${count}...`;
+              recordBtn.textContent = `⏳ Recording starts in ${count}...`;
             } else {
               clearInterval(countdownInterval);
               isCountdownActive = false;
@@ -581,7 +528,7 @@ input[type="range"].progress-slider {
 
       mediaRecorder.start();
       isRecording = true;
-      recordBtn.textContent = '⏹️ stop recording';
+      recordBtn.textContent = '⏹️ Stop recording';
       recordBtn.className = 'btn-recording';
     }
 
@@ -714,7 +661,7 @@ input[type="range"].progress-slider {
       });
 
       if (recordBtn && !isRecording) {
-        recordBtn.textContent = `🔴 record track ${tracks.length + 1} from microphone`;
+        recordBtn.textContent = `🔴 Record track ${tracks.length + 1} from microphone`;
       }
       updateUI();
     }
@@ -781,7 +728,7 @@ input[type="range"].progress-slider {
 
       if (!options.monitoringOnly) {
         isPlayingMix = true;
-        masterPlayBtn.textContent = '⏸️ pause mix';
+        masterPlayBtn.textContent = '⏸️ Pause mix';
         
         Tone.Transport.start();
         progressAnimationId = requestAnimationFrame(updatePlaybackProgressUI);
@@ -812,7 +759,7 @@ input[type="range"].progress-slider {
       });
 
       isPlayingMix = false;
-      masterPlayBtn.textContent = '▶️ play mix';
+      masterPlayBtn.textContent = '▶️ Play mix';
     }
 
     function scrubPlaybackToTimestamp(targetTime) {
@@ -870,14 +817,14 @@ input[type="range"].progress-slider {
       if (isRecording || isCountdownActive) return;
 
       recordBtn.disabled    = false;
-      recordBtn.textContent = `🔴 record track ${tracks.length + 1} from microphone`;
-      recordBtn.className   = 'btn-record';
+      recordBtn.textContent = `🔴 Record track ${tracks.length + 1} from microphone`;
+      recordBtn.className   = '';
     }
 
     saveMixBtn.addEventListener('click', async () => {
       if (!tracks || tracks.length === 0) return;
       saveMixBtn.disabled    = true;
-      saveMixBtn.textContent = 'rendering mix...';
+      saveMixBtn.textContent = 'Rendering mix...';
 
       try {
         const maxDuration = Math.max(...tracks.map(t => t.duration));
@@ -917,7 +864,7 @@ input[type="range"].progress-slider {
         alert('Failed to export the audio mix.');
       } finally {
         saveMixBtn.disabled    = false;
-        saveMixBtn.textContent = '💾 save mix';
+        saveMixBtn.textContent = '💾 Save mix';
       }
     });
 
