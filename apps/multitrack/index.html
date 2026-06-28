@@ -351,27 +351,26 @@ button {
         updateUI(); 
      }
       
-  if (event.data.action === 'ADD_TRACK') {
-        const { audioBuffer, trackName } = event.data;
+if (event.data.action === 'ADD_TRACK') {
+        let { audioBuffer, trackName } = event.data;
         
         try {
-            console.log("Multitrack received:", event.data);
-            
-            // SECURITY CHECK: Verify it's actually an ArrayBuffer
+            // 1. If it's not a proper ArrayBuffer (but looks like one), force it
             if (!(audioBuffer instanceof ArrayBuffer)) {
-                throw new Error("Received data is not an ArrayBuffer. Type is: " + typeof audioBuffer);
+                console.warn("Buffer lost prototype. Re-casting...");
+                audioBuffer = new Uint8Array(audioBuffer).buffer;
             }
 
             const ctx = getAudioContext();
             if (ctx.state === 'suspended') await ctx.resume();
             
-            // Now proceed with the verified buffer
+            // 2. Decode the now-guaranteed ArrayBuffer
             const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
             await createTrackNodeFromBuffer(decodedBuffer, trackName);
             
             console.log("Success: Track added to mixer.");
         } catch (err) {
-            console.error('CRITICAL ERROR in Multitrack listener:', err);
+            console.error('Failed to add incoming clip:', err);
         }
     }
       
