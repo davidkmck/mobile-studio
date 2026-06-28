@@ -352,23 +352,28 @@ button {
      }
       
     if (event.data.action === 'ADD_TRACK') {
-      const { audioBuffer, trackName } = event.data;
-    
-      try {
-      console.log("Multitrack received buffer for:", trackName);
-      const ctx = getAudioContext();
-      
-      // Ensure the context is resumed before decoding
-      if (ctx.state === 'suspended') await ctx.resume();
-      
-      const decodedBuffer = await ctx.decodeAudioData(audioBuffer);
-      await createTrackNodeFromBuffer(decodedBuffer, trackName);
-      
-      console.log("Success: Track added to mixer.");
-    } catch (err) {
-      console.error('Failed to add incoming clip:', err);
+        let { audioBuffer, trackName } = event.data;
+        
+        try {
+            // RE-CASTING FIX:
+            // Ensure the incoming data is treated as a valid ArrayBuffer
+            // If it arrived as an object, .buffer on a Uint8Array view recovers it.
+            const validBuffer = (audioBuffer instanceof ArrayBuffer) 
+                ? audioBuffer 
+                : new Uint8Array(audioBuffer).buffer;
+
+            const ctx = getAudioContext();
+            if (ctx.state === 'suspended') await ctx.resume();
+            
+            // Now pass the guaranteed ArrayBuffer to decodeAudioData
+            const decodedBuffer = await ctx.decodeAudioData(validBuffer);
+            await createTrackNodeFromBuffer(decodedBuffer, trackName);
+            
+            console.log("Success: Track successfully added to mixer.");
+        } catch (err) {
+            console.error('Failed to add incoming clip:', err);
+        }
     }
-  }
       
 });
 
