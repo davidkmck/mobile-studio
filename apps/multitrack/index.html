@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mixer</title>
+  <!-- 🚀 ADD THIS SCRIPT TAG TO IMPORT TONE.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -822,21 +824,26 @@ function renderMixerBoard() {
     }
 
     // ─── Playback ─────────────────────────────────────────────────────────────
-    masterPlayBtn.addEventListener('click', () => {
-      getAudioContext();
-      if (isPlayingMix) {
-        stopAllTracks();
-      } else {
-        startAllTracks();
-      }
-    });
+    if (masterPlayBtn) {
+      masterPlayBtn.addEventListener('click', () => {
+        getAudioContext();
+        if (isPlayingMix) {
+          stopAllTracks();
+        } else {
+          startAllTracks();
+        }
+      });
+    }
 
-    resetBtn.addEventListener('click', () => {
-      getAudioContext();
-      stopAllTracks();
-      tracks.forEach(t => t.playheadOffset = 0);
-      resetAllProgressUI();
-    });
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        getAudioContext();
+        stopAllTracks();
+        tracks.forEach(t => t.playheadOffset = 0);
+        resetAllProgressUI();
+      });
+    }
+
 
 function startAllTracks(options = {}) {
   if (!tracks || tracks.length === 0) return;
