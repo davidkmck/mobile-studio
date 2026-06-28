@@ -709,18 +709,26 @@ function updateRecordButtonText() {
 // and after any track deletion to keep it accurate!
     // ─── Mixer UI ─────────────────────────────────────────────────────────────
 
-    
 function renderMixerBoard() {
   console.log("Rendering board. Tracks count:", tracks.length);
+  
+  if (!mixerBoard) {
+    console.error("mixerBoard element variable is not defined or found!");
+    return;
+  }
+  
   mixerBoard.innerHTML = '';
+
   tracks.forEach((track, index) => {
     const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
     const row = document.createElement('div');
     row.className = 'track-row';
+    
+    // 1. Render the HTML layout shell safely
     row.innerHTML = `
       <div class="track-header">
         <span class="track-title">${track.name}</span>
-        <button class="btn-delete" onclick="deleteTrack(${track.id})">Delete</button>
+        <button class="btn-delete" id="delete-btn-${track.id}">Delete</button>
       </div>
       <div class="controls-container">
         <div class="slider-container">
@@ -737,7 +745,7 @@ function renderMixerBoard() {
             <span>Volume</span>
             <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
           </div>
-          <input type="range" min="0" max="1.5" step="0.05" value="${track.currentVolume}" oninput="updateVolume(${track.id}, this.value)">
+          <input type="range" class="volume-slider" min="0" max="1.5" step="0.05" value="${track.currentVolume}">
         </div>
         <div class="slider-container">
           <div class="slider-label">
@@ -745,26 +753,57 @@ function renderMixerBoard() {
             <span>Stereo Pan</span>
             <span>Right</span>
           </div>
-          <input type="range" min="-1" max="1" step="0.1" value="${track.currentPan}" oninput="updatePan(${track.id}, this.value)">
+          <input type="range" class="pan-slider" min="-1" max="1" step="0.1" value="${track.currentPan}">
         </div>
       </div>
     `;
+    
+    // 2. Append row immediately to the DOM so querySelectors are guaranteed to find elements
     mixerBoard.appendChild(row);
 
-    const progressSlider = row.querySelector(`.progress-slider`);
-    
-    progressSlider.addEventListener('input', (e) => {
-      isScrubbing = true;
-      const targetTime = parseFloat(e.target.value);
-      updateAllProgressUI(targetTime);
-    });
+    // 3. Bind Delete Button safely via JavaScript event listener
+    const deleteBtn = row.querySelector(`#delete-btn-${track.id}`);
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => deleteTrack(track.id));
+    }
 
-    progressSlider.addEventListener('change', (e) => {
-      const targetTime = parseFloat(e.target.value);
-      scrubPlaybackToTimestamp(targetTime);
-      isScrubbing = false;
-    });
+    // 4. Bind Volume Slider safely via JavaScript listener
+    const volumeSlider = row.querySelector('.volume-slider');
+    if (volumeSlider) {
+      volumeSlider.addEventListener('input', (e) => updateVolume(track.id, e.target.value));
+    }
+
+    // 5. Bind Pan Slider safely via JavaScript listener
+    const panSlider = row.querySelector('.pan-slider');
+    if (panSlider) {
+      panSlider.addEventListener('input', (e) => updatePan(track.id, e.target.value));
+    }
+
+    // 6. Bind Progress Sliders
+    const progressSlider = row.querySelector(`.progress-slider`);
+    if (progressSlider) {
+      progressSlider.addEventListener('input', (e) => {
+        isScrubbing = true;
+        const targetTime = parseFloat(e.target.value);
+        updateAllProgressUI(targetTime);
+      });
+
+      progressSlider.addEventListener('change', (e) => {
+        const targetTime = parseFloat(e.target.value);
+        scrubPlaybackToTimestamp(targetTime);
+        isScrubbing = false;
+      });
+    }
   });
+
+  // Dynamic Mic recording button update
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn && !isRecording) {
+    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+  }
+
+  updateUI();
+}
 
   // ─── THE UPDATE ───
   // Dynamically update the Mic recording button to reflect the next available track number
