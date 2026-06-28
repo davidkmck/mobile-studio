@@ -270,16 +270,37 @@ input[type="range"].progress-slider {
   cursor: pointer;
 }
 
-/* --- THE MOBILE FIX --- */
-@media (max-width: 600px) {
+  /* 1. GLOBAL STYLE (Put this first) */
+h1 {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;       /* Big and clean on desktop/portrait */
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
+@media (max-height: 500px) and (orientation: landscape) {
   body {
     padding: 10px;
   }
   
   h1 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+    margin-bottom: 2px;
   }
-
+  
+  .subtitle {
+    display: none;       /* Hides the subtitle to preserve vertical room */
+  }
   .controls-container {
     display: flex;
     flex-direction: column;
