@@ -612,30 +612,35 @@ async function addAudioToTimeline(url, trackName) {
     }
 
     // ─── Track creation ───────────────────────────────────────────────────────
-    async function createTrackNode(decodedBuffer, customName) {
-      const ctx = getAudioContext();
-      
-      const arrayBuffer = await blob.arrayBuffer();
-      
-      const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+async function createTrackNode(blob, customName) {
+  const ctx = getAudioContext();
+  
+  // 1. Convert the blob to an ArrayBuffer
+  const arrayBuffer = await blob.arrayBuffer();
+  
+  // 2. Decode the buffer (using a new name: decodedAudio)
+  const decodedAudio = await ctx.decodeAudioData(arrayBuffer);
 
-      const trackObject = {
-        id: Date.now(),
-        name: customName || `Track ${tracks.length + 1}`,
-        blob,
-        audioBuffer: decodedBuffer,
-        sourceNode: null,
-        gainNode:   null,
-        panNode:    null,
-        currentPan: 0,
-        currentVolume: 1.0,
-        duration: decodedBuffer.duration || 0,
-        playheadOffset: 0
-      };
+  // 3. Create the track object
+  const trackObject = {
+    id: Date.now(),
+    name: customName || `Track ${tracks.length + 1}`,
+    blob: blob, // Store the blob
+    audioBuffer: decodedAudio, // Use the decoded data
+    sourceNode: null,
+    gainNode: null,
+    panNode: null,
+    currentPan: 0,
+    currentVolume: 1.0,
+    duration: decodedAudio.duration || 0,
+    playheadOffset: 0
+  };
 
-      tracks.push(trackObject);
-      renderMixerBoard();
-    }
+  tracks.push(trackObject);
+  
+  // 4. Trigger the UI refresh
+  renderMixerBoard();
+}
 
     // ─── Mixer UI ─────────────────────────────────────────────────────────────
     function renderMixerBoard() {
