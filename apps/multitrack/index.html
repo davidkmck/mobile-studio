@@ -188,20 +188,47 @@ button {
       gap: 15px;
       width: 100%;
     }
-    .track-row {
-      background-color: var(--card-bg);
-      padding: 15px;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    }
-    .track-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    
+.track-row {
+  background-color: var(--card-bg);
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column; /* Keeps internal groupings clean */
+  gap: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+    /* --- THE MOBILE FIX --- */
+/* This media query targets screens narrower than 600px (standard portrait phone) */
+@media (max-width: 600px) {
+  body {
+    padding: 10px; /* Give yourself more screen real estate */
+  }
+  
+  h1 {
+    font-size: 1.4rem; /* Shrink headers slightly so they don't consume the screen */
+  }
+
+  .controls-container {
+    display: flex;
+    flex-direction: column; /* Stack controls vertically instead of crowding horizontally */
+    gap: 15px;
+  }
+
+  /* Make sliders and their touch targets larger for fingers instead of mouse pointers */
+  input[type="range"] {
+    height: 24px; /* fatter touch target */
+  }
+
+  /* Adjust buttons inside track headers so they don't squash the track title */
+  .track-header {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+}
+
     .track-title {
       font-weight: 600;
       color: #cbd5e1;
