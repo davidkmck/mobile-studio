@@ -79,16 +79,23 @@
     padding: 8px;
   }
   
-  /* If you have a top navigation bar or app-switcher tabs */
-  .nav-tabs, .app-switcher {
-    flex-direction: column;
+/* Target the container wrapping your 3 bottom sub-app buttons */
+  .nav-tabs, .app-switcher, .tab-bar {
+    display: flex !important;
+    flex-direction: row !important; /* Keep them inline across the bottom row */
     width: 100%;
     gap: 8px;
+    padding: 5px;
   }
 
-  .nav-tabs button, .app-switcher button {
-    width: 100%; /* Full width buttons are much easier to tap on mobile */
-    padding: 12px;
+/* Force the buttons to scale safely and prevent shrinking */
+  .nav-tabs button, .app-switcher button, .tab-bar button {
+    flex: 1;            /* Forces them to split available width 3 ways evenly */
+    min-height: 48px;   /* Fat finger tap target standard */
+    font-size: 0.9rem;  /* Keeps font readable */
+    padding: 8px 4px;
+    flex-shrink: 0;     /* STOPS the browser from compressing them to tiny slivers */
+    white-space: nowrap;/* Prevents text from ugly wrapping or clipping */
   }
 
   /* Make sure the iframe container stretches to fill the rest of the portrait view */
