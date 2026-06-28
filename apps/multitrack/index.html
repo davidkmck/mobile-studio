@@ -311,13 +311,13 @@ input[type="range"].progress-slider {
     <h1>Multitrack Studio</h1>
     <div class="subtitle">A dynamic scratchpad for layout and recording music ideas</div>
 
-    <section id="controls-sector">
-      <button id="record-btn" class="btn-record">🔴 Record Track 1</button>
-      
-      <div class="button-group" style="flex-direction: column; gap: 10px;">
-        <button id="vault-btn" class="btn-vault">📥 Load from Beat Maker</button>
-        <button id="import-btn" class="btn-global" style="background-color: #475569; width: 100%; flex: none;">📁 Import Local Audio File</button>
-      </div>
+<div id="controls-sector">
+  <div class="button-group">
+    <!-- Updated with dynamic text placeholder -->
+    <button id="recordBtn" class="btn-record">RECORD TRACK 1 FROM MICROPHONE</button>
+  </div>
+  <!-- REMOVED: The old "Load from Beat Maker" or vault button group is gone completely -->
+</div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
 
@@ -346,7 +346,7 @@ input[type="range"].progress-slider {
       </div>
 
       <button id="save-mix-btn" class="btn-save" disabled>💾 Save Mix to File</button>
-    </section>
+    </div>
 
     <section class="mixer-board" id="mixer-board"></section>
   </main>
@@ -703,64 +703,83 @@ async function createTrackNode(blob, customName) {
   renderMixerBoard();
 }
 
+function updateRecordButtonText() {
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn && !isRecording) {
+    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+  }
+}
+
+// Call updateRecordButtonText() inside your renderMixerBoard() 
+// and after any track deletion to keep it accurate!
     // ─── Mixer UI ─────────────────────────────────────────────────────────────
-    function renderMixerBoard() {
-      console.log("Rendering board. Tracks count:", tracks.length);
-      mixerBoard.innerHTML = '';
-      tracks.forEach((track, index) => {
-        const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
-        const row = document.createElement('div');
-        row.className = 'track-row';
-        row.innerHTML = `
-          <div class="track-header">
-            <span class="track-title">${track.name}</span>
-            <button class="btn-delete" onclick="deleteTrack(${track.id})">Delete</button>
-          </div>
-          <div class="controls-container">
-            <div class="slider-container">
-              <div class="slider-label">
-                <span>Playback Position</span>
-                <div>
-                  <span id="current-time-${track.id}">0.0s</span> / <span>${totalDurationText}</span>
-                </div>
-              </div>
-              <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
-            </div>
-            <div class="slider-container">
-              <div class="slider-label">
-                <span>Volume</span>
-                <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
-              </div>
-              <input type="range" min="0" max="1.5" step="0.05" value="${track.currentVolume}" oninput="updateVolume(${track.id}, this.value)">
-            </div>
-            <div class="slider-container">
-              <div class="slider-label">
-                <span>Left</span>
-                <span>Stereo Pan</span>
-                <span>Right</span>
-              </div>
-              <input type="range" min="-1" max="1" step="0.1" value="${track.currentPan}" oninput="updatePan(${track.id}, this.value)">
+
+    
+function renderMixerBoard() {
+  console.log("Rendering board. Tracks count:", tracks.length);
+  mixerBoard.innerHTML = '';
+  tracks.forEach((track, index) => {
+    const totalDurationText = track.duration ? track.duration.toFixed(1) + 's' : '0.0s';
+    const row = document.createElement('div');
+    row.className = 'track-row';
+    row.innerHTML = `
+      <div class="track-header">
+        <span class="track-title">${track.name}</span>
+        <button class="btn-delete" onclick="deleteTrack(${track.id})">Delete</button>
+      </div>
+      <div class="controls-container">
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Playback Position</span>
+            <div>
+              <span id="current-time-${track.id}">0.0s</span> / <span>${totalDurationText}</span>
             </div>
           </div>
-        `;
-        mixerBoard.appendChild(row);
+          <input type="range" class="progress-slider" id="progress-${track.id}" min="0" max="${track.duration || 0}" step="0.01" value="0">
+        </div>
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Volume</span>
+            <span id="vol-txt-${track.id}">${Math.round(track.currentVolume * 100)}%</span>
+          </div>
+          <input type="range" min="0" max="1.5" step="0.05" value="${track.currentVolume}" oninput="updateVolume(${track.id}, this.value)">
+        </div>
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Left</span>
+            <span>Stereo Pan</span>
+            <span>Right</span>
+          </div>
+          <input type="range" min="-1" max="1" step="0.1" value="${track.currentPan}" oninput="updatePan(${track.id}, this.value)">
+        </div>
+      </div>
+    `;
+    mixerBoard.appendChild(row);
 
-        const progressSlider = row.querySelector(`.progress-slider`);
-        
-        progressSlider.addEventListener('input', (e) => {
-          isScrubbing = true;
-          const targetTime = parseFloat(e.target.value);
-          updateAllProgressUI(targetTime);
-        });
+    const progressSlider = row.querySelector(`.progress-slider`);
+    
+    progressSlider.addEventListener('input', (e) => {
+      isScrubbing = true;
+      const targetTime = parseFloat(e.target.value);
+      updateAllProgressUI(targetTime);
+    });
 
-        progressSlider.addEventListener('change', (e) => {
-          const targetTime = parseFloat(e.target.value);
-          scrubPlaybackToTimestamp(targetTime);
-          isScrubbing = false;
-        });
-      });
-      updateUI();
-    }
+    progressSlider.addEventListener('change', (e) => {
+      const targetTime = parseFloat(e.target.value);
+      scrubPlaybackToTimestamp(targetTime);
+      isScrubbing = false;
+    });
+  });
+
+  // ─── THE UPDATE ───
+  // Dynamically update the Mic recording button to reflect the next available track number
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn && !isRecording) {
+    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
+  }
+
+  updateUI();
+}
 
     function updateVolume(id, val) {
       const track = tracks.find(t => t.id === id);
