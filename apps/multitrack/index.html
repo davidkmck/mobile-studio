@@ -801,44 +801,6 @@ function renderMixerBoard() {
   if (typeof updateUI === 'function') updateUI();
 }
 
-    
-  // Dynamic Mic recording button update
-  const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn && !isRecording) {
-    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
-  }
-
-  updateUI();
-}
-
-  // ─── THE UPDATE ───
-  // Dynamically update the Mic recording button to reflect the next available track number
-  const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn && !isRecording) {
-    recordBtn.textContent = `RECORD TRACK ${tracks.length + 1} FROM MICROPHONE`;
-  }
-
-  updateUI();
-}
-
-    function updateVolume(id, val) {
-      const track = tracks.find(t => t.id === id);
-      if (!track) return;
-      track.currentVolume = parseFloat(val);
-      if (track.gainNode) {
-        track.gainNode.gain.setValueAtTime(track.currentVolume, audioCtx.currentTime);
-      }
-      document.getElementById(`vol-txt-${id}`).textContent = `${Math.round(val * 100)}%`;
-    }
-
-    function updatePan(id, val) {
-      const track = tracks.find(t => t.id === id);
-      if (!track) return;
-      track.currentPan = parseFloat(val);
-      if (track.panNode) {
-        track.panNode.pan.setValueAtTime(track.currentPan, audioCtx.currentTime);
-      }
-    }
 
     function deleteTrack(id) {
       stopAllTracks();
