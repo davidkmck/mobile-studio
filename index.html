@@ -73,7 +73,7 @@
     display: block; /* Show only the active one */
 }
 
-    @media (max-width: 600px) {
+@media (max-width: 600px) {
   /* Stack the main application containers vertically */
   body {
     padding: 8px;
@@ -94,6 +94,24 @@
   /* Make sure the iframe container stretches to fill the rest of the portrait view */
   #app-container {
     height: calc(100vh - 180px); /* Adjust based on your header height */
+  }
+
+  /* Ensure the navigation bar spans cleanly */
+  .nav-container, .tab-bar {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+  }
+
+  /* Protect the buttons from squishing */
+  .nav-container button, .tab-bar button {
+    flex: 1;            /* Forces them to evenly share all available horizontal space */
+    min-height: 48px;   /* Meets mobile touch-target accessibility standards */
+    font-size: 14px;    /* Keeps text perfectly readable */
+    flex-shrink: 0;     /* ABSOLUTELY stops the browser from squishing them down */
+    padding: 12px 6px;
   }
 }
     
