@@ -118,40 +118,53 @@
     // Centralized Storage Managed by the Parent App
     let pendingClip = null; // holds audio waiting to be delivered to the next app
 
-    window.addEventListener('message', (event) => {
-      const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
+window.addEventListener('message', (event) => {
+  const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
 
-      // 1. Receive from Beat Maker
-      if (action === 'EXPORT_AUDIO_TO_TRACKS') {
-        console.log("Parent: Received audio from Beat Maker. Queuing for Tracks...");
-        pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
-      }
+  // 1. Receive from Beat Maker (Legacy or background worker)
+  if (action === 'EXPORT_AUDIO_TO_TRACKS') {
+    console.log("Parent: Received audio from Beat Maker. Queuing for Tracks...");
+    pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
+  }
 
-      // 2. Navigation — switch sub-app, then deliver any queued clip once it's loaded
-      if (action === 'SWITCH_APP') {
-        switchApp(app);
-      }
+  // 2. Navigation — switch sub-app
+  if (action === 'SWITCH_APP') {
+    switchApp(app);
+  }
 
-      // Listen for the app requesting a global state change
-      if (action === 'REQUEST_PLAY') {
-        // Broadcast to ALL subapps
-        const frames = document.querySelectorAll('#appFrame'); 
-        frames.forEach(frame => {
-          frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
-       });
-     }
-
-      // 1. If Beat Maker sends an audio clip
-      if (event.data.action === 'ADD_TRACK') {
-        console.log("Parent received:", event.data); // ADD THIS
-        const multitrackFrame = document.getElementById('multitrack');
-        if (multitrackFrame) {
-           console.log("Parent forwarding to Multitrack"); // ADD THIS
-            // Forward the data specifically to the Multitrack iframe
-            multitrackFrame.contentWindow.postMessage(event.data, '*');
-        }
+  // 3. Global Play Sync (Triggered by Synth App recording or playback requests)
+  if (action === 'REQUEST_PLAY') {
+    console.log("Parent: Broadcasting START_AUDIO to all apps at BPM:", bpm);
+    // Fixed selector to target your actual class name '.app-frame'
+    const frames = document.querySelectorAll('.app-frame'); 
+    frames.forEach(frame => {
+      if (frame.contentWindow) {
+        frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm: bpm }, '*');
       }
     });
+  }
+
+  // 4. Global Stop Sync (Added to stop Multitrack timeline when Synth stops recording)
+  if (action === 'REQUEST_STOP') {
+    console.log("Parent: Broadcasting STOP_AUDIO to all apps");
+    const frames = document.querySelectorAll('.app-frame');
+    frames.forEach(frame => {
+      if (frame.contentWindow) {
+        frame.contentWindow.postMessage({ action: 'STOP_AUDIO' }, '*');
+      }
+    });
+  }
+
+  // 5. Forward Raw Audio Tracks to Multitrack Mixer
+  if (action === 'ADD_TRACK') {
+    console.log("Parent received ADD_TRACK, forwarding to Multitrack:", trackName);
+    // Targeting your exact iframe ID '#multitrack'
+    const multitrackFrame = document.getElementById('multitrack');
+    if (multitrackFrame && multitrackFrame.contentWindow) {
+      multitrackFrame.contentWindow.postMessage(event.data, '*');
+    }
+  }
+});
 
     function switchApp(targetAppId) {
     // 1. Hide all frames
