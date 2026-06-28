@@ -74,13 +74,23 @@
       gap: 10px;
       margin-bottom: 25px;
     }
-    h1 { font-size: 1.4rem; }
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+/* 1. GLOBAL STYLE (Put this first) */
+h1 {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;       /* Big and clean on desktop/portrait */
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
     select {
       background: var(--panel);
       color: var(--text);
@@ -159,7 +169,20 @@
     .editor-row label { width: 110px; }
     .editor-row input[type="range"] { flex: 1; }
 
-    @media (max-width: 600px) {
+/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Keeps padding tight to save screen real estate */
+  }
+  h1 {
+    font-size: 1.3rem;   /* Automatically shrinks just the size when flipped sideways */
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none;       /* Hides the subtitle to preserve vertical room */
+  }
+  
   /* Stack synth control modules (Oscillator, Filter, Envelope) vertically */
   .synth-controls {
     display: flex;
