@@ -451,6 +451,15 @@ window.addEventListener('message', (event) => {
     Tone.Transport.bpm.value = event.data.bpm;
     Tone.Transport.start(); // Start the timeline
   }
+
+  if (event.data.action === 'STOP_AUDIO') {
+    // ─── THE CRITICAL CHECK ───
+    // If THIS app is currently recording, let recordWav() handle the stop state natively.
+    // Don't let the global broadcast choke Tone.js early!
+    if (isRecording) return; 
+
+    Tone.Transport.stop();
+  }
 });
 
 // Send the request when your internal Play button is pressed
