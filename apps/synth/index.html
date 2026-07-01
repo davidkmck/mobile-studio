@@ -2,561 +2,528 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Synth Subapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Synth</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
     :root {
       --bg: #0a0a0f;
       --panel: #12121c;
       --border: #26263b;
+      --text: #e2e2e9;
+      --text-dim: #6c6c84;'m
       --accent: #00e5ff;
+      --accent-alt: #9d4edd;
     }
-
-    * { box-sizing: border-box; }
-    
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100dvh;
-      overflow: hidden;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      padding: 12px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      height: 100%;
-    }
-
-    /* ==========================================================================
-       1. TOP MASTER PANEL (Transport + Engine Switcher)
-       ========================================================================== */
-    .controls-panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-
-    .left-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .selector-group {
-      display: flex;
-      background: #07070a;
-      padding: 2px;
-      border-radius: 6px;
-      border: 1px solid #1f1f2e;
-    }
-
-    .sound-btn {
-      background: transparent;
-      border: none;
-      color: #5c5c7a;
-      padding: 6px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s;
-    }
-
-    .sound-btn.active {
-      background: #1c1c2b;
-      color: var(--accent);
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-      text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
-    }
-
-    .status-lamp {
-      font-family: monospace;
-      font-size: 9px;
-      background: #121c12;
-      color: #39ff14;
-      padding: 4px 8px;
-      border-radius: 3px;
-      border: 1px solid #091009;
-    }
-
-    .transport-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      background: #1c1c2b;
-      border: 1px solid var(--border);
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn-record {
-      background: #2b1c1c;
-      border-color: #5c2626;
-      color: #ff4444;
-    }
-    
-    .btn-record.recording {
-      background: #ff4444;
-      color: #fff;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-
-    /* ==========================================================================
-       2. SYNTH PARAMETERS EDITING PANEL (Restored Tweaking Knobs)
-       ========================================================================== */
-    .synth-tweaker-panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      display: flex;
-      gap: 16px;
-      overflow-x: auto;
-      flex-shrink: 0;
-    }
-
-    .tweak-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #09090f;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid #1a1a29;
-    }
-
-    .section-title {
-      font-size: 10px;
-      font-weight: 800;
-      color: #5c5c7a;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      writing-mode: vertical-lr;
-      transform: rotate(180deg);
-    }
-
-    .knob-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .knob-box label {
-      font-size: 9px;
-      color: #8c8ca3;
-      font-weight: 600;
-    }
-
-    .knob-box input[type="range"] {
-      width: 60px;
-      accent-color: var(--accent);
-    }
-
-    .select-dark {
-      background: #1c1c2b;
-      border: 1px solid var(--border);
-      color: #fff;
-      padding: 4px 8px;
-      font-size: 11px;
-      border-radius: 4px;
-      outline: none;
-    }
-
-    /* ==========================================================================
-       3. FLEXIBLE KEYBOARD ENVIRONMENT
-       ========================================================================= */
-    .keyboard-space {
-      flex: 1;
-      width: 100%;
-      position: relative;
-    }
-
-    .keyboard {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-    }
-
-    .key {
-      position: relative;
-      cursor: pointer;
+      min-height: 100vh;
       user-select: none;
     }
+    button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    
+/* Initial unpressed state: Dark text on glowing cyan background */
+.btn-record {
+  background-color: var(--accent);
+  color: #0a0a0f !important; /* Forces dark contrast on cyan */
+  width: 100%;
+}
 
-    .key.white {
+/* Active recording state: White text on pulsing red background */
+.btn-recording {
+  background-color: #ef4444 !important; /* Cyberpunk danger red */
+  color: #ffffff !important; /* Forces bright white text contrast */
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+    .container {
+      width: 100%;
+      max-width: 950px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .secondary-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+/* 1. GLOBAL STYLE (Put this first) */
+h1 {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;       /* Big and clean on desktop/portrait */
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  width: 100%; /* Ensures alignment spans full width */
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+    select {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px;
+      border-radius: 4px;
+    }
+    .octave-display {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 70px;
+      text-align: center;
+    }
+
+    /* ─── Keyboard ─────────────────────────────────────────── */
+    .keyboard-wrap {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    .keyboard {
+      position: relative;
+      display: flex;
+      height: 180px;
+      min-width: 700px;
+    }
+    .white-key {
+      position: relative;
       flex: 1;
-      background: #f4f4f9;
-      border-right: 1px solid #bdae9e;
-      border-bottom: 6px solid #dbd2c4;
-      border-radius: 0 0 4px 4px;
-      height: 100%;
-      z-index: 1;
+      background: #e9e9f2;
+      border: 1px solid var(--border);
+      border-radius: 0 0 6px 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      font-size: 10px;
+      color: #555;
+      transition: background 0.05s ease;
     }
-
-    .key.white.active {
-      background: #e2e2eb;
-      border-bottom-width: 2px;
-      transform: translateY(4px);
+    .white-key.pressed {
+      background: var(--accent);
     }
-
-    .key.white:last-child {
-      border-right: none;
-    }
-
-    .key.black {
+    .black-key {
       position: absolute;
-      width: 6%;
-      height: 58%;
-      background: linear-gradient(to bottom, #111 0%, #292929 80%, #000 100%);
+      top: 0;
+      width: 6.5%;
+      height: 62%;
+      background: #14141f;
       border: 1px solid #000;
-      border-radius: 0 0 3px 3px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+      border-radius: 0 0 5px 5px;
+      cursor: pointer;
       z-index: 2;
+      transition: background 0.05s ease;
+    }
+    .black-key.pressed {
+      background: var(--accent-alt);
     }
 
-    .key.black.active {
-      background: #111;
-      transform: translateY(2px);
-      height: 57%;
+    /* ─── Edit panel ───────────────────────────────────────── */
+    .synth-edit-panel {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: none;
     }
+    .synth-edit-panel.visible { display: block; }
+    .editor-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .editor-row label { width: 110px; }
+    .editor-row input[type="range"] { flex: 1; }
 
-    /* Traditional layout geometry offsets */
-    .k-Csh1 { left: 5.5%; }
-    .k-Dsh1 { left: 14.5%; }
-    .k-Fsh1 { left: 32.5%; }
-    .k-Gsh1 { left: 41.5%; }
-    .k-Ash1 { left: 50.5%; }
-    .k-Csh2 { left: 69.5%; }
-    .k-Dsh2 { left: 78.5%; }
+/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Keeps padding tight to save screen real estate */
+  }
+  h1 {
+    font-size: 1.3rem;   /* Automatically shrinks just the size when flipped sideways */
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none;       /* Hides the subtitle to preserve vertical room */
+  }
+  
+  /* Stack synth control modules (Oscillator, Filter, Envelope) vertically */
+  .synth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .knob-panel, .adsr-envelope {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Put knobs into a clean 2-column grid instead of a squished row */
+    gap: 10px;
+  }
+
+  /* Make the piano keyboard scrollable so keys stay wide enough to play chords */
+  .keyboard-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+  }
+
+  .piano-keyboard {
+    display: flex;
+    width: max-content; /* Forces the keyboard to maintain its full natural width */
+  }
+
+  .white-key {
+    width: 40px; /* Big enough for a finger tap */
+    height: 120px;
+    flex-shrink: 0;
+  }
+}
   </style>
 </head>
 <body>
 
-  <!-- Top Master Utility Block -->
-  <div class="controls-panel">
-    <div class="left-controls">
-      <div class="selector-group">
-        <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
-        <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
-      </div>
-      <div id="engine-status" class="status-lamp">READY</div>
+<div class="container">
+<h1>Polyphonic Synth</h1>
+  <div class="subtitle">Play chords and design retro electronic tones</div>
+  <header>
+    <div class="controls">
+      <button id="playBtn">▶ Play</button>
+      <button id="recordBtn">🔴 Record</button>
     </div>
+  </header>
 
-    <div class="transport-group">
-      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
-    </div>
+  <div class="keyboard-wrap">
+    <div class="keyboard" id="keyboard"></div>
   </div>
 
-  <!-- Restored Sound Editing Parameters Grid -->
-  <div class="synth-tweaker-panel">
-    <!-- Generator Source -->
-    <div class="tweak-section">
-      <span class="section-title">Osc</span>
-      <div class="knob-box">
-        <label>Wave</label>
-        <select id="wave-type" class="select-dark" onchange="updateParameters()">
-          <option value="sawtooth">Sawtooth</option>
-          <option value="square">Square</option>
-          <option value="sine">Sine</option>
-          <option value="triangle">Triangle</option>
-        </select>
-      </div>
-      <div class="knob-box">
-        <label>Octave</label>
-        <select id="octave-shift" class="select-dark" onchange="shiftOctave()">
-          <option value="-1">Lower</option>
-          <option value="0" selected>Normal</option>
-          <option value="1">Higher</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Envelope Modifiers -->
-    <div class="tweak-section">
-      <span class="section-title">Env</span>
-      <div class="knob-box">
-        <label>Attack</label>
-        <input id="p-attack" type="range" min="0.01" max="1" step="0.05" value="0.05" oninput="updateParameters()">
-      </div>
-      <div class="knob-box">
-        <label>Decay</label>
-        <input id="p-decay" type="range" min="0.01" max="1" step="0.05" value="0.1" oninput="updateParameters()">
-      </div>
-      <div class="knob-box">
-        <label>Sustain</label>
-        <input id="p-sustain" type="range" min="0" max="1" step="0.1" value="0.3" oninput="updateParameters()">
-      </div>
-      <div class="knob-box">
-        <label>Release</label>
-        <input id="p-release" type="range" min="0.1" max="3" step="0.1" value="1.0" oninput="updateParameters()">
-      </div>
-    </div>
-
-    <!-- Master Amp Gain -->
-    <div class="tweak-section">
-      <span class="section-title">Amp</span>
-      <div class="knob-box">
-        <label>Volume</label>
-        <input id="p-volume" type="range" min="-30" max="0" step="1" value="-6" oninput="updateParameters()">
-      </div>
-    </div>
+  <div class="secondary-controls">
+    <select id="waveSelect">
+      <option value="sawtooth">Sawtooth</option>
+      <option value="square">Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="sine">Sine</option>
+    </select>
+    <button id="octaveDownBtn">Oct −</button>
+    <div class="octave-display" id="octaveDisplay">Octave 4</div>
+    <button id="octaveUpBtn">Oct +</button>
+    <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
   </div>
 
-  <!-- Main Self-Sizing Dynamic Piano Workspace -->
-  <div class="keyboard-space">
-    <div class="keyboard">
-      <!-- Octave 1 White Keys -->
-      <div class="key white" data-base-note="C" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="D" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="E" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="F" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="G" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="A" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="B" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-
-      <!-- Octave 2 White Keys -->
-      <div class="key white" data-base-note="C+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="D+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="E+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="F+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="G+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="A+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="B+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key white" data-base-note="C++" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-
-      <!-- Black Keys Overlays -->
-      <div class="key black k-Csh1" data-base-note="C#" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key black k-Dsh1" data-base-note="D#" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      
-      <div class="key black k-Fsh1" data-base-note="F#" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key black k-Gsh1" data-base-note="G#" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key black k-Ash1" data-base-note="A#" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-
-      <div class="key black k-Csh2" data-base-note="C#+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-      <div class="key black k-Dsh2" data-base-note="D#+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
-    </div>
+  <div class="synth-edit-panel" id="synthEditor">
+    <div id="globalEditorControls"></div>
   </div>
+</div>
 
-  <script>
-    // Global variable state references declared early to prevent runtime errors
-    let activeEngine = null;
-    let currentOctaveBase = 4; // Mid-scale C4 standard default
+<script>
+  // ─── Keyboard layout ──────────────────────────────────────────
+  const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  const BLACK_NOTES = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
+  const NUM_OCTAVES_SHOWN = 2;
+  let baseOctave = 4;
 
-    const recorder = new Tone.Recorder();
+  let isRecording = false;
+  let recorder = null;
+  const activeNotes = new Set();
 
-    // Sound Engine 1: Fully Customizable Electronic PolySynth
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(recorder).toDestination();
+  // ─── Sound engine ─────────────────────────────────────────────
+  const synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sawtooth' },
+    envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
+  }).toDestination();
+  synth.volume.value = -6;
 
-    // Sound Engine 2: Premium Piano Sampler (Configured with safe CORS mirror endpoints)
-    const pianoSampler = new Tone.Sampler({
-      urls: {
-        A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
-        A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
-        A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
-        A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
-        A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
-        A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
-        A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
-        A7: "A7.mp3", C8: "C8.mp3"
-      },
-      baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/piano/",
-      onload: () => {
-        if (activeEngine === pianoSampler) {
-          const statusEl = document.getElementById('engine-status');
-          if (statusEl) statusEl.innerText = "READY";
+  document.getElementById('waveSelect').addEventListener('change', (e) => {
+    synth.set({ oscillator: { type: e.target.value } });
+  });
+
+  // ─── Build keyboard ───────────────────────────────────────────
+  function buildKeyboard() {
+    const kb = document.getElementById('keyboard');
+    kb.innerHTML = '';
+
+    const whiteKeyEls = [];
+    let whiteIndex = 0;
+
+    for (let o = 0; o < NUM_OCTAVES_SHOWN; o++) {
+      const octave = baseOctave + o;
+      WHITE_NOTES.forEach(note => {
+        const key = document.createElement('div');
+        key.className = 'white-key';
+        key.dataset.note = `${note}${octave}`;
+        key.textContent = `${note}${octave}`;
+        kb.appendChild(key);
+        whiteKeyEls.push(key);
+        attachKeyEvents(key, key.dataset.note);
+        whiteIndex++;
+      });
+    }
+
+    // Position black keys relative to white key width
+    const totalWhite = whiteKeyEls.length;
+    const whiteKeyPercent = 100 / totalWhite;
+
+    let wi = 0;
+    for (let o = 0; o < NUM_OCTAVES_SHOWN; o++) {
+      const octave = baseOctave + o;
+      WHITE_NOTES.forEach(note => {
+        if (BLACK_NOTES[note]) {
+          const blackNote = `${BLACK_NOTES[note]}${octave}`;
+          const bk = document.createElement('div');
+          bk.className = 'black-key';
+          bk.dataset.note = blackNote;
+          bk.style.left = `calc(${(wi + 1) * whiteKeyPercent}% - 3.25%)`;
+          kb.appendChild(bk);
+          attachKeyEvents(bk, blackNote);
         }
-      }
-    }).connect(recorder).toDestination();
-
-    // Establish active initialization engine target safely
-    activeEngine = electronicSynth;
-
-    // Push slider/select values straight into the Tone parameters matrix
-    function updateParameters() {
-      const wave = document.getElementById('wave-type').value;
-      const attack = parseFloat(document.getElementById('p-attack').value);
-      const decay = parseFloat(document.getElementById('p-decay').value);
-      const sustain = parseFloat(document.getElementById('p-sustain').value);
-      const release = parseFloat(document.getElementById('p-release').value);
-      const volume = parseFloat(document.getElementById('p-volume').value);
-
-      // Apply modifiers to Customizable Synth
-      electronicSynth.set({
-        oscillator: { type: wave },
-        envelope: { attack, decay, sustain, release }
+        wi++;
       });
-      electronicSynth.volume.value = volume;
-
-      // Apply modifications to Sampler (Volume/Envelope Release adjustments)
-      pianoSampler.volume.value = volume;
     }
 
-    function shiftOctave() {
-      const shift = parseInt(document.getElementById('octave-shift').value);
-      currentOctaveBase = 4 + shift;
-    }
+    document.getElementById('octaveDisplay').textContent =
+      `Octave ${baseOctave}–${baseOctave + NUM_OCTAVES_SHOWN - 1}`;
+  }
 
-    function setEngine(type, buttonEl) {
-      document.querySelectorAll('.sound-btn').forEach(btn => btn.classList.remove('active'));
-      buttonEl.classList.add('active');
-      
-      if (type === 'piano') {
-        activeEngine = pianoSampler;
-        document.getElementById('engine-status').innerText = pianoSampler.loaded ? "READY" : "LOADING PIANO...";
-      } else {
-        activeEngine = electronicSynth;
-        document.getElementById('engine-status').innerText = "READY";
-      }
-    }
+  function attachKeyEvents(el, note) {
+    const press = async (e) => {
+      e.preventDefault();
+      await Tone.start();
+      if (activeNotes.has(note)) return;
+      activeNotes.add(note);
+      el.classList.add('pressed');
+      synth.triggerAttack(note);
+    };
+    const release = (e) => {
+      if (e) e.preventDefault();
+      if (!activeNotes.has(note)) return;
+      activeNotes.delete(note);
+      el.classList.remove('pressed');
+      synth.triggerRelease(note);
+    };
 
-    // Map the relative DOM data tokens to strict scientific musical note notation values
-    function getTargetNoteString(baseToken) {
-      let octave = currentOctaveBase;
-      let cleanNote = baseToken;
+    el.addEventListener('mousedown', press);
+    el.addEventListener('mouseup', release);
+    el.addEventListener('mouseleave', release);
+    el.addEventListener('touchstart', press, { passive: false });
+    el.addEventListener('touchend', release, { passive: false });
+    el.addEventListener('touchcancel', release, { passive: false });
+  }
 
-      if (baseToken.includes('++')) {
-        octave += 2;
-        cleanNote = baseToken.replace('++', '');
-      } else if (baseToken.includes('+')) {
-        octave += 1;
-        cleanNote = baseToken.replace('+', '');
-      }
-      return `${cleanNote}${octave}`;
-    }
+  document.getElementById('octaveDownBtn').addEventListener('click', () => {
+    if (baseOctave > 1) { baseOctave--; buildKeyboard(); }
+  });
+  document.getElementById('octaveUpBtn').addEventListener('click', () => {
+    if (baseOctave < 6) { baseOctave++; buildKeyboard(); }
+  });
 
-    // Transport Systems
-    let isPlaying = false;
-    let isRecording = false;
+  // ─── Computer keyboard support (optional but handy) ──────────
+  const KEY_MAP = {
+    'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E',
+    'f': 'F', 't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A',
+    'u': 'A#', 'j': 'B'
+  };
+  const heldKeys = new Set();
 
-    function togglePlay() {
-      if (Tone.context.state !== 'running') Tone.start();
-      isPlaying = !isPlaying;
-      const btn = document.getElementById('play-btn');
-      
-      if (isPlaying) {
-        btn.innerText = "STOP";
-        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
-      } else {
-        btn.innerText = "PLAY";
-        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-      }
-    }
-
-async function toggleRecord() {
-  // Ensure AudioContext is active
-  if (Tone.context.state !== 'running') {
+  window.addEventListener('keydown', async (e) => {
+    const note = KEY_MAP[e.key.toLowerCase()];
+    if (!note || heldKeys.has(e.key)) return;
+    heldKeys.add(e.key);
     await Tone.start();
+    const fullNote = `${note}${baseOctave}`;
+    if (!activeNotes.has(fullNote)) {
+      activeNotes.add(fullNote);
+      synth.triggerAttack(fullNote);
+      const el = document.querySelector(`[data-note="${fullNote}"]`);
+      if (el) el.classList.add('pressed');
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const note = KEY_MAP[e.key.toLowerCase()];
+    if (!note) return;
+    heldKeys.delete(e.key);
+    const fullNote = `${note}${baseOctave}`;
+    activeNotes.delete(fullNote);
+    synth.triggerRelease(fullNote);
+    const el = document.querySelector(`[data-note="${fullNote}"]`);
+    if (el) el.classList.remove('pressed');
+  });
+
+  // ─── Edit panel ────────────────────────────────────────────────
+  function buildEditorControls() {
+    const wrap = document.getElementById('globalEditorControls');
+    wrap.innerHTML = '';
+
+    const rows = [
+      { label: 'Volume', min: -40, max: 0, value: synth.volume.value,
+        onInput: v => { synth.volume.value = parseFloat(v); } },
+      { label: 'Attack', min: 0, max: 1, step: 0.01, value: 0.02,
+        onInput: v => synth.set({ envelope: { attack: parseFloat(v) } }) },
+      { label: 'Decay', min: 0, max: 1, step: 0.01, value: 0.2,
+        onInput: v => synth.set({ envelope: { decay: parseFloat(v) } }) },
+      { label: 'Sustain', min: 0, max: 1, step: 0.01, value: 0.4,
+        onInput: v => synth.set({ envelope: { sustain: parseFloat(v) } }) },
+      { label: 'Release', min: 0, max: 2, step: 0.01, value: 0.8,
+        onInput: v => synth.set({ envelope: { release: parseFloat(v) } }) }
+    ];
+
+    rows.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'editor-row';
+
+      const label = document.createElement('label');
+      label.textContent = r.label;
+      row.appendChild(label);
+
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = r.min;
+      slider.max = r.max;
+      slider.step = r.step || 1;
+      slider.value = r.value;
+      slider.addEventListener('input', () => r.onInput(slider.value));
+      row.appendChild(slider);
+
+      wrap.appendChild(row);
+    });
   }
 
-  const recBtn = document.getElementById('record-btn');
-  isRecording = !isRecording;
+  document.getElementById('toggleEditBtn').addEventListener('click', () => {
+    const panel = document.getElementById('synthEditor');
+    const btn = document.getElementById('toggleEditBtn');
+    const willShow = !panel.classList.contains('visible');
+    panel.classList.toggle('visible');
+    btn.textContent = willShow ? '🎛️ Hide Edit Controls' : '🎛️ Show Edit Controls';
+    if (willShow && document.getElementById('globalEditorControls').children.length === 0) {
+      buildEditorControls();
+    }
+  });
 
-  if (isRecording) {
-    recBtn.innerText = "STOP REC";
-    recBtn.classList.add('recording');
-    recorder.start();
-  } else {
-    recBtn.innerText = "REC";
-    recBtn.classList.remove('recording');
-    document.getElementById('engine-status').innerText = "SAVING...";
+  // ─── Recording + handoff to Tracks (same flow as Beat Maker) ──
+  async function recordWav() {
+    const btn = document.getElementById('recordBtn');
+    await Tone.start();
 
-    try {
-      // Correct way to await the blob
-      const recordingBlob = await recorder.stop();
+    if (!isRecording) {
+      if (!recorder) {
+        recorder = new Tone.Recorder();
+        Tone.Destination.connect(recorder);
+      }
+      // 1. Tell the parent frame to broadcast a START_AUDIO signal 
+    // so Multitrack starts playing back your timeline tracks immediately!
+    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
       
-      document.getElementById('engine-status').innerText = "READY";
+      recorder.start();
+      isRecording = true;
+      
+      btn.textContent = '⏹️ Stop Recording';
+      btn.className = 'btn-recording';
 
-      // Send to parent
+    } else {
+      const recording = await recorder.stop();
+
+      // 2. Tell the parent frame to pause/stop playback now that recording is finished
+    window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      
+      // Release any held notes so nothing rings on after recording stops
+      activeNotes.forEach(note => synth.triggerRelease(note));
+      activeNotes.clear();
+      document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
+
+      // ─── CONVERT BLOB TO ARRAYBUFFER ───
+      // Use the built-in arrayBuffer() method on the audio blob
+      const audioBuffer = await recording.arrayBuffer();
+
+      // Use the exact same action and payload structure as the Beat Maker
       window.parent.postMessage({
-        action: 'EXPORT_AUDIO_TO_TRACKS',
-        audioBlob: recordingBlob,
-        trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
-        mimeType: 'audio/webm'
+        action: 'ADD_TRACK',
+        audioBuffer: audioBuffer,
+        trackName: `Synth_${Date.now()}` // Dynamic timestamp name so recordings don't overwrite each other
       }, '*');
-
+      
       window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
-    } catch (err) {
-      console.error("Recording error:", err);
-      document.getElementById('engine-status').innerText = "ERROR";
+
+      isRecording = false;
+      btn.textContent = '🔴Record';
+      btn.className = 'btn-record';
     }
   }
-}
-    window.addEventListener('message', (event) => {
-      if (event.data.action === 'START_AUDIO') {
-        isPlaying = true;
-        document.getElementById('play-btn').innerText = "STOP";
-      }
-      if (event.data.action === 'STOP_AUDIO') {
-        isPlaying = false;
-        document.getElementById('play-btn').innerText = "PLAY";
-      }
-    });
 
-    // Interaction Note Mechanics
-    function handleNoteOn(element) {
-      if (Tone.context.state !== 'running') Tone.start();
-      element.classList.add('active');
-      const targetNote = getTargetNoteString(element.dataset.baseNote);
-      if (activeEngine) activeEngine.triggerAttack(targetNote);
-    }
+  // Inside Synth/Multitrack index.html
+window.addEventListener('message', (event) => {
+  if (event.data.action === 'START_AUDIO') {
+    Tone.start(); // Unlock audio
+    Tone.Transport.bpm.value = event.data.bpm || 120
+    Tone.Transport.start(); // Start the timeline
+  }
 
-    function handleNoteOff(element) {
-      if (element.classList.contains('active')) {
-        element.classList.remove('active');
-        const targetNote = getTargetNoteString(element.dataset.baseNote);
-        if (activeEngine) activeEngine.triggerRelease(targetNote);
-      }
-    }
+  if (event.data.action === 'STOP_AUDIO') {
+// ─── THE FIX ───
+    // Always stop the local timeline transport cleanly when requested globally.
+    // If we were recording, recordWav() has already captured the buffer, so it is safe to halt!
+    if (isRecording) return; 
 
-    // Init values on run
-    updateParameters();
+    Tone.Transport.stop();
+  }
+});
 
-    // Mobile Responsive Touch Hooks
-    document.querySelectorAll('.key').forEach(key => {
-      key.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        handleNoteOn(key);
-      });
-      key.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        handleNoteOff(key);
-      });
-    });
-  </script>
+// Send the request when your internal Play button is pressed
+document.getElementById('playBtn').addEventListener('click', () => {
+  window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+});
+
+  document.getElementById('recordBtn').addEventListener('click', recordWav);
+
+  // ─── Boot ───────────────────────────────────────────────────────
+  buildKeyboard();
+
+  // Tell the parent studio we are alive!
+  window.parent.postMessage({ action: 'SYNTH_READY' }, '*');
+</script>
 </body>
 </html>
