@@ -9,18 +9,18 @@
   const activeNotes = new Set();
 
   // ─── Effects Setup ────────────────────────────────────────────
-  // Create effects with sensible default mixes (set to 0 wet initially so it starts dry)
+  // We initialize the effects chains with a default 'wet' level of 0 (dry)
   const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 }).start();
   const feedbackDelay = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.4, wet: 0 });
   const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
 
-  // Initialize Reverb asynchronous generation so it is ready to process audio immediately
+  // Pre-generate reverb so it's ready instantly
   reverb.generate();
 
   // ─── Sound engine & Effects Chain ─────────────────────────────
-  // Chain: Synth -> Chorus -> Echo (Delay) -> Reverb -> Speakers
+  // Chain: Synth -> Chorus -> Echo -> Reverb -> Speakers
   const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: 'sawtooth' },
+    oscillator: { type: 'sine' }, // Starts on Piano Mode (Sine) by default matching HTML
     envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
   }).chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
@@ -109,7 +109,7 @@
     if (baseOctave < 6) { baseOctave++; buildKeyboard(); }
   });
 
-  // ─── Computer keyboard support (optional but handy) ──────────
+  // ─── Computer keyboard support ──────────────────────────────────
   const KEY_MAP = {
     'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E',
     'f': 'F', 't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A',
@@ -159,7 +159,7 @@
       { label: 'Release', min: 0, max: 2, step: 0.01, value: 0.8,
         onInput: v => synth.set({ envelope: { release: parseFloat(v) } }) },
       
-      // ─── Added Back: Effects Sliders ───
+      // ─── Added Back: Effects Knobs / Sliders Mapping ───
       { label: 'Chorus Mix', min: 0, max: 1, step: 0.01, value: chorus.wet.value,
         onInput: v => { chorus.wet.value = parseFloat(v); } },
       { label: 'Echo Mix', min: 0, max: 1, step: 0.01, value: feedbackDelay.wet.value,
@@ -200,7 +200,7 @@
     }
   });
 
-  // ─── Recording + handoff to Tracks (same flow as Beat Maker) ──
+  // ─── Recording + handoff to Tracks ─────────────────────────────
   async function recordWav() {
     const btn = document.getElementById('recordBtn');
     await Tone.start();
@@ -208,8 +208,7 @@
     if (!isRecording) {
       if (!recorder) {
         recorder = new Tone.Recorder();
-        // Captures Tone.Destination, meaning any signal hitting the master output 
-        // (including our whole effects chain) will cleanly record!
+        // Connect Master Destination containing the full chained effects output to recorder
         Tone.Destination.connect(recorder);
       }
       window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
@@ -245,23 +244,23 @@
     }
   }
 
-  // Inside Synth/Multitrack index.html
-window.addEventListener('message', (event) => {
-  if (event.data.action === 'START_AUDIO') {
-    Tone.start();
-    Tone.Transport.bpm.value = event.data.bpm || 120;
-    Tone.Transport.start();
-  }
+  // Multitrack timeline listeners
+  window.addEventListener('message', (event) => {
+    if (event.data.action === 'START_AUDIO') {
+      Tone.start();
+      Tone.Transport.bpm.value = event.data.bpm || 120;
+      Tone.Transport.start();
+    }
 
-  if (event.data.action === 'STOP_AUDIO') {
-    if (isRecording) return; 
-    Tone.Transport.stop();
-  }
-});
+    if (event.data.action === 'STOP_AUDIO') {
+      if (isRecording) return; 
+      Tone.Transport.stop();
+    }
+  });
 
-document.getElementById('playBtn').addEventListener('click', () => {
-  window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-});
+  document.getElementById('playBtn').addEventListener('click', () => {
+    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+  });
 
   document.getElementById('recordBtn').addEventListener('click', recordWav);
 
