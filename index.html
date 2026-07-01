@@ -9,38 +9,44 @@
 /* ==========================================================================
    2. WIRED HARDWARE STUDIO RACK (Updated Layout Rules)
    ========================================================================== */
+    :root {
+  --bg: #0a0a0f;
+  --panel: #12121c;
+  --border: #26263b;
+  --nav-height: 85px; 
+  --cable-left-color: #ff3366;  
+  --cable-right-color: #00e5ff; 
+}
+    
+/* Base structural layout wrapper */
 .studio-rack {
   position: relative; 
   display: flex; 
   width: 100%; 
   height: var(--nav-height);
-  flex: 0 0 var(--nav-height);
-  justify-content: space-between; 
-  align-items: stretch; 
   background: var(--panel); 
   border-top: 1px solid var(--border); 
-  padding: 10px 5px 25px 5px; 
-  padding-bottom: calc(15px + env(safe-area-inset-bottom));
+  padding: 10px 5px 25px 5px;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
    2. WIRED HARDWARE STUDIO RACK
    ========================================================================== */
 .rack-device {
-  position: relative; /* 👈 CRITICAL FIX: Re-anchors the ports to each individual tab */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  margin: 0 8px;
-  padding: 10px;
-  background: #0a0a0f;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  z-index: 2;
-  text-decoration: none;
-  color: #6c6c84;
+  position: relative; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  flex: 1; 
+  margin: 0 8px; 
+  background: #0a0a0f; 
+  border: 2px solid var(--border); 
+  border-radius: 8px; 
+  z-index: 2; 
+  text-decoration: none; 
+  color: #6c6c84; 
   font-size: 13px;
   font-weight: 600;
 }
@@ -49,30 +55,27 @@
   color: #fff;
   background: #161624; 
   border-color: #4f4f7a; 
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
 }
 
-/* Fixed Hardware Jacks positioning */
+/* Hardware Jack Ports */
 .audio-port {
   width: 12px; 
   height: 12px; 
   background: #000000; 
-  border: 2px solid var(--port-border); 
+  border: 2px solid #44445c; 
   border-radius: 50%; 
-  position: absolute; /* Takes them out of the flex column stack flow */
+  position: absolute; 
   bottom: -6px; 
   left: 50%; 
   transform: translateX(-50%); 
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); 
 }
 
-/* Absolute offsets for the mixer inputs */
-.mixer-tab #port-mixer-left { left: 25%; transform: translateX(-50%); }
-.mixer-tab #port-mixer-right { left: 75%; transform: translateX(-50%); }
-
-/* ==========================================================================
-   3. SVG CANVAS & FLOATING PATCH CABLES
-   ========================================================================== */
+    /* Adjust twin mixer input positions */
+.mixer-tab .port-left { left: 25%; }
+.mixer-tab .port-right { left: 75%; }
+    
+/* Canvas Vector Overlays */
 .patch-bay-canvas {
   position: absolute; 
   top: 0; 
@@ -83,15 +86,20 @@
   z-index: 5; 
 }
 
-.patch-cable {
-  fill: none; 
-  stroke-width: 4; 
-  stroke-linecap: round; 
-  filter: drop-shadow(0px 5px 3px rgba(0, 0, 0, 0.5)); 
+/* Scalable relative stroke paths using viewBox percent vectors */
+.patch-bay-canvas path {
+  fill: none;
+  stroke-width: 1.5; /* Evaluated smoothly relative to 100x100 box space */
+  stroke-linecap: round;
 }
 
-.cable-left { stroke: var(--cable-left-color); }
-.cable-right { stroke: var(--cable-right-color); }
+  .cable-left { 
+  stroke: var(--cable-left-color); 
+}
+.cable-right { 
+  stroke: var(--cable-right-color); 
+}  
+
     
   </style>
 </head>
@@ -116,31 +124,32 @@
 
     <!-- 06/30 update -->
 <div class="studio-rack">
-  <!-- BEAT (Drum Kit) -->
-  <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)" id="tab-beat">
+<!-- BEAT (Drum Kit) -->
+  <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">
     <div class="device-body">🥁 BEAT</div>
-    <div class="audio-port out-port" id="port-beat-out"></div>
+    <div class="audio-port"></div>
   </a>
 
-  <!-- TRACKS (The Mixer - Central Hub) -->
-  <a href="#" class="rack-device mixer-tab" data-app="multitrack" onclick="loadApp('multitrack', event)" id="tab-tracks">
-    <div class="audio-port in-port" id="port-mixer-left"></div>
-    <div class="audio-port in-port" id="port-mixer-right"></div>
+<!-- TRACKS (The Mixer Board) -->
+  <a href="#" class="rack-device mixer-tab" data-app="multitrack" onclick="loadApp('multitrack', event)">
+    <!-- Simulated internal connections using structural classes -->
+    <div class="audio-port port-left"></div>
+    <div class="audio-port port-right"></div>
     <div class="device-body">🎛️ TRACKS</div>
   </a>
 
-  <!-- SYNTH (Keyboard) -->
-  <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)" id="tab-synth">
-    <div class="audio-port out-port" id="port-synth-out"></div>
+<!-- SYNTH (Keyboard) -->
+  <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)">
+    <div class="audio-port"></div>
     <div class="device-body">🎹 SYNTH</div>
   </a>
   
-  <!-- Overlay SVG Canvas for Perfect Cable Droops -->
-  <svg class="patch-bay-canvas" xmlns="http://www.w3.org/2000/svg">
-    <!-- Left Cable: Drum Kit to Mixer -->
-    <path class="patch-cable cable-left" d="M 0 0" />
-    <!-- Right Cable: Synth to Mixer -->
-    <path class="patch-cable cable-right" d="M 0 0" />
+<!-- CSS Powered Vector Canvas -->
+  <svg class="patch-bay-canvas" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Left Cable: Connects roughly 16% (Beat) to 50% (Mixer) using relative grid layout -->
+    <path class="cable-left" d="M 16,85 C 16,115 42,115 42,85" />
+    <!-- Right Cable: Connects roughly 84% (Synth) to 58% (Mixer) -->
+    <path class="cable-right" d="M 84,85 C 84,115 58,115 58,85" />
   </svg>
 </div>
     <!-- 06/30 update -->
