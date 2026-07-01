@@ -6,11 +6,11 @@
   <title>Synth Subapp</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
-    :root { 
-      --bg: #0a0a0f; 
+    :root {
+      --bg: #0a0a0f;
       --panel: #12121c;
       --border: #26263b;
-      --accent: #00e5ff; 
+      --accent: #00e5ff;
     }
 
     * { box-sizing: border-box; }
@@ -107,6 +107,21 @@
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:active {
+      background: #26263b;
+    }
+
+    .btn-toggle-panel {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .btn-toggle-panel.hidden-state {
+      background: #00e5ff;
+      color: #000;
     }
 
     .btn-record {
@@ -140,6 +155,12 @@
       overflow-x: auto;
       flex-shrink: 0;
       white-space: nowrap;
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* Used to hide the tweaker panel completely to save vertical workspace */
+    .synth-tweaker-panel.collapsed {
+      display: none !important;
     }
 
     /* Hide scrollbars but preserve gesture rolling on mobile touch panel surfaces */
@@ -283,13 +304,14 @@
     </div>
 
     <div class="transport-group">
+      <button id="toggle-panel-btn" class="btn btn-toggle-panel" onclick="toggleTweakerPanel()">🎛️ CONTROLS</button>
       <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
       <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
     </div>
   </div>
 
   <!-- Extended Control Panel: Synthesizer Parameters & Multi-Effects Engine -->
-  <div class="synth-tweaker-panel">
+  <div id="tweaker-panel" class="synth-tweaker-panel">
     <!-- Generator Source -->
     <div class="tweak-section">
       <span class="section-title">Osc</span>
@@ -396,33 +418,30 @@
       <div class="key black k-Dsh2" data-base-note="D#+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
     </div>
   </div>
-<script>
+
+  <script>
     const recorder = new Tone.Recorder();
 
     // ==========================================================================
-    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Type & Order)
+    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP
     // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
-    const delayFX = new Tone.FeedbackDelay("8n", 0.3); // <-- Fixed missing Tone. prefix!
+    const delayFX = new Tone.FeedbackDelay("8n", 0.3);
     const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
 
-    // Explicitly configure wet/dry parameters before routing
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
 
-    // Start the oscillator modulation engine inside the Chorus unit first
     chorusFX.start();
 
-    // Link the rigid chain: Chorus -> Delay -> Reverb
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     
-    // Split the reverb's final output to the recording bus AND the hardware speakers
     reverbFX.connect(recorder);
     reverbFX.toDestination(); 
 
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION (Connected directly to running FX input)
+    // 2. SOUND ENGINES GENERATION
     // ==========================================================================
     const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
 
@@ -445,6 +464,20 @@
 
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
+
+    // Interface toggling feature for tiny screens / landscape modes
+    function toggleTweakerPanel() {
+      const panel = document.getElementById('tweaker-panel');
+      const btn = document.getElementById('toggle-panel-btn');
+      
+      panel.classList.toggle('collapsed');
+      
+      if (panel.classList.contains('collapsed')) {
+        btn.classList.add('hidden-state');
+      } else {
+        btn.classList.remove('hidden-state');
+      }
+    }
 
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
