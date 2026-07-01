@@ -7,62 +7,7 @@
   
   <style>
 /* ==========================================================================
-   1. GLOBAL APP LAYOUT (Restores your Subapp Frames)
-   ========================================================================== */
-:root {
-  --bg: #0a0a0f;
-  --panel: #12121c;
-  --border: #26263b;
-  --text: #e2e2e9;
-  --accent: #00e5ff;
-  --nav-height: 80px; /* Expanded slightly to give cables room to hang */
-  
-  --cable-left-color: #ff3366;  /* Hot pink for drums */
-  --cable-right-color: #00e5ff; /* Electric cyan for synth */
-  --port-border: #44445c;
-}
-
-* { 
-  box-sizing: border-box; 
-}
-
-html, body {
-  margin: 0; 
-  padding: 0; 
-  background: var(--bg); 
-  overflow: hidden; 
-  height: 100dvh; 
-}
-
-body {
-  display: flex; 
-  flex-direction: column; 
-}
-
-/* Fixes the view container height so your subapps render perfectly */
-#app-container {
-  width: 100%; 
-  height: calc(100dvh - var(--nav-height)); 
-  position: relative; 
-  overflow: hidden; 
-}
-
-.app-frame {
-  width: 100%; 
-  height: 100%; 
-  border: none; 
-  display: none; 
-  position: absolute; 
-  top: 0; 
-  left: 0; 
-}
-
-.app-frame.active {
-  display: block; 
-}
-
-/* ==========================================================================
-   2. WIRED HARDWARE STUDIO RACK (Your New Custom Nav Bar)
+   2. WIRED HARDWARE STUDIO RACK (Updated Layout Rules)
    ========================================================================== */
 .studio-rack {
   position: relative; 
@@ -74,12 +19,12 @@ body {
   align-items: stretch; 
   background: var(--panel); 
   border-top: 1px solid var(--border); 
-  padding: 10px 5px 25px 5px; /* Bottom padding gives space for cables */
+  padding: 10px 5px 25px 5px; 
   padding-bottom: calc(15px + env(safe-area-inset-bottom));
 }
 
-/* Individual Device Links */
 .rack-device {
+  position: relative; /* CRITICAL: Re-anchors absolute child ports to the tab frame */
   display: flex; 
   flex-direction: column; 
   align-items: center; 
@@ -97,7 +42,6 @@ body {
   font-weight: 600;
 }
 
-/* Selected Device Glow Engine */
 .rack-device.active {
   color: #fff;
   background: #161624; 
@@ -105,23 +49,23 @@ body {
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
 }
 
-/* Physical Hardware Jack Inputs/Outputs */
+/* Fixed Hardware Jacks positioning */
 .audio-port {
   width: 12px; 
   height: 12px; 
   background: #000000; 
   border: 2px solid var(--port-border); 
   border-radius: 50%; 
-  position: absolute; 
+  position: absolute; /* Takes them out of the flex column stack flow */
   bottom: -6px; 
   left: 50%; 
   transform: translateX(-50%); 
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); 
 }
 
-/* Position mixer routing inputs nicely */
-.mixer-tab #port-mixer-left { left: 25%; }
-.mixer-tab #port-mixer-right { left: 75%; }
+/* Absolute offsets for the mixer inputs */
+.mixer-tab #port-mixer-left { left: 25%; transform: translateX(-50%); }
+.mixer-tab #port-mixer-right { left: 75%; transform: translateX(-50%); }
 
 /* ==========================================================================
    3. SVG CANVAS & FLOATING PATCH CABLES
@@ -132,7 +76,7 @@ body {
   left: 0; 
   width: 100%; 
   height: 100%; 
-  pointer-events: none; /* Let clicks pass straight through to buttons */
+  pointer-events: none; 
   z-index: 5; 
 }
 
@@ -140,17 +84,11 @@ body {
   fill: none; 
   stroke-width: 4; 
   stroke-linecap: round; 
-  filter: drop-shadow(0px 5px 3px rgba(0, 0, 0, 0.5)); /* Adds physical drop-shadow depth */
+  filter: drop-shadow(0px 5px 3px rgba(0, 0, 0, 0.5)); 
 }
 
 .cable-left { stroke: var(--cable-left-color); }
 .cable-right { stroke: var(--cable-right-color); }
-
-/* Landscape Responsive Optimization */
-@media (max-height: 500px) and (orientation: landscape) {
-  :root { --nav-height: 65px; }
-  .rack-device { font-size: 11px; padding: 5px; }
-}
     
   </style>
 </head>
