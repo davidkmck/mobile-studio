@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Keys</title>
+  <title>Synth Subapp</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
     :root {
@@ -304,12 +304,12 @@
 </head>
 <body>
 
-  <!-- Top Utilities Bar: Core Triggers Grouped Safely on the Left -->
+  <!-- Top Utilities Bar -->
   <div class="controls-panel">
     <div class="transport-group">
       <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
       <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ CONTROLS</button>
+      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ SYNTH</button>
       <button id="toggle-fx-btn" class="btn btn-toggle-fx" onclick="togglePanel('effects')">✨ EFFECTS</button>
     </div>
 
@@ -322,7 +322,7 @@
     </div>
   </div>
 
-  <!-- Panel 1: Synthesizer Parameters Panel -->
+  <!-- Panel 1: Synth Parameters -->
   <div id="tweaker-panel" class="synth-tweaker-panel">
     <div class="tweak-section">
       <span class="section-title">Osc</span>
@@ -376,7 +376,7 @@
     </div>
   </div>
 
-  <!-- Panel 2: Isolated Effects Parameter Modulation Panel -->
+  <!-- Panel 2: Effects Panel -->
   <div id="effects-panel" class="synth-tweaker-panel collapsed">
     <div class="tweak-section">
       <span class="section-title" style="color: var(--accent-fx);">FX</span>
@@ -395,7 +395,7 @@
     </div>
   </div>
 
-  <!-- Interactive Visual Piano Matrix -->
+  <!-- Piano -->
   <div class="keyboard-space">
     <div class="keyboard">
       <!-- White Keys -->
@@ -430,8 +430,14 @@
   </div>
 
   <script>
+    // Explicitly setup MediaRecorder constraints via standard browser-supported formats 
+    let mimeTypeSelection = "audio/webm;codecs=opus";
+    if (!MediaRecorder.isTypeSupported(mimeTypeSelection)) {
+      mimeTypeSelection = "audio/webm";
+    }
+
     const recordingBus = new Tone.Gain();
-    const recorder = new Tone.Recorder();
+    const recorder = new Tone.Recorder({ mimeType: mimeTypeSelection });
     recordingBus.connect(recorder);
 
     // ==========================================================================
@@ -545,7 +551,7 @@
     }
 
     // ==========================================================================
-    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication Polyfills)
+    // 3. TRANSPORT MANAGEMENT WITH HYBRID BLOB/URL REDIRECTS
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
@@ -596,18 +602,20 @@
           document.getElementById('engine-status').innerText = "READY";
 
           const trackName = activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth';
-          const audioFile = new File([rawBlob], "keyboard-take.webm", { type: "audio/webm" });
-          const generatedUrl = URL.createObjectURL(rawBlob);
+          
+          // Re-encode ensuring the exact audio container type layout match
+          const standardizedBlob = new Blob([rawBlob], { type: mimeTypeSelection });
+          const objectUrl = URL.createObjectURL(standardizedBlob);
 
-          // Sending multiple variations of data payloads so the multitrack core listener catches it
+          // We pass down trackName as explicit labels and the objectURL explicitly as the sound block target
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
-            audioBlob: rawBlob,       // Variation 1: Raw Blob
-            audioFile: audioFile,     // Variation 2: Unified File Reference
-            audioUrl: generatedUrl,   // Variation 3: Direct Object DOM URL string
+            audioBlob: standardizedBlob, 
+            audioUrl: objectUrl,
+            url: objectUrl,             // Fallback key mapping if it attempts text resolution
             trackName: trackName,
             name: trackName,
-            mimeType: 'audio/webm'
+            mimeType: mimeTypeSelection
           }, '*');
           
           window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
