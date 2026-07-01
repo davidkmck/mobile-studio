@@ -15,7 +15,6 @@
 
   reverb.generate();
 
-
   // ─── Sound engines & Global Effects Chain ─────────────────────
   // 1. Classic Synth Engine
   const synth = new Tone.PolySynth(Tone.Synth, {
@@ -29,13 +28,11 @@
 
   // Function to safely build/rebuild the sampler node when switching instruments
   function loadSamplerInstrument(config) {
-    // Clean up old sampler memory and disconnect it from the audio effects chain
     if (sampler) {
       sampler.disconnect();
       sampler.dispose();
     }
 
-    // Instantiation with the fresh instrument sample maps
     sampler = new Tone.Sampler({
       urls: config.urls,
       baseUrl: config.baseUrl,
@@ -50,7 +47,7 @@
   // Route the initial synth engine setup
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-  // ─── Instrument Configurations ────────────────────────────────
+  // ─── Instrument Configurations (Corrected File Mappings) ──────
   const SAMPLER_MAPS = {
     piano: {
       baseUrl: "https://tonejs.github.io/audio/salamander/",
@@ -58,15 +55,15 @@
     },
     guitar: {
       baseUrl: "https://tonejs.github.io/audio/casio/",
-      urls: { "G2": "G2.mp3", "C3": "C3.mp3", "E3": "E3.mp3", "G3": "G3.mp3" }
+      urls: { "A1": "A1.mp3", "C2": "C2.mp3", "E2": "E2.mp3", "G2": "G2.mp3" }
     },
     bass: {
-      baseUrl: "https://tonejs.github.io/audio/applause/",
-      urls: { "E1": "E1.mp3", "A1": "A1.mp3", "D2": "D2.mp3", "G2": "G2.mp3" }
+      baseUrl: "https://tonejs.github.io/audio/casio/",
+      urls: { "A1": "A1.mp3", "C2": "C2.mp3" }
     },
     organ: {
-      baseUrl: "https://tonejs.github.io/audio/bermuda/",
-      urls: { "C3": "C3.mp3", "G3": "G3.mp3", "C4": "C4.mp3", "G4": "G4.mp3" }
+      baseUrl: "https://tonejs.github.io/audio/casio/",
+      urls: { "A1": "A1.mp3", "C2": "C2.mp3" }
     }
   };
 
@@ -92,7 +89,6 @@
   document.getElementById('waveSelect').addEventListener('change', (e) => {
     synth.set({ oscillator: { type: e.target.value } });
   });
-
 
   // Helper function to figure out which sound engine instance to trigger
   function getActiveEngine() {
@@ -220,7 +216,7 @@
       { label: 'Volume', min: -40, max: 0, value: synth.volume.value,
         onInput: v => { 
           synth.volume.value = parseFloat(v); 
-          sampler.volume.value = parseFloat(v) + 4; 
+          if (sampler) sampler.volume.value = parseFloat(v) + 4; 
         } 
       },
       { label: 'Attack', min: 0, max: 1, step: 0.01, value: 0.02,
