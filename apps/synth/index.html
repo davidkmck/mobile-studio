@@ -34,9 +34,9 @@
     }
 
     /* ==========================================================================
-       1. TOP MASTER PANEL (Transport + Engine Switcher)
+       1. TOP MASTER PANEL (Transport FIRST on Left, Engine Switcher Right)
        ========================================================================== */
-.controls-panel {
+    .controls-panel {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -45,13 +45,20 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-shrink: 0; /* Keeps the transport bar strictly locked on screen */
+      flex-shrink: 0;
     }
 
-    .left-controls {
+    .transport-group {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .right-controls {
       display: flex;
       align-items: center;
       gap: 12px;
+      overflow-x: auto;
     }
 
     .selector-group {
@@ -91,18 +98,14 @@
       padding: 4px 8px;
       border-radius: 3px;
       border: 1px solid #091009;
-    }
-
-    .transport-group {
-      display: flex;
-      gap: 8px;
+      white-space: nowrap;
     }
 
     .btn {
       background: #1c1c2b;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 700;
@@ -158,12 +161,10 @@
       transition: all 0.2s ease-in-out;
     }
 
-    /* Used to hide the tweaker panel completely to save vertical workspace */
     .synth-tweaker-panel.collapsed {
       display: none !important;
     }
 
-    /* Hide scrollbars but preserve gesture rolling on mobile touch panel surfaces */
     .synth-tweaker-panel::-webkit-scrollbar {
       display: none;
     }
@@ -281,7 +282,6 @@
       height: 57%;
     }
 
-    /* Traditional layout geometry offsets */
     .k-Csh1 { left: 5.5%; }
     .k-Dsh1 { left: 14.5%; }
     .k-Fsh1 { left: 32.5%; }
@@ -293,20 +293,20 @@
 </head>
 <body>
 
-  <!-- Top Master Utility Block -->
+  <!-- Top Master Utility Block: Reordered so Transport is Left Aligned -->
   <div class="controls-panel">
-    <div class="left-controls">
+    <div class="transport-group">
+      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
+      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
+      <button id="toggle-panel-btn" class="btn btn-toggle-panel" onclick="toggleTweakerPanel()">🎛️ CONTROLS</button>
+    </div>
+
+    <div class="right-controls">
       <div class="selector-group">
         <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
         <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
       </div>
       <div id="engine-status" class="status-lamp">READY</div>
-    </div>
-
-    <div class="transport-group">
-      <button id="toggle-panel-btn" class="btn btn-toggle-panel" onclick="toggleTweakerPanel()">🎛️ CONTROLS</button>
-      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
     </div>
   </div>
 
@@ -419,9 +419,9 @@
     </div>
   </div>
 
- <script>
-    // Initialize the recorder with explicit settings to ensure broad mobile compatibility
-    const recorder = new Tone.Recorder({ mimeType: "audio/webm" });
+  <script>
+    // Master recording layout setup targeting the main global output stream directly
+    const recorder = new Tone.Recorder();
 
     // ==========================================================================
     // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP
@@ -432,19 +432,21 @@
 
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
-
-    // Spin up the modulation engine inside Chorus
     chorusFX.start();
 
-    // Setup main effects route
+    // Route: Instrument Nodes -> FX Nodes Chain -> Master Destination Block
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     reverbFX.toDestination(); 
 
+    // Connect Tone Destination globally directly into our Recorder line 
+    // This ensures that anything you can hear coming from the synth goes into the track file!
+    Tone.Destination.connect(recorder);
+
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION (Dual-routed to Master Out AND Recording Bus)
+    // 2. SOUND ENGINES GENERATION
     // ==========================================================================
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recorder);
+    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
 
     const pianoSampler = new Tone.Sampler({
       urls: {
@@ -461,7 +463,7 @@
       onload: () => {
         if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
       }
-    }).connect(chorusFX).connect(recorder);
+    }).connect(chorusFX);
 
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
@@ -527,7 +529,7 @@
     }
 
     // ==========================================================================
-    // 3. TRANSPORT & MESSAGING TRACK LIFECYCLE
+    // 3. TRANSPORT STATE SYSTEMS
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
@@ -558,18 +560,20 @@
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
         
-        // A. Fire playback command to parent container first so timeline starts ticking
+        // 1. Alert parent framework timeline to run backing tracks
         isPlaying = true;
         playBtn.innerText = "STOP";
         window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
         
-        // B. Start recording audio buffer stream
-        recorder.start();
+        // 2. Start recording stream capture
+        setTimeout(() => {
+          recorder.start();
+        }, 50);
       } else {
         recBtn.innerText = "REC";
         recBtn.classList.remove('recording');
         
-        // Stop playback globally
+        // Stop playback everywhere simultaneously
         isPlaying = false;
         playBtn.innerText = "PLAY";
         window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
@@ -580,18 +584,17 @@
           const recordingBlob = await recorder.stop();
           document.getElementById('engine-status').innerText = "READY";
 
-          // C. Ship the blob up to the parent application frame
+          // Export the processed audio data block directly to the parent multitrack track slot list
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
             audioBlob: recordingBlob,
-            trackName: activeEngine === pianoSampler ? 'Piano Layer' : 'Synth Layer',
+            trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
             mimeType: 'audio/webm'
           }, '*');
           
-          // D. Force layout focus view back to the Multitrack environment view
           window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
         } catch (err) {
-          console.error("Recording acquisition failure:", err);
+          console.error("Recording buffer processing failed:", err);
           document.getElementById('engine-status').innerText = "ERR REC";
         }
       }
@@ -609,7 +612,7 @@
     });
 
     // ==========================================================================
-    // 4. INTERACTION MECHANICS
+    // 4. NOTE INTERACTION HANDLING
     // ==========================================================================
     function handleNoteOn(element) {
       if (Tone.context.state !== 'running') Tone.start();
@@ -626,11 +629,11 @@
       }
     }
 
-    // Initialize defaults on boot
+    // Set initial defaults
     updateParameters();
     updateFX();
 
-    // Mobile Touch Bindings
+    // Mobile Responsive Touch Bindings
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
