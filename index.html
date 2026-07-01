@@ -10,7 +10,7 @@
       --bg: #0a0a0f;
       --panel: #12121c;
       --border: #26263b;
-      --nav-height: 110px; /* Increased slightly to give the hardware designs breathing room */
+      --nav-height: 105px; 
       --cable-left-color: #ff3366;  
       --cable-right-color: #00e5ff; 
     }
@@ -63,9 +63,9 @@
       display: flex; 
       width: 100%; 
       height: var(--nav-height);
-      background: #1a1a26; 
+      background: #161622; 
       border-top: 2px solid #2d2d3f; 
-      padding: 8px 6px 24px 6px;
+      padding: 12px 6px 24px 6px;
       flex-shrink: 0;
       box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
     }
@@ -75,40 +75,25 @@
       position: relative; 
       display: flex; 
       flex-direction: column; 
-      justify-content: space-between;
+      justify-content: center;
       flex: 1; 
       margin: 0 5px; 
-      padding: 6px; 
+      padding: 8px; 
       background: #0f0f14; 
       border: 1px solid #2d2d3f; 
       border-bottom: 3px solid #08080a;
       border-radius: 6px; 
       z-index: 2; 
       text-decoration: none; 
-      color: #8e8eaf;
       overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
     .rack-device.active {
       border-color: #4a4a68;
       border-bottom-color: #1a1a26;
+      background: #13131a;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
-    }
-
-    .device-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-align: center;
-      margin-bottom: 4px;
-      user-select: none;
-    }
-
-    .rack-device.active .device-label {
-      color: #fff;
-      text-shadow: 0 0 8px rgba(255,255,255,0.3);
     }
 
     /* Hardware Jack Input/Output Sockets */
@@ -133,8 +118,9 @@
     .drum-interface {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       flex: 1;
+      justify-content: center;
     }
     .drum-top-row {
       display: flex;
@@ -145,11 +131,12 @@
     .drum-screen {
       font-family: monospace;
       font-size: 8px;
-      background: #182818;
+      background: #122012;
       color: #39ff14;
-      padding: 1px 3px;
+      padding: 1px 4px;
       border-radius: 2px;
-      border: 1px solid #101a10;
+      border: 1px solid #091009;
+      text-shadow: 0 0 2px rgba(57, 255, 20, 0.5);
     }
     .drum-knob {
       width: 10px;
@@ -170,19 +157,20 @@
     }
     .drum-pads {
       display: grid;
-      grid-template-columns: repeat(4, 1xl);
-      gap: 3px;
-      flex: 1;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
     }
     .drum-pad {
+      aspect-ratio: 1;
       background: #22222e;
       border: 1px solid #333344;
-      border-radius: 2px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+      border-radius: 3px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .rack-device.active .drum-pad {
       border-color: #ff3366;
       background: #2d1620;
+      box-shadow: 0 0 4px rgba(255, 51, 102, 0.2);
     }
 
     /* --- MIXER BOARD (TRACKS) --- */
@@ -191,7 +179,7 @@
       justify-content: space-around;
       align-items: stretch;
       flex: 1;
-      padding: 2px 4px 0 4px;
+      padding: 4px 2px 0 2px;
       gap: 6px;
     }
     .mixer-channel {
@@ -213,22 +201,22 @@
       width: 2px;
       background: #000;
       flex: 1;
-      margin: 4px 0;
+      margin: 6px 0;
       position: relative;
       border-radius: 1px;
     }
     .mixer-fader-cap {
-      width: 8px;
-      height: 4px;
-      background: #ccc;
-      border: 1px solid #444;
+      width: 10px;
+      height: 5px;
+      background: #e2e2e9;
+      border: 1px solid #333;
       border-radius: 1px;
       position: absolute;
-      left: -3px;
+      left: -4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
-    /* Alternate track positions for reality */
-    .ch-1 .mixer-fader-cap { top: 30%; }
-    .ch-2 .mixer-fader-cap { top: 60%; }
+    .ch-1 .mixer-fader-cap { top: 25%; }
+    .ch-2 .mixer-fader-cap { top: 55%; }
     .ch-3 .mixer-fader-cap { top: 15%; }
     
     .mixer-led {
@@ -242,48 +230,64 @@
       box-shadow: 0 0 4px #39ff14;
     }
 
-    /* --- KEYBOARD (SYNTH) --- */
+    /* --- REALISTIC KEYBOARD (SYNTH) --- */
     .keyboard-interface {
-      display: flex;
       position: relative;
-      background: #000;
-      height: 24px;
-      border-radius: 2px;
-      border: 1px solid #222;
-      padding-left: 1px;
+      background: #0a0a0f;
+      height: 48px;
+      border-radius: 3px;
+      border: 1px solid #1a1a26;
+      border-top: 3px solid #222;
+      display: flex;
+      width: 100%;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .white-keys-layer {
+      display: flex;
+      width: 100%;
+      height: 100%;
     }
     .white-key {
       flex: 1;
-      background: #e5e5ed;
-      border-right: 1px solid #111;
-      border-bottom: 2px solid #b5b5bd;
-      border-radius: 0 0 1.5px 1.5px;
+      background: #f4f4f9;
+      border-right: 1px solid #bdae9e;
+      border-bottom: 3px solid #dbd2c4;
+      border-radius: 0 0 2px 2px;
       height: 100%;
+      box-shadow: inset 0 -2px 1px rgba(0,0,0,0.1);
     }
     .white-key:last-child {
       border-right: none;
     }
-    .black-keys-overlay {
+    .rack-device.active .white-key {
+      background: #ffffff;
+    }
+    /* Absolute Positioning Overlays for Accurate Black Keys Layout */
+    .black-keys-layer {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 60%;
-      display: flex;
       pointer-events: none;
     }
-    .black-gap {
-      flex: 1;
-    }
     .black-key {
-      width: 6px;
-      background: #111116;
-      border-radius: 0 0 1px 1px;
-      margin-left: -3px;
-      margin-right: -3px;
+      position: absolute;
+      width: 11%;
+      height: 100%;
+      background: linear-gradient(to bottom, #111 0%, #222 80%, #000 100%);
+      border-radius: 0 0 1.5px 1.5px;
+      border: 1px solid #000;
+      border-top: none;
+      box-shadow: 1px 1px 2px rgba(0,0,0,0.4);
       z-index: 3;
-      border-bottom: 1px solid #000;
     }
+    /* Standard 7 White / 5 Black Piano Topography Percent offsets */
+    .bk-1 { left: 9%; }
+    .bk-2 { left: 23%; }
+    .bk-3 { left: 51%; }
+    .bk-4 { left: 66%; }
+    .bk-5 { left: 80%; }
 
     /* ==========================================================================
        4. SVG CANVAS & FLOATING PATCH CABLES
@@ -321,10 +325,9 @@
   <div class="studio-rack">
     <!-- BEAT (Drum Kit) -->
     <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">
-      <div class="device-label">Drum Kit</div>
       <div class="drum-interface">
         <div class="drum-top-row">
-          <div class="drum-screen">A01</div>
+          <div class="drum-screen">KIT</div>
           <div class="drum-knob"></div>
         </div>
         <div class="drum-pads">
@@ -339,7 +342,6 @@
 
     <!-- TRACKS (The Mixer Board) -->
     <a href="#" class="rack-device mixer-tab" data-app="multitrack" onclick="loadApp('multitrack', event)">
-      <div class="device-label">Mixer</div>
       <div class="mixer-interface">
         <div class="mixer-channel ch-1">
           <div class="mixer-knob"></div>
@@ -363,23 +365,24 @@
 
     <!-- SYNTH (Keyboard) -->
     <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)">
-      <div class="device-label">Keyboard</div>
       <div class="keyboard-interface">
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="white-key"></div>
-        <div class="black-keys-overlay">
-          <div class="black-gap" style="flex: 0.5;"></div>
-          <div class="black-key"></div>
-          <div class="black-key"></div>
-          <div class="black-gap" style="flex: 1.5;"></div>
-          <div class="black-key"></div>
-          <div class="black-key"></div>
-          <div class="black-key"></div>
+        <!-- White Keys Layer -->
+        <div class="white-keys-layer">
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+          <div class="white-key"></div>
+        </div>
+        <!-- Black Keys Overlay Layer -->
+        <div class="black-keys-layer">
+          <div class="black-key bk-1"></div>
+          <div class="black-key bk-2"></div>
+          <div class="black-key bk-3"></div>
+          <div class="black-key bk-4"></div>
+          <div class="black-key bk-5"></div>
         </div>
       </div>
       <div class="audio-port" style="left: 50%;"></div>
