@@ -419,13 +419,15 @@
     </div>
   </div>
 
-  <script>
-    // Master recording layout setup targeting the main global output stream directly
+<script>
+    // ==========================================================================
+    // 1. AUDIO ROUTING & RECORDING BUS SETUP
+    // ==========================================================================
+    // Create a dedicated isolated mix bus just for the recorder
+    const recordingBus = new Tone.Gain();
     const recorder = new Tone.Recorder();
+    recordingBus.connect(recorder);
 
-    // ==========================================================================
-    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP
-    // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
     const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
@@ -434,19 +436,18 @@
     chorusFX.wet.value = 0;
     chorusFX.start();
 
-    // Route: Instrument Nodes -> FX Nodes Chain -> Master Destination Block
+    // Main Live Output Chain
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     reverbFX.toDestination(); 
 
-    // Connect Tone Destination globally directly into our Recorder line 
-    // This ensures that anything you can hear coming from the synth goes into the track file!
-    Tone.Destination.connect(recorder);
+    // Also route the wet effects tail into the recording bus so effects are printed to the track!
+    reverbFX.connect(recordingBus);
 
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION
+    // 2. SOUND ENGINES GENERATION (Connected to FX Chain & Dry Recording Bus)
     // ==========================================================================
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
+    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recordingBus);
 
     const pianoSampler = new Tone.Sampler({
       urls: {
@@ -463,7 +464,7 @@
       onload: () => {
         if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
       }
-    }).connect(chorusFX);
+    }).connect(chorusFX).connect(recordingBus);
 
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
@@ -529,7 +530,7 @@
     }
 
     // ==========================================================================
-    // 3. TRANSPORT STATE SYSTEMS
+    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication)
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
@@ -560,20 +561,18 @@
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
         
-        // 1. Alert parent framework timeline to run backing tracks
+        // Start recording buffer immediately
+        recorder.start();
+        
+        // Notify parent timeline to start audio generation playback loop
         isPlaying = true;
         playBtn.innerText = "STOP";
         window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
-        
-        // 2. Start recording stream capture
-        setTimeout(() => {
-          recorder.start();
-        }, 50);
       } else {
         recBtn.innerText = "REC";
         recBtn.classList.remove('recording');
         
-        // Stop playback everywhere simultaneously
+        // Hard stop playback globally
         isPlaying = false;
         playBtn.innerText = "PLAY";
         window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
@@ -584,7 +583,7 @@
           const recordingBlob = await recorder.stop();
           document.getElementById('engine-status').innerText = "READY";
 
-          // Export the processed audio data block directly to the parent multitrack track slot list
+          // Dispatch tracking message to parent environment
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
             audioBlob: recordingBlob,
@@ -592,9 +591,10 @@
             mimeType: 'audio/webm'
           }, '*');
           
+          // Switch view back to main workspace
           window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
         } catch (err) {
-          console.error("Recording buffer processing failed:", err);
+          console.error("Recording acquisition failure:", err);
           document.getElementById('engine-status').innerText = "ERR REC";
         }
       }
@@ -612,7 +612,7 @@
     });
 
     // ==========================================================================
-    // 4. NOTE INTERACTION HANDLING
+    // 4. INTERACTION MECANICS
     // ==========================================================================
     function handleNoteOn(element) {
       if (Tone.context.state !== 'running') Tone.start();
@@ -629,11 +629,10 @@
       }
     }
 
-    // Set initial defaults
     updateParameters();
     updateFX();
 
-    // Mobile Responsive Touch Bindings
+    // Responsive Mobile Touch Handlers
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
