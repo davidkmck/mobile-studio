@@ -6,302 +6,152 @@
   <title>Mobile Studio</title>
   
   <style>
-
-/* Apply this to the parent container wrapping your entire app/iframes and the rack */
-body, .app-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  margin: 0;
-  overflow: hidden;
-  background: #0a0a0f;
-}
-
-/* Ensure your iframe container or active subapp area grows to fill all top space */
-.content-area, iframe, #app-container {
-  flex: 1;          /* Forces it to take up 100% of the remaining top space */
-  width: 100%;
-  border: none;
-  display: block;
-}
-
-/* The Fixed Bottom Studio Rack Layout */
-.studio-rack {
-  position: relative; 
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch;
-  background: #0a0a0f;
-  padding: 15px 5px 35px 5px; 
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0; /* CRITICAL: Prevents the rack from collapsing or resizing */
-}
-
-/* The Interactive Device Buttons */
-.rack-device {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  margin: 0 8px;
-  padding: 12px;
-  background: #12121c;
-  border: 2px solid #26263b;
-  border-radius: 8px;
-  z-index: 2; 
-  text-decoration: none;
-  color: #ffffff; 
-  min-height: 50px;
-}
-
-.rack-device.active {
-  background: #1a1a2e;
-  border-color: #4f4f7a;
-}
-
-/* Ports & SVG Canvas */
-.audio-port {
-  width: 14px;
-  height: 14px;
-  background: #050508;
-  border: 2px solid #44445c;
-  border-radius: 50%;
-  position: absolute;
-  bottom: -7px; 
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-}
-
-.mixer-tab #port-mixer-left { left: 25%; }
-.mixer-tab #port-mixer-right { left: 75%; }
-
-.patch-bay-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; 
-  z-index: 5;
-}
-
-.patch-cable {
-  fill: none;
-  stroke-width: 4.5;
-  stroke-linecap: round;
-  filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.45)); 
-}
-.cable-left { stroke: #ff3366; }
-.cable-right { stroke: #00e5ff; }
-
-    
+/* ==========================================================================
+   1. GLOBAL APP LAYOUT (Restores your Subapp Frames)
+   ========================================================================== */
 :root {
-  --cable-left-color: #ff3366;  
-  --cable-right-color: #00e5ff; 
+  --bg: #0a0a0f;
+  --panel: #12121c;
+  --border: #26263b;
+  --text: #e2e2e9;
+  --accent: #00e5ff;
+  --nav-height: 80px; /* Expanded slightly to give cables room to hang */
+  
+  --cable-left-color: #ff3366;  /* Hot pink for drums */
+  --cable-right-color: #00e5ff; /* Electric cyan for synth */
   --port-border: #44445c;
 }
 
-/* 1. Ensure the bottom rack layout doesn't overlap the app content above it */
+* { 
+  box-sizing: border-box; 
+}
+
+html, body {
+  margin: 0; 
+  padding: 0; 
+  background: var(--bg); 
+  overflow: hidden; 
+  height: 100dvh; 
+}
+
+body {
+  display: flex; 
+  flex-direction: column; 
+}
+
+/* Fixes the view container height so your subapps render perfectly */
+#app-container {
+  width: 100%; 
+  height: calc(100dvh - var(--nav-height)); 
+  position: relative; 
+  overflow: hidden; 
+}
+
+.app-frame {
+  width: 100%; 
+  height: 100%; 
+  border: none; 
+  display: none; 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+}
+
+.app-frame.active {
+  display: block; 
+}
+
+/* ==========================================================================
+   2. WIRED HARDWARE STUDIO RACK (Your New Custom Nav Bar)
+   ========================================================================== */
 .studio-rack {
   position: relative; 
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch; /* Forces all tabs to be equal height */
-  background: #0a0a0f;
-  padding: 15px 5px 35px 5px; 
-  width: 100%;
-  box-sizing: border-box;
+  display: flex; 
+  width: 100%; 
+  height: var(--nav-height);
+  flex: 0 0 var(--nav-height);
+  justify-content: space-between; 
+  align-items: stretch; 
+  background: var(--panel); 
+  border-top: 1px solid var(--border); 
+  padding: 10px 5px 25px 5px; /* Bottom padding gives space for cables */
+  padding-bottom: calc(15px + env(safe-area-inset-bottom));
 }
 
-/* 2. Fix the <a> tags so they don't collapse into hidden inline text elements */
+/* Individual Device Links */
 .rack-device {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  margin: 0 8px;
-  padding: 12px;
-  background: #12121c;
-  border: 2px solid #26263b;
-  border-radius: 8px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  flex: 1; 
+  margin: 0 8px; 
+  padding: 10px; 
+  background: #0a0a0f; 
+  border: 2px solid var(--border); 
+  border-radius: 8px; 
   z-index: 2; 
-  
-  /* Critical additions for <a> conversion: */
-  text-decoration: none;
-  color: #ffffff; 
-  min-height: 50px; /* Gives it a solid structural tap target */
+  text-decoration: none; 
+  color: #6c6c84; 
+  font-size: 13px;
+  font-weight: 600;
 }
 
-/* 3. Smooth active/tap highlight states */
-.rack-device:shadow {
-  outline: none;
-}
+/* Selected Device Glow Engine */
 .rack-device.active {
-  background: #1a1a2e;
-  border-color: #4f4f7a;
+  color: #fff;
+  background: #161624; 
+  border-color: #4f4f7a; 
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
 }
 
-/* Keep your existing port and canvas styles exactly as they were */
+/* Physical Hardware Jack Inputs/Outputs */
 .audio-port {
-  width: 14px;
-  height: 14px;
-  background: #050508;
-  border: 2px solid var(--port-border);
-  border-radius: 50%;
-  position: absolute;
-  bottom: -7px; 
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+  width: 12px; 
+  height: 12px; 
+  background: #000000; 
+  border: 2px solid var(--port-border); 
+  border-radius: 50%; 
+  position: absolute; 
+  bottom: -6px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); 
 }
 
+/* Position mixer routing inputs nicely */
 .mixer-tab #port-mixer-left { left: 25%; }
 .mixer-tab #port-mixer-right { left: 75%; }
 
+/* ==========================================================================
+   3. SVG CANVAS & FLOATING PATCH CABLES
+   ========================================================================== */
 .patch-bay-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; 
-  z-index: 5;
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  pointer-events: none; /* Let clicks pass straight through to buttons */
+  z-index: 5; 
 }
 
 .patch-cable {
-  fill: none;
-  stroke-width: 4.5;
-  stroke-linecap: round;
-  filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.45)); 
+  fill: none; 
+  stroke-width: 4; 
+  stroke-linecap: round; 
+  filter: drop-shadow(0px 5px 3px rgba(0, 0, 0, 0.5)); /* Adds physical drop-shadow depth */
 }
+
 .cable-left { stroke: var(--cable-left-color); }
 .cable-right { stroke: var(--cable-right-color); }
-   
 
-/* Position ports logically */
-.drum-kit-tab .audio-out-port { right: 15px; }
-.synth-tab .audio-out-port { left: 15px; }
-.mixer-tab .left-port { left: 15px; }
-.mixer-tab .right-port { right: 15px; }
-
-/* The Cables (Using border-radius to create a droop effect) */
-.cable {
-  position: absolute;
-  border: 4px solid var(--cable-color);
-  border-top: none; /* Only show the bottom curved part */
-  border-radius: 0 0 50% 50%;
-  pointer-events: none; /* Make sure users can still click the tabs underneath */
-  z-index: 10;
+/* Landscape Responsive Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --nav-height: 65px; }
+  .rack-device { font-size: 11px; padding: 5px; }
 }
-
-/* Adjust these coordinates to bridge your exact layout layout */
-.cable-left {
-  left: 20%; 
-  width: 25%;
-  height: 25px;
-  top: 30px;
-}
-
-.cable-right {
-  right: 20%;
-  width: 25%;
-  height: 25px;
-  top: 30px;
-}
-    /* previous!
-  :root {
-    --bg: #0a0a0f;
-    --panel: #12121c;
-    --border: #26263b;
-    --text: #e2e2e9;
-    --accent: #00e5ff;
-    --nav-height: 60px;
-  }
-*/
     
-  * { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    overflow: hidden;
-    /* dvh accounts for mobile browser chrome (address bar) better than vh */
-    height: 100dvh;
-  }
-
-  body {
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* App viewport area: full screen height MINUS the nav bar, so the nav
-     never overlaps app content (this is what was hiding controls in
-     landscape mode). */
-  #app-container {
-    width: 100%;
-    height: calc(100dvh - var(--nav-height));
-    position: relative;
-    overflow: hidden;
-  }
-
-  .app-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  .app-frame.active {
-    display: block;
-  }
-
-  .global-app-banner {
-    display: flex;
-    width: 100%;
-    height: var(--nav-height);
-    flex: 0 0 var(--nav-height);
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .banner-icon {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    color: #6c6c84;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    border-right: 1px solid var(--border);
-    min-height: 48px; /* touch-target friendly */
-  }
-
-  .banner-icon:last-child { border-right: none; }
-
-  .banner-icon.active {
-    color: var(--accent);
-    font-weight: bold;
-    background: rgba(0, 229, 255, 0.05);
-  }
-
-  /* Landscape: shrink the nav bar a bit so it eats less of the limited
-     vertical space, while staying comfortably tappable. */
-  @media (max-height: 500px) and (orientation: landscape) {
-    :root { --nav-height: 48px; }
-    .banner-icon { font-size: 12px; min-height: 40px; }
-  }
   </style>
 </head>
 <body>
