@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Synth</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+<!--<div class="container"> -->
+
+    <main>
+<h1>Synth</h1>
+  <div class="subtitle">Play chords and design retro electronic tones</div>
+  <header>
+    <div class="controls">
+      <button id="playBtn">▶ Play</button>
+      <button id="recordBtn">🔴 Record</button>
+    </div>
+  </header>
+
+  <div class="keyboard-wrap">
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <div class="secondary-controls">
+    <select id="waveSelect">
+      <option value="sawtooth">Sawtooth</option>
+      <option value="square">Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="sine">Sine</option>
+    </select>
+    <button id="octaveDownBtn">Oct −</button>
+    <div class="octave-display" id="octaveDisplay">Octave 4</div>
+    <button id="octaveUpBtn">Oct +</button>
+    <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
+  </div>
+
+  <div class="synth-edit-panel" id="synthEditor">
+    <div id="globalEditorControls"></div>
+  </div>
+      <!--
+</div>
+      -->
+</main>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
