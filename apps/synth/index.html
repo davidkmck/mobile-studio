@@ -428,8 +428,7 @@
       <div class="key black k-Dsh2" data-base-note="D#+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
     </div>
   </div>
-
- <script>
+<script>
     // ==========================================================================
     // 1. ALL GLOBAL ENVIRONMENT & ENGINE DECLARATIONS FIRST (Hoisting safe)
     // ==========================================================================
@@ -437,42 +436,46 @@
     window.isRecording = false;
     window.currentOctaveBase = 4;
 
-    // Build Synth Audio Engines
-    window.electronicSynth = new Tone.PolySynth(Tone.Synth).toDestination();
-    
-    // FIXED: Adjusted piano sampler mappings to match valid URLs in the Salamander repository
-    window.pianoSampler = new Tone.Sampler({
-      urls: {
-        A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", A1: "A1.mp3",
-        C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3", A2: "A2.mp3",
-        C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", A3: "A3.mp3",
-        C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", A4: "A4.mp3",
-        C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", A5: "A5.mp3",
-        C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3", A6: "A6.mp3",
-        C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3", A7: "A7.mp3", C8: "C8.mp3"
-      },
-      baseUrl: "https://tonejs.github.io/audio/salamander/",
-      onload: () => {
-        if (window.activeEngine === window.pianoSampler) {
-          document.getElementById('engine-status').innerText = "READY";
-        }
-      }
-    });
-
-    window.activeEngine = window.electronicSynth;
-
-    // Detect format compatibility for the pipeline
+    // Create a master recording bus that feeds directly into the recorder
     let mimeTypeSelection = "audio/webm;codecs=opus";
     if (!MediaRecorder.isTypeSupported(mimeTypeSelection)) {
       mimeTypeSelection = "audio/webm";
     }
 
-    const recordingBus = new Tone.Gain();
+    const recordingBus = new Tone.Gain().toDestination();
     const recorder = new Tone.Recorder({ mimeType: mimeTypeSelection });
     recordingBus.connect(recorder);
 
+    // Build Synth Audio Engines
+    window.electronicSynth = new Tone.PolySynth(Tone.Synth);
     window.electronicSynth.connect(recordingBus);
+
+    // FIXED: Switched to a robust, fully-populated Salamander Piano mirror with precise uppercase/lowercase mappings
+    window.pianoSampler = new Tone.Sampler({
+      urls: {
+        "A0": "A0.mp3", "C1": "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", "A1": "A1.mp3",
+        "C2": "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3", "A2": "A2.mp3",
+        "C3": "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", "A3": "A3.mp3",
+        "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3",
+        "C5": "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", "A5": "A5.mp3",
+        "C6": "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3", "A6": "A6.mp3",
+        "C7": "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3", "A7": "A7.mp3", "C8": "C8.mp3"
+      },
+      baseUrl: "https://g200kg.github.io/soundfonts/SalamanderPiano/",
+      onload: () => {
+        console.log("Piano sampler assets loaded successfully!");
+        if (window.activeEngine === window.pianoSampler) {
+          document.getElementById('engine-status').innerText = "READY";
+        }
+      },
+      onerror: (err) => {
+        console.error("Sampler loading error:", err);
+        document.getElementById('engine-status').innerText = "LOAD ERROR";
+      }
+    });
     window.pianoSampler.connect(recordingBus);
+
+    window.activeEngine = window.electronicSynth;
 
     // ==========================================================================
     // 2. SIGNAL PROCESSING EFFECTS CHAINS
@@ -484,9 +487,12 @@
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
 
+    // Route engines through FX as well as keeping clean routing to the recorder
+    window.electronicSynth.connect(chorusFX);
+    window.pianoSampler.connect(chorusFX);
+
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
-    reverbFX.toDestination(); 
     reverbFX.connect(recordingBus);
 
     // ==========================================================================
@@ -495,9 +501,13 @@
     async function ensureAudioContext() {
       if (Tone.context.state !== 'running') {
         await Tone.start();
+        console.log("AudioContext successfully unlocked via user gesture.");
         try {
-          chorusFX.start(); 
-        } catch(e) {}
+          await chorusFX.start(); 
+          await reverbFX.ready;
+        } catch(e) {
+          console.warn("FX Warmup Warning:", e);
+        }
       }
     }
 
@@ -541,14 +551,20 @@
       await ensureAudioContext(); 
       element.classList.add('active');
       const targetNote = getTargetNoteString(element.dataset.baseNote);
-      window.activeEngine.triggerAttack(targetNote);
+      try {
+        window.activeEngine.triggerAttack(targetNote);
+      } catch (err) {
+        console.error("Trigger attack failure:", err);
+      }
     }
 
     function handleNoteOff(element) {
       if (element.classList.contains('active')) {
         element.classList.remove('active');
         const targetNote = getTargetNoteString(element.dataset.baseNote);
-        window.activeEngine.triggerRelease(targetNote);
+        try {
+          window.activeEngine.triggerRelease(targetNote);
+        } catch(err) {}
       }
     }
 
@@ -581,6 +597,7 @@
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
         
+        // Clear old state and safely record directly via Tone.Recorder destination stream
         recorder.start();
         
         window.isPlaying = true;
@@ -694,5 +711,6 @@
       });
     });
   </script>
+
 </body>
 </html>
