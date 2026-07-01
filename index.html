@@ -6,6 +6,98 @@
   <title>Mobile Studio</title>
   
   <style>
+
+/* Apply this to the parent container wrapping your entire app/iframes and the rack */
+body, .app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+/* Ensure your iframe container or active subapp area grows to fill all top space */
+.content-area, iframe, #app-container {
+  flex: 1;          /* Forces it to take up 100% of the remaining top space */
+  width: 100%;
+  border: none;
+  display: block;
+}
+
+/* The Fixed Bottom Studio Rack Layout */
+.studio-rack {
+  position: relative; 
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  background: #0a0a0f;
+  padding: 15px 5px 35px 5px; 
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0; /* CRITICAL: Prevents the rack from collapsing or resizing */
+}
+
+/* The Interactive Device Buttons */
+.rack-device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: 0 8px;
+  padding: 12px;
+  background: #12121c;
+  border: 2px solid #26263b;
+  border-radius: 8px;
+  z-index: 2; 
+  text-decoration: none;
+  color: #ffffff; 
+  min-height: 50px;
+}
+
+.rack-device.active {
+  background: #1a1a2e;
+  border-color: #4f4f7a;
+}
+
+/* Ports & SVG Canvas */
+.audio-port {
+  width: 14px;
+  height: 14px;
+  background: #050508;
+  border: 2px solid #44445c;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -7px; 
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.mixer-tab #port-mixer-left { left: 25%; }
+.mixer-tab #port-mixer-right { left: 75%; }
+
+.patch-bay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; 
+  z-index: 5;
+}
+
+.patch-cable {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.45)); 
+}
+.cable-left { stroke: #ff3366; }
+.cable-right { stroke: #00e5ff; }
+
+    
 :root {
   --cable-left-color: #ff3366;  
   --cable-right-color: #00e5ff; 
