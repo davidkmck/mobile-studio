@@ -1,5 +1,4 @@
-
-  // ─── Keyboard layout ──────────────────────────────────────────
+// ─── Keyboard layout ──────────────────────────────────────────
   const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   const BLACK_NOTES = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
   const NUM_OCTAVES_SHOWN = 2;
@@ -9,11 +8,22 @@
   let recorder = null;
   const activeNotes = new Set();
 
-  // ─── Sound engine ─────────────────────────────────────────────
+  // ─── Effects Setup ────────────────────────────────────────────
+  // Create effects with sensible default mixes (set to 0 wet initially so it starts dry)
+  const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 }).start();
+  const feedbackDelay = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.4, wet: 0 });
+  const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
+
+  // Initialize Reverb asynchronous generation so it is ready to process audio immediately
+  reverb.generate();
+
+  // ─── Sound engine & Effects Chain ─────────────────────────────
+  // Chain: Synth -> Chorus -> Echo (Delay) -> Reverb -> Speakers
   const synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: 'sawtooth' },
     envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
-  }).toDestination();
+  }).chain(chorus, feedbackDelay, reverb, Tone.Destination);
+
   synth.volume.value = -6;
 
   document.getElementById('waveSelect').addEventListener('change', (e) => {
@@ -147,7 +157,15 @@
       { label: 'Sustain', min: 0, max: 1, step: 0.01, value: 0.4,
         onInput: v => synth.set({ envelope: { sustain: parseFloat(v) } }) },
       { label: 'Release', min: 0, max: 2, step: 0.01, value: 0.8,
-        onInput: v => synth.set({ envelope: { release: parseFloat(v) } }) }
+        onInput: v => synth.set({ envelope: { release: parseFloat(v) } }) },
+      
+      // ─── Added Back: Effects Sliders ───
+      { label: 'Chorus Mix', min: 0, max: 1, step: 0.01, value: chorus.wet.value,
+        onInput: v => { chorus.wet.value = parseFloat(v); } },
+      { label: 'Echo Mix', min: 0, max: 1, step: 0.01, value: feedbackDelay.wet.value,
+        onInput: v => { feedbackDelay.wet.value = parseFloat(v); } },
+      { label: 'Reverb Mix', min: 0, max: 1, step: 0.01, value: reverb.wet.value,
+        onInput: v => { reverb.wet.value = parseFloat(v); } }
     ];
 
     rows.forEach(r => {
@@ -190,11 +208,11 @@
     if (!isRecording) {
       if (!recorder) {
         recorder = new Tone.Recorder();
+        // Captures Tone.Destination, meaning any signal hitting the master output 
+        // (including our whole effects chain) will cleanly record!
         Tone.Destination.connect(recorder);
       }
-      // 1. Tell the parent frame to broadcast a START_AUDIO signal 
-    // so Multitrack starts playing back your timeline tracks immediately!
-    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
+      window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
       
       recorder.start();
       isRecording = true;
@@ -205,23 +223,18 @@
     } else {
       const recording = await recorder.stop();
 
-      // 2. Tell the parent frame to pause/stop playback now that recording is finished
-    window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
       
-      // Release any held notes so nothing rings on after recording stops
       activeNotes.forEach(note => synth.triggerRelease(note));
       activeNotes.clear();
       document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
 
-      // ─── CONVERT BLOB TO ARRAYBUFFER ───
-      // Use the built-in arrayBuffer() method on the audio blob
       const audioBuffer = await recording.arrayBuffer();
 
-      // Use the exact same action and payload structure as the Beat Maker
       window.parent.postMessage({
         action: 'ADD_TRACK',
         audioBuffer: audioBuffer,
-        trackName: `Synth_${Date.now()}` // Dynamic timestamp name so recordings don't overwrite each other
+        trackName: `Synth_${Date.now()}`
       }, '*');
       
       window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
@@ -235,22 +248,17 @@
   // Inside Synth/Multitrack index.html
 window.addEventListener('message', (event) => {
   if (event.data.action === 'START_AUDIO') {
-    Tone.start(); // Unlock audio
-    Tone.Transport.bpm.value = event.data.bpm || 120
-    Tone.Transport.start(); // Start the timeline
+    Tone.start();
+    Tone.Transport.bpm.value = event.data.bpm || 120;
+    Tone.Transport.start();
   }
 
   if (event.data.action === 'STOP_AUDIO') {
-// ─── THE FIX ───
-    // Always stop the local timeline transport cleanly when requested globally.
-    // If we were recording, recordWav() has already captured the buffer, so it is safe to halt!
     if (isRecording) return; 
-
     Tone.Transport.stop();
   }
 });
 
-// Send the request when your internal Play button is pressed
 document.getElementById('playBtn').addEventListener('click', () => {
   window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
 });
@@ -260,5 +268,4 @@ document.getElementById('playBtn').addEventListener('click', () => {
   // ─── Boot ───────────────────────────────────────────────────────
   buildKeyboard();
 
-  // Tell the parent studio we are alive!
   window.parent.postMessage({ action: 'SYNTH_READY' }, '*');
