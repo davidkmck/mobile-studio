@@ -400,11 +400,10 @@
     const recorder = new Tone.Recorder();
 
     // ==========================================================================
-    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Optimized Graph Order)
+    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Type & Order)
     // ==========================================================================
-    // Create the master effects units
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
-    const delayFX = new FeedbackDelay("8n", 0.3);
+    const delayFX = new Tone.FeedbackDelay("8n", 0.3); // <-- Fixed missing Tone. prefix!
     const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
 
     // Explicitly configure wet/dry parameters before routing
