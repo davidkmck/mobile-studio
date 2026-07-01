@@ -7,7 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
     :root {
-      --bg: #0a0a0f; 
+      --bg: #0a0a0f;
       --panel: #12121c;
       --border: #26263b;
       --accent: #00e5ff;
@@ -27,7 +27,9 @@
       justify-content: space-between;
     }
 
-    /* Engine Sound Selector Rack Control */
+    /* ==========================================================================
+       1. TRANSPORT / CONTROL PANEL (Restored original layout + Toggle)
+       ========================================================================== */
     .controls-panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -35,8 +37,15 @@
       padding: 12px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
       margin-bottom: 16px;
+    }
+
+    .left-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .selector-group {
@@ -51,7 +60,7 @@
       background: transparent;
       border: none;
       color: #5c5c7a;
-      padding: 6px 16px;
+      padding: 6px 14px;
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
@@ -68,17 +77,52 @@
       text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
     }
 
+    .transport-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #1c1c2b;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-record {
+      background: #2b1c1c;
+      border-color: #5c2626;
+      color: #ff4444;
+    }
+    
+    .btn-record.recording {
+      background: #ff4444;
+      color: #fff;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
     .status-lamp {
       font-family: monospace;
       font-size: 9px;
       background: #121c12;
       color: #39ff14;
-      padding: 3px 6px;
+      padding: 4px 8px;
       border-radius: 3px;
       border: 1px solid #091009;
     }
 
-    /* Keyboard Layout */
+    /* ==========================================================================
+       2. KEYBOARD CONTAINER (Restored original sizing layout)
+       ========================================================================== */
     .keyboard {
       position: relative;
       display: flex;
@@ -128,7 +172,7 @@
       height: 59%;
     }
 
-    /* Custom absolute alignments for black keys across 2 octaves */
+    /* Absolute positioning offsets from your original code layout */
     .k-Csh1 { left: 5.5%; }
     .k-Dsh1 { left: 14.5%; }
     .k-Fsh1 { left: 32.5%; }
@@ -141,11 +185,20 @@
 <body>
 
   <div class="controls-panel">
-    <div class="selector-group">
-      <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
-      <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
+    <div class="left-controls">
+      <!-- Engine Switcher Toggle -->
+      <div class="selector-group">
+        <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
+        <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
+      </div>
+      <div id="engine-status" class="status-lamp">READY</div>
     </div>
-    <div id="engine-status" class="status-lamp">READY</div>
+
+    <!-- Restored Original Transport & Record Controls -->
+    <div class="transport-group">
+      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
+      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
+    </div>
   </div>
 
   <div class="keyboard">
@@ -181,13 +234,16 @@
   </div>
 
   <script>
-    // 1. Keep your original electronic synthetic sound engine
+    // 1. Maintain Original Recording & Destination Nodes
+    const recorder = new Tone.Recorder();
+
+    // Original Synthetic PolySynth Setup
     const electronicSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sawtooth" },
       envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
-    }).toDestination();
+    }).connect(recorder).toDestination();
 
-    // 2. Setup the high quality piano sampler asset bank
+    // Piano Sampler Engine Bank Setup
     const pianoSampler = new Tone.Sampler({
       urls: {
         A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -201,11 +257,11 @@
       },
       baseUrl: "https://tonejs.github.io/audio/salamander/",
       onload: () => {
-        document.getElementById('engine-status').innerText = "READY";
+        if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
       }
-    }).toDestination();
+    }).connect(recorder).toDestination();
 
-    // Set Default Engine
+    // Default Starting Variable Engine
     let activeEngine = electronicSynth;
 
     function setEngine(type, buttonEl) {
@@ -214,16 +270,75 @@
       
       if (type === 'piano') {
         activeEngine = pianoSampler;
-        document.getElementById('engine-status').innerText = "PIANO LOADING...";
-        // If it's already cached/loaded, reset status string right away
-        if (pianoSampler.loaded) document.getElementById('engine-status').innerText = "READY";
+        document.getElementById('engine-status').innerText = pianoSampler.loaded ? "READY" : "LOADING PIANO...";
       } else {
         activeEngine = electronicSynth;
         document.getElementById('engine-status').innerText = "READY";
       }
     }
 
-    // 3. Audio Handlers using the variable active engine
+    // ==========================================================================
+    // RESTORED ORIGINAL APP INTERACTION LOGIC (Transport, Messaging & Recording)
+    // ==========================================================================
+    let isPlaying = false;
+    let isRecording = false;
+
+    function togglePlay() {
+      if (Tone.context.state !== 'running') Tone.start();
+      
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('play-btn');
+      
+      if (isPlaying) {
+        btn.innerText = "STOP";
+        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
+      } else {
+        btn.innerText = "PLAY";
+        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      }
+    }
+
+    async function toggleRecord() {
+      if (Tone.context.state !== 'running') Tone.start();
+      
+      const recBtn = document.getElementById('record-btn');
+      isRecording = !isRecording;
+
+      if (isRecording) {
+        recBtn.innerText = "STOP REC";
+        recBtn.classList.add('recording');
+        recorder.start();
+      } else {
+        recBtn.innerText = "REC";
+        recBtn.classList.remove('recording');
+        
+        document.getElementById('engine-status').innerText = "SAVING...";
+        const recordingBlob = await recorder.stop();
+        document.getElementById('engine-status').innerText = "READY";
+
+        window.parent.postMessage({
+          action: 'EXPORT_AUDIO_TO_TRACKS',
+          audioBlob: recordingBlob,
+          trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
+          mimeType: 'audio/webm'
+        }, '*');
+        
+        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.data.action === 'START_AUDIO') {
+        isPlaying = true;
+        document.getElementById('play-btn').innerText = "STOP";
+      }
+      if (event.data.action === 'STOP_AUDIO') {
+        isPlaying = false;
+        document.getElementById('play-btn').innerText = "PLAY";
+      }
+    });
+
+    // Keys Triggers Engine Hook
     function handleNoteOn(note, element) {
       if (Tone.context.state !== 'running') Tone.start();
       element.classList.add('active');
@@ -237,7 +352,7 @@
       }
     }
 
-    // Mobile hardware support touch handles
+    // Mobile touch listeners
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
