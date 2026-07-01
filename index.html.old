@@ -1,1 +1,269 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mobile Studio</title>
+  
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --panel: #12121c;
+      --border: #26263b;
+      --nav-height: 85px; 
+      --cable-left-color: #ff3366;  
+      --cable-right-color: #00e5ff; 
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      overflow: hidden;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       1. CORE VIEWPORT LAYOUT (Fixes the overlapping/simultaneous app bug)
+       ========================================================================== */
+    #app-container {
+      width: 100%;
+      height: calc(100dvh - var(--nav-height));
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .app-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none; /* Keeps apps hidden by default */
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .app-frame.active {
+      display: block; /* Only displays the currently selected sub-app */
+    }
+
+    /* ==========================================================================
+       2. WIRED HARDWARE STUDIO RACK
+       ========================================================================== */
+    .studio-rack {
+      position: relative; 
+      display: flex; 
+      width: 100%; 
+      height: var(--nav-height);
+      background: var(--panel); 
+      border-top: 1px solid var(--border); 
+      padding: 10px 5px 25px 5px;
+      flex-shrink: 0;
+    }
+
+    /* Individual hardware unit tabs */
+    .rack-device {
+      position: relative; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      flex: 1; 
+      margin: 0 8px; 
+      background: #0a0a0f; 
+      border: 2px solid var(--border); 
+      border-radius: 8px; 
+      z-index: 2; 
+      text-decoration: none; 
+      color: #6c6c84; 
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .rack-device.active {
+      color: #fff;
+      background: #161624; 
+      border-color: #4f4f7a; 
+    }
+
+    /* Hardware Jack Input/Output Sockets */
+    .audio-port {
+      width: 12px; 
+      height: 12px; 
+      background: #000000; 
+      border: 2px solid #44445c; 
+      border-radius: 50%; 
+      position: absolute; 
+      bottom: -6px; 
+      transform: translateX(-50%); 
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); 
+    }
+
+    /* Absolute Vector Canvas Overlay Layer */
+    .patch-bay-canvas {
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      pointer-events: none; 
+      z-index: 5; 
+      overflow: visible; 
+    }
+
+    .patch-bay-canvas path {
+      fill: none;
+      stroke-width: 4px; 
+      stroke-linecap: round;
+      filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.5));
+    }
+
+    .cable-left { stroke: var(--cable-left-color); }
+    .cable-right { stroke: var(--cable-right-color); }   
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <iframe id="beat-maker" class="app-frame active" src="apps/beat-maker/index.html"></iframe>
+    <iframe id="multitrack" class="app-frame" src="apps/multitrack/index.html"></iframe>
+    <iframe id="synth" class="app-frame" src="apps/synth/index.html"></iframe>
+  </div>
+
+  <div class="studio-rack">
+    <!-- BEAT (Drum Kit) -->
+    <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">
+      <div class="device-body">🥁 BEAT</div>
+      <div class="audio-port" style="left: 50%;"></div>
+    </a>
+
+    <!-- TRACKS (The Mixer Board) -->
+    <a href="#" class="rack-device mixer-tab" data-app="multitrack" onclick="loadApp('multitrack', event)">
+      <div class="audio-port port-left" style="left: 25%;"></div>
+      <div class="audio-port port-right" style="left: 75%;"></div>
+      <div class="device-body">🎛️ TRACKS</div>
+    </a>
+
+    <!-- SYNTH (Keyboard) -->
+    <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)">
+      <div class="audio-port" style="left: 50%;"></div>
+      <div class="device-body">🎹 SYNTH</div>
+    </a>
+    
+    <!-- The Vector Canvas Overlay -->
+    <svg class="patch-bay-canvas" xmlns="http://www.w3.org/2000/svg">
+      <path class="cable-left" d="M 0 0" />
+      <path class="cable-right" d="M 0 0" />
+    </svg>
+  </div>
+
+  <script>
+    let pendingClip = null; 
+
+    window.addEventListener('message', (event) => {
+      const { action, audioBlob, trackName, mimeType, app, bpm } = event.data;
+
+      if (action === 'EXPORT_AUDIO_TO_TRACKS') {
+        console.log("Parent: Received audio. Queuing for Tracks...");
+        pendingClip = { action: 'ADD_CLIP_TO_TIMELINE', audioBlob, trackName, mimeType };
+      }
+
+      if (action === 'SWITCH_APP') {
+        switchApp(app);
+      }
+
+      if (action === 'REQUEST_PLAY') {
+        document.querySelectorAll('.app-frame').forEach(frame => {
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ action: 'START_AUDIO', bpm }, '*');
+          }
+        });
+      }
+
+      if (action === 'REQUEST_STOP') {
+        document.querySelectorAll('.app-frame').forEach(frame => {
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({ action: 'STOP_AUDIO' }, '*');
+          }
+        });
+      }
+
+      if (action === 'ADD_TRACK') {
+        const multitrackFrame = document.getElementById('multitrack');
+        if (multitrackFrame && multitrackFrame.contentWindow) {
+          multitrackFrame.contentWindow.postMessage(event.data, '*');
+        }
+      }
+    });
+
+    function drawPatchCables() {
+      const rack = document.querySelector('.studio-rack');
+      if (!rack) return;
+      const rackRect = rack.getBoundingClientRect();
+      
+      const getPortCenter = (tabClass, portClass) => {
+        const tab = document.querySelector(tabClass);
+        if (!tab) return { x: 0, y: 0 };
+        
+        const port = portClass ? tab.querySelector(portClass) : tab.querySelector('.audio-port');
+        if (!port) return { x: 0, y: 0 };
+        
+        const pRect = port.getBoundingClientRect();
+        return {
+          x: pRect.left - rackRect.left + (pRect.width / 2),
+          y: pRect.top - rackRect.top + (pRect.height / 2)
+        };
+      };
+
+      const startLeft = getPortCenter('.drum-kit-tab');
+      const endLeft = getPortCenter('.mixer-tab', '.port-left');
+      const startRight = getPortCenter('.synth-tab');
+      const endRight = getPortCenter('.mixer-tab', '.port-right');
+
+      const droopAmount = 35; 
+
+      const pathLeft = document.querySelector('.cable-left');
+      if (pathLeft) {
+        pathLeft.setAttribute('d', `M ${startLeft.x} ${startLeft.y} C ${startLeft.x} ${startLeft.y + droopAmount}, ${endLeft.x} ${endLeft.y + droopAmount}, ${endLeft.x} ${endLeft.y}`);
+      }
+
+      const pathRight = document.querySelector('.cable-right');
+      if (pathRight) {
+        pathRight.setAttribute('d', `M ${startRight.x} ${startRight.y} C ${startRight.x} ${startRight.y + droopAmount}, ${endRight.x} ${endRight.y + droopAmount}, ${endRight.x} ${endRight.y}`);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', drawPatchCables);
+    window.addEventListener('load', drawPatchCables);
+    window.addEventListener('resize', drawPatchCables);   
+    
+    function switchApp(targetAppId) {
+      document.querySelectorAll('.app-frame').forEach(frame => frame.classList.remove('active'));
+      const activeFrame = document.getElementById(targetAppId);
+      if (activeFrame) activeFrame.classList.add('active');
+
+      document.querySelectorAll('.rack-device').forEach(el => {
+        el.classList.toggle('active', el.dataset.app === targetAppId);
+      });
+
+      if (targetAppId === 'multitrack' && pendingClip && activeFrame) {
+        activeFrame.contentWindow.postMessage(pendingClip, '*');
+        pendingClip = null;
+      }
+    }
+
+    function loadApp(appName, event) {
+      if (event) event.preventDefault(); 
+      switchApp(appName);
+    }
+  </script>
+</body>
+</html>
