@@ -422,8 +422,8 @@
   <script>
     const recorder = new Tone.Recorder();
 
-    // ==========================================================================
-    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP
+// ==========================================================================
+    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Recording Bus)
     // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
@@ -434,16 +434,18 @@
 
     chorusFX.start();
 
+    // Main FX chain routing
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     
-    reverbFX.connect(recorder);
+    // The FX chain outputs directly to the speakers
     reverbFX.toDestination(); 
 
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION
+    // 2. SOUND ENGINES GENERATION (Dual routed to FX AND Recorder)
     // ==========================================================================
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
+    // Connect to chorusFX for hearing it live, and recorder to catch the raw notes!
+    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recorder);
 
     const pianoSampler = new Tone.Sampler({
       urls: {
@@ -460,7 +462,7 @@
       onload: () => {
         if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
       }
-    }).connect(chorusFX);
+    }).connect(chorusFX).connect(recorder);
 
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
