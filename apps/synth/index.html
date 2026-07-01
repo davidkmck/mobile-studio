@@ -36,7 +36,7 @@
 
     /* ==========================================================================
        1. TOP MASTER PANEL (Mobile Accessible Layout)
-       ========================================================================== */
+       ========================================================================= */
     .controls-panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -155,7 +155,7 @@
 
     /* ==========================================================================
        2. SEPARATED CONFIGURATION PANELS
-       ========================================================================== */
+       ========================================================================= */
     .synth-tweaker-panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -230,7 +230,7 @@
 
     /* ==========================================================================
        3. KEYBOARD AREA
-       ========================================================================== */
+       ========================================================================= */
     .keyboard-space {
       flex: 1;
       width: 100%;
@@ -431,12 +431,13 @@
 
   <script>
     // ==========================================================================
-    // 1. GLOBAL STATE & SYNTH ENGINE SETUP
+    // 1. ALL GLOBAL ENVIRONMENT & ENGINE DECLARATIONS FIRST
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
     let currentOctaveBase = 4;
 
+    // Build Synth Audio Engines
     const electronicSynth = new Tone.PolySynth(Tone.Synth).toDestination();
     const pianoSampler = new Tone.Sampler({
       urls: {
@@ -458,7 +459,7 @@
 
     let activeEngine = electronicSynth;
 
-    // Explicitly setup MediaRecorder constraints via standard browser-supported formats 
+    // Detect format compatibility for the pipeline
     let mimeTypeSelection = "audio/webm;codecs=opus";
     if (!MediaRecorder.isTypeSupported(mimeTypeSelection)) {
       mimeTypeSelection = "audio/webm";
@@ -468,7 +469,6 @@
     const recorder = new Tone.Recorder({ mimeType: mimeTypeSelection });
     recordingBus.connect(recorder);
 
-    // Electronic sound configurations connected to recording pipelines
     electronicSynth.connect(recordingBus);
     pianoSampler.connect(recordingBus);
 
@@ -488,7 +488,7 @@
     reverbFX.connect(recordingBus);
 
     // ==========================================================================
-    // HELPER TO GUARANTEE CONTEXT IS RESUMED
+    // 3. CORE AUDIO AUXILIARY HELPERS
     // ==========================================================================
     async function ensureAudioContext() {
       if (Tone.context.state !== 'running') {
@@ -497,8 +497,22 @@
       }
     }
 
+    function getTargetNoteString(baseToken) {
+      let octave = currentOctaveBase;
+      let cleanNote = baseToken;
+
+      if (baseToken.includes('++')) {
+        octave += 2;
+        cleanNote = baseToken.replace('++', '');
+      } else if (baseToken.includes('+')) {
+        octave += 1;
+        cleanNote = baseToken.replace('+', '');
+      }
+      return `${cleanNote}${octave}`;
+    }
+
     // ==========================================================================
-    // 3. UI MANAGEMENT PANELS
+    // 4. INTERACTIVE ACTIONS (Panels & Notes)
     // ==========================================================================
     function togglePanel(panelName) {
       const tweaker = document.getElementById('tweaker-panel');
@@ -519,9 +533,6 @@
       }
     }
 
-    // ==========================================================================
-    // 4. NOTE INTERACTION MECHANICS
-    // ==========================================================================
     async function handleNoteOn(element) {
       await ensureAudioContext(); 
       element.classList.add('active');
@@ -538,7 +549,7 @@
     }
 
     // ==========================================================================
-    // 5. TRANSPORT WAKEUP & BLOB FORWARDING INTERCEPT
+    // 5. TIMELINE TRANSPORT & BLOB FORWARDING
     // ==========================================================================
     async function togglePlay() {
       await ensureAudioContext();
@@ -588,7 +599,7 @@
           const standardizedBlob = new Blob([rawBlob], { type: mimeTypeSelection });
           const objectUrl = URL.createObjectURL(standardizedBlob);
 
-          // TRICK THE MULTITRACK: Pass the objectUrl directly down trackName so its internal fetch() loads memory streams
+          // Satisfy multitrack internal fetch requirements directly using the memory URL stream
           window.parent.postMessage({
             action: 'ADD_CLIP_TO_TIMELINE',
             blob: standardizedBlob,       
@@ -620,7 +631,7 @@
     });
 
     // ==========================================================================
-    // 6. INITIALIZERS & CONFIGURATION UTILS
+    // 6. ENGINE CONTROL MODIFIERS
     // ==========================================================================
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
@@ -661,25 +672,11 @@
       }
     }
 
-    function getTargetNoteString(baseToken) {
-      let octave = currentOctaveBase;
-      let cleanNote = baseToken;
-
-      if (baseToken.includes('++')) {
-        octave += 2;
-        cleanNote = baseToken.replace('++', '');
-      } else if (baseToken.includes('+')) {
-        octave += 1;
-        cleanNote = baseToken.replace('+', '');
-      }
-      return `${cleanNote}${octave}`;
-    }
-
-    // Bootstrap values
+    // Bootstrap values once definitions are safely configured
     updateParameters();
     updateFX();
 
-    // Mobile hardware fallback layout bindings
+    // Mobile touch interaction event maps
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
