@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Synth Subapp</title>
+  <title>Synth</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
     :root {
@@ -11,6 +11,7 @@
       --panel: #12121c;
       --border: #26263b;
       --accent: #00e5ff;
+      --accent-fx: #d400ff;
     }
 
     * { box-sizing: border-box; }
@@ -34,7 +35,7 @@
     }
 
     /* ==========================================================================
-       1. TOP MASTER PANEL (Transport FIRST on Left, Engine Switcher Right)
+       1. TOP MASTER PANEL (Mobile Accessible Layout)
        ========================================================================== */
     .controls-panel {
       background: var(--panel);
@@ -50,7 +51,7 @@
 
     .transport-group {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
     }
 
@@ -105,12 +106,12 @@
       background: #1c1c2b;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 8px 14px;
+      padding: 8px 12px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .btn:active {
@@ -121,10 +122,18 @@
       border-color: var(--accent);
       color: var(--accent);
     }
-    
-    .btn-toggle-panel.hidden-state {
-      background: #00e5ff;
+    .btn-toggle-panel.active-state {
+      background: var(--accent);
       color: #000;
+    }
+
+    .btn-toggle-fx {
+      border-color: var(--accent-fx);
+      color: var(--accent-fx);
+    }
+    .btn-toggle-fx.active-state {
+      background: var(--accent-fx);
+      color: #fff;
     }
 
     .btn-record {
@@ -132,7 +141,6 @@
       border-color: #5c2626;
       color: #ff4444;
     }
-    
     .btn-record.recording {
       background: #ff4444;
       color: #fff;
@@ -146,7 +154,7 @@
     }
 
     /* ==========================================================================
-       2. SYNTH PARAMETERS & EFFECTS PANEL
+       2. SEPARATED CONFIGURATION PANELS
        ========================================================================== */
     .synth-tweaker-panel {
       background: var(--panel);
@@ -158,7 +166,6 @@
       overflow-x: auto;
       flex-shrink: 0;
       white-space: nowrap;
-      transition: all 0.2s ease-in-out;
     }
 
     .synth-tweaker-panel.collapsed {
@@ -207,6 +214,10 @@
       accent-color: var(--accent);
     }
 
+    .fx-box input[type="range"] {
+      accent-color: var(--accent-fx);
+    }
+
     .select-dark {
       background: #1c1c2b;
       border: 1px solid var(--border);
@@ -218,7 +229,7 @@
     }
 
     /* ==========================================================================
-       3. FLEXIBLE KEYBOARD ENVIRONMENT
+       3. KEYBOARD AREA
        ========================================================================== */
     .keyboard-space {
       flex: 1;
@@ -293,12 +304,13 @@
 </head>
 <body>
 
-  <!-- Top Master Utility Block: Reordered so Transport is Left Aligned -->
+  <!-- Top Utilities Bar: All Core Triggers Grouped Safely on the Left -->
   <div class="controls-panel">
     <div class="transport-group">
       <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
       <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="toggle-panel-btn" class="btn btn-toggle-panel" onclick="toggleTweakerPanel()">🎛️ CONTROLS</button>
+      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ SYNTH</button>
+      <button id="toggle-fx-btn" class="btn btn-toggle-fx" onclick="togglePanel('effects')">✨ EFFECTS</button>
     </div>
 
     <div class="right-controls">
@@ -310,9 +322,8 @@
     </div>
   </div>
 
-  <!-- Extended Control Panel: Synthesizer Parameters & Multi-Effects Engine -->
+  <!-- Panel 1: Synthesizer Parameters Panel -->
   <div id="tweaker-panel" class="synth-tweaker-panel">
-    <!-- Generator Source -->
     <div class="tweak-section">
       <span class="section-title">Osc</span>
       <div class="knob-box">
@@ -336,7 +347,6 @@
       </div>
     </div>
 
-    <!-- Envelope Modifiers -->
     <div class="tweak-section">
       <span class="section-title">Env</span>
       <div class="knob-box">
@@ -357,24 +367,6 @@
       </div>
     </div>
 
-    <!-- FX Modulation Engine -->
-    <div class="tweak-section">
-      <span class="section-title">FX</span>
-      <div class="knob-box">
-        <label>Chorus</label>
-        <input id="fx-chorus" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
-      </div>
-      <div class="knob-box">
-        <label>Echo (Delay)</label>
-        <input id="fx-delay" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
-      </div>
-      <div class="knob-box">
-        <label>Reverb</label>
-        <input id="fx-reverb" type="range" min="0" max="1" step="0.05" value="0.1" oninput="updateFX()">
-      </div>
-    </div>
-
-    <!-- Master Amp Gain -->
     <div class="tweak-section">
       <span class="section-title">Amp</span>
       <div class="knob-box">
@@ -384,10 +376,29 @@
     </div>
   </div>
 
-  <!-- Main Self-Sizing Dynamic Piano Workspace -->
+  <!-- Panel 2: Isolated Effects Parameter Modulation Panel -->
+  <div id="effects-panel" class="synth-tweaker-panel collapsed">
+    <div class="tweak-section">
+      <span class="section-title" style="color: var(--accent-fx);">FX</span>
+      <div class="knob-box fx-box">
+        <label>Chorus</label>
+        <input id="fx-chorus" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
+      </div>
+      <div class="knob-box fx-box">
+        <label>Echo (Delay)</label>
+        <input id="fx-delay" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
+      </div>
+      <div class="knob-box fx-box">
+        <label>Reverb</label>
+        <input id="fx-reverb" type="range" min="0" max="1" step="0.05" value="0.1" oninput="updateFX()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Visual Piano Matrix -->
   <div class="keyboard-space">
     <div class="keyboard">
-      <!-- Octave 1 White Keys -->
+      <!-- White Keys -->
       <div class="key white" data-base-note="C" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="D" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="E" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
@@ -396,7 +407,6 @@
       <div class="key white" data-base-note="A" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="B" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
 
-      <!-- Octave 2 White Keys -->
       <div class="key white" data-base-note="C+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="D+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="E+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
@@ -419,15 +429,15 @@
     </div>
   </div>
 
-<script>
-    // ==========================================================================
-    // 1. AUDIO ROUTING & RECORDING BUS SETUP
-    // ==========================================================================
-    // Create a dedicated isolated mix bus just for the recorder
+  <script>
+    // Dedicated internal recording node routing layer
     const recordingBus = new Tone.Gain();
     const recorder = new Tone.Recorder();
     recordingBus.connect(recorder);
 
+    // ==========================================================================
+    // 1. SIGNAL PROCESSING EFFECTS CHAINS
+    // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
     const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
@@ -436,16 +446,16 @@
     chorusFX.wet.value = 0;
     chorusFX.start();
 
-    // Main Live Output Chain
+    // Setup master live sound route
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     reverbFX.toDestination(); 
 
-    // Also route the wet effects tail into the recording bus so effects are printed to the track!
+    // Capture wet effects tails to recording block 
     reverbFX.connect(recordingBus);
 
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION (Connected to FX Chain & Dry Recording Bus)
+    // 2. SYNTH ENGINES GENERATION
     // ==========================================================================
     const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recordingBus);
 
@@ -469,11 +479,20 @@
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
 
-    function toggleTweakerPanel() {
-      const panel = document.getElementById('tweaker-panel');
-      const btn = document.getElementById('toggle-panel-btn');
-      panel.classList.toggle('collapsed');
-      btn.classList.toggle('hidden-state', panel.classList.contains('collapsed'));
+    // Split Panel UI Toggling 
+    function togglePanel(type) {
+      const controlsPanel = document.getElementById('tweaker-panel');
+      const effectsPanel = document.getElementById('effects-panel');
+      const controlsBtn = document.getElementById('toggle-panel-btn');
+      const effectsBtn = document.getElementById('toggle-fx-btn');
+
+      if (type === 'controls') {
+        controlsPanel.classList.toggle('collapsed');
+        controlsBtn.classList.toggle('active-state', !controlsPanel.classList.contains('collapsed'));
+      } else if (type === 'effects') {
+        effectsPanel.classList.toggle('collapsed');
+        effectsBtn.classList.toggle('active-state', !effectsPanel.classList.contains('collapsed'));
+      }
     }
 
     function updateParameters() {
@@ -530,7 +549,7 @@
     }
 
     // ==========================================================================
-    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication)
+    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication & Explicit File Typing)
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
@@ -561,10 +580,8 @@
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
         
-        // Start recording buffer immediately
         recorder.start();
         
-        // Notify parent timeline to start audio generation playback loop
         isPlaying = true;
         playBtn.innerText = "STOP";
         window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
@@ -572,7 +589,6 @@
         recBtn.innerText = "REC";
         recBtn.classList.remove('recording');
         
-        // Hard stop playback globally
         isPlaying = false;
         playBtn.innerText = "PLAY";
         window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
@@ -580,18 +596,19 @@
         document.getElementById('engine-status').innerText = "SAVING...";
         
         try {
-          const recordingBlob = await recorder.stop();
+          const rawBlob = await recorder.stop();
           document.getElementById('engine-status').innerText = "READY";
 
-          // Dispatch tracking message to parent environment
+          // Force standard type naming so multitrack app maps it to wave timeline automatically
+          const audioFile = new File([rawBlob], "keyboard-take.webm", { type: "audio/webm" });
+
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
-            audioBlob: recordingBlob,
-            trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
+            audioBlob: audioFile,
+            trackName: activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth',
             mimeType: 'audio/webm'
           }, '*');
           
-          // Switch view back to main workspace
           window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
         } catch (err) {
           console.error("Recording acquisition failure:", err);
@@ -612,7 +629,7 @@
     });
 
     // ==========================================================================
-    // 4. INTERACTION MECANICS
+    // 4. NOTE INTERACTION MECHANICS
     // ==========================================================================
     function handleNoteOn(element) {
       if (Tone.context.state !== 'running') Tone.start();
@@ -632,7 +649,7 @@
     updateParameters();
     updateFX();
 
-    // Responsive Mobile Touch Handlers
+    // Mobile Responsive Touch Bindings
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
