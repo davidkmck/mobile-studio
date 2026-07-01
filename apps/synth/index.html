@@ -477,34 +477,45 @@
       }
     }
 
-    async function toggleRecord() {
-      if (Tone.context.state !== 'running') Tone.start();
-      const recBtn = document.getElementById('record-btn');
-      isRecording = !isRecording;
+async function toggleRecord() {
+  // Ensure AudioContext is active
+  if (Tone.context.state !== 'running') {
+    await Tone.start();
+  }
 
-      if (isRecording) {
-        recBtn.innerText = "STOP REC";
-        recBtn.classList.add('recording');
-        recorder.start();
-      } else {
-        recBtn.innerText = "REC";
-        recBtn.classList.remove('recording');
-        
-        document.getElementById('engine-status').innerText = "SAVING...";
-        const recordingBlob = await recorder.stop();
-        document.getElementById('engine-status').innerText = "READY";
+  const recBtn = document.getElementById('record-btn');
+  isRecording = !isRecording;
 
-        window.parent.postMessage({
-          action: 'EXPORT_AUDIO_TO_TRACKS',
-          audioBlob: recordingBlob,
-          trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
-          mimeType: 'audio/webm'
-        }, '*');
-        
-        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
-      }
+  if (isRecording) {
+    recBtn.innerText = "STOP REC";
+    recBtn.classList.add('recording');
+    recorder.start();
+  } else {
+    recBtn.innerText = "REC";
+    recBtn.classList.remove('recording');
+    document.getElementById('engine-status').innerText = "SAVING...";
+
+    try {
+      // Correct way to await the blob
+      const recordingBlob = await recorder.stop();
+      
+      document.getElementById('engine-status').innerText = "READY";
+
+      // Send to parent
+      window.parent.postMessage({
+        action: 'EXPORT_AUDIO_TO_TRACKS',
+        audioBlob: recordingBlob,
+        trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
+        mimeType: 'audio/webm'
+      }, '*');
+
+      window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+    } catch (err) {
+      console.error("Recording error:", err);
+      document.getElementById('engine-status').innerText = "ERROR";
     }
-
+  }
+}
     window.addEventListener('message', (event) => {
       if (event.data.action === 'START_AUDIO') {
         isPlaying = true;
