@@ -128,7 +128,7 @@
     }
 
     /* ==========================================================================
-       2. SYNTH PARAMETERS EDITING PANEL (Restored Tweaking Knobs)
+       2. SYNTH PARAMETERS & EFFECTS PANEL
        ========================================================================== */
     .synth-tweaker-panel {
       background: var(--panel);
@@ -136,9 +136,15 @@
       border-radius: 8px;
       padding: 10px;
       display: flex;
-      gap: 16px;
+      gap: 12px;
       overflow-x: auto;
       flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* Hide scrollbars but preserve gesture rolling on mobile touch panel surfaces */
+    .synth-tweaker-panel::-webkit-scrollbar {
+      display: none;
     }
 
     .tweak-section {
@@ -175,7 +181,7 @@
     }
 
     .knob-box input[type="range"] {
-      width: 60px;
+      width: 55px;
       accent-color: var(--accent);
     }
 
@@ -183,7 +189,7 @@
       background: #1c1c2b;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 4px 8px;
+      padding: 4px 6px;
       font-size: 11px;
       border-radius: 4px;
       outline: none;
@@ -282,7 +288,7 @@
     </div>
   </div>
 
-  <!-- Restored Sound Editing Parameters Grid -->
+  <!-- Extended Control Panel: Synthesizer Parameters & Multi-Effects Engine -->
   <div class="synth-tweaker-panel">
     <!-- Generator Source -->
     <div class="tweak-section">
@@ -299,9 +305,11 @@
       <div class="knob-box">
         <label>Octave</label>
         <select id="octave-shift" class="select-dark" onchange="shiftOctave()">
-          <option value="-1">Lower</option>
-          <option value="0" selected>Normal</option>
-          <option value="1">Higher</option>
+          <option value="-2">C2 - Bass</option>
+          <option value="-1">C3 - Low</option>
+          <option value="0" selected>C4 - Mid</option>
+          <option value="1">C5 - High</option>
+          <option value="2">C6 - Lead</option>
         </select>
       </div>
     </div>
@@ -324,6 +332,23 @@
       <div class="knob-box">
         <label>Release</label>
         <input id="p-release" type="range" min="0.1" max="3" step="0.1" value="1.0" oninput="updateParameters()">
+      </div>
+    </div>
+
+    <!-- FX Modulation Engine -->
+    <div class="tweak-section">
+      <span class="section-title">FX</span>
+      <div class="knob-box">
+        <label>Chorus</label>
+        <input id="fx-chorus" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
+      </div>
+      <div class="knob-box">
+        <label>Echo (Delay)</label>
+        <input id="fx-delay" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
+      </div>
+      <div class="knob-box">
+        <label>Reverb</label>
+        <input id="fx-reverb" type="range" min="0" max="1" step="0.05" value="0.1" oninput="updateFX()">
       </div>
     </div>
 
@@ -375,10 +400,27 @@
   <script>
     const recorder = new Tone.Recorder();
 
-    // Sound Engine 1: Fully Customizable Electronic PolySynth
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(recorder).toDestination();
+    // ==========================================================================
+    // AUDIO SIGNAL EFFECTS CHAIN SETUP
+    // ==========================================================================
+    const chorusFX = new Tone.Chorus(4, 2.5, 0).start();
+    const delayFX = new Tone.FeedbackDelay("8n", 0.3);
+    const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
 
-    // Sound Engine 2: Premium Piano Sampler
+    // Initial configuration adjustments
+    delayFX.wet.value = 0;
+    chorusFX.wet.value = 0;
+
+    // Connect the nodes: Engines -> Chorus -> Delay -> Reverb -> Recorder -> Output
+    chorusFX.connect(delayFX);
+    delayFX.connect(reverbFX);
+    reverbFX.connect(recorder);
+    recorder.toDestination();
+
+    // Sound Engine 1: Customizable PolySynth
+    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
+
+    // Sound Engine 2: Premium Piano Sampler Bank
     const pianoSampler = new Tone.Sampler({
       urls: {
         A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -394,12 +436,11 @@
       onload: () => {
         if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
       }
-    }).connect(recorder).toDestination();
+    }).connect(chorusFX);
 
     let activeEngine = electronicSynth;
-    let currentOctaveBase = 4; // Mid-scale C4 standard default
+    let currentOctaveBase = 4; // Center home base octave config
 
-    // Push slider/select values straight into the Tone parameters matrix
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
       const attack = parseFloat(document.getElementById('p-attack').value);
@@ -408,15 +449,23 @@
       const release = parseFloat(document.getElementById('p-release').value);
       const volume = parseFloat(document.getElementById('p-volume').value);
 
-      // Apply modifiers to Customizable Synth
       electronicSynth.set({
         oscillator: { type: wave },
         envelope: { attack, decay, sustain, release }
       });
       electronicSynth.volume.value = volume;
-
-      // Apply modifications to Sampler (Volume/Envelope Release adjustments)
       pianoSampler.volume.value = volume;
+    }
+
+    function updateFX() {
+      const chorusValue = parseFloat(document.getElementById('fx-chorus').value);
+      const delayValue = parseFloat(document.getElementById('fx-delay').value);
+      const reverbValue = parseFloat(document.getElementById('fx-reverb').value);
+
+      // Smooth param changes mapping directly inside Tone.js Web Audio context
+      chorusFX.wet.value = chorusValue;
+      delayFX.wet.value = delayValue;
+      reverbFX.wet.value = reverbValue;
     }
 
     function shiftOctave() {
@@ -437,7 +486,6 @@
       }
     }
 
-    // Map the relative DOM data tokens to strict scientific musical note notation values
     function getTargetNoteString(baseToken) {
       let octave = currentOctaveBase;
       let cleanNote = baseToken;
@@ -525,8 +573,9 @@
       }
     }
 
-    // Init values on run
+    // Initialize defaults on runtime initialization
     updateParameters();
+    updateFX();
 
     // Mobile Responsive Touch Hooks
     document.querySelectorAll('.key').forEach(key => {
