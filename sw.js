@@ -5,14 +5,13 @@ const ASSETS = [
   '/index.html',
 
   // Sub-app HTML
-  '/mobile-studio/apps/beat-maker/index.html',
-  '/mobile-studio/apps/multitrack/index.html',
-  '/mobile-studio/apps/synth/index.html',
-  '/mobile-studio/index.html',
+  '/apps/beat-maker/index.html',
+  '/apps/multitrack/index.html',
+  '/apps/synth/index.html',
 
   // Icons
-  '/mobile-studio/icon.png',
-  '/mobile-studio/icon-sml.png'
+  '/icon.png',
+  '/icon-sml.png'
 ];
 
 // Install and cache assets
