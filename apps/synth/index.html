@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Synth</title>
+  <title>Keys</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
     :root {
@@ -304,12 +304,12 @@
 </head>
 <body>
 
-  <!-- Top Utilities Bar: All Core Triggers Grouped Safely on the Left -->
+  <!-- Top Utilities Bar: Core Triggers Grouped Safely on the Left -->
   <div class="controls-panel">
     <div class="transport-group">
       <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
       <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ SYNTH</button>
+      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ CONTROLS</button>
       <button id="toggle-fx-btn" class="btn btn-toggle-fx" onclick="togglePanel('effects')">✨ EFFECTS</button>
     </div>
 
@@ -430,7 +430,6 @@
   </div>
 
   <script>
-    // Dedicated internal recording node routing layer
     const recordingBus = new Tone.Gain();
     const recorder = new Tone.Recorder();
     recordingBus.connect(recorder);
@@ -446,12 +445,10 @@
     chorusFX.wet.value = 0;
     chorusFX.start();
 
-    // Setup master live sound route
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     reverbFX.toDestination(); 
 
-    // Capture wet effects tails to recording block 
     reverbFX.connect(recordingBus);
 
     // ==========================================================================
@@ -479,7 +476,6 @@
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
 
-    // Split Panel UI Toggling 
     function togglePanel(type) {
       const controlsPanel = document.getElementById('tweaker-panel');
       const effectsPanel = document.getElementById('effects-panel');
@@ -549,7 +545,7 @@
     }
 
     // ==========================================================================
-    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication & Explicit File Typing)
+    // 3. TRANSPORT WORKFLOWS (Cross-Frame Communication Polyfills)
     // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
@@ -599,13 +595,18 @@
           const rawBlob = await recorder.stop();
           document.getElementById('engine-status').innerText = "READY";
 
-          // Force standard type naming so multitrack app maps it to wave timeline automatically
+          const trackName = activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth';
           const audioFile = new File([rawBlob], "keyboard-take.webm", { type: "audio/webm" });
+          const generatedUrl = URL.createObjectURL(rawBlob);
 
+          // Sending multiple variations of data payloads so the multitrack core listener catches it
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
-            audioBlob: audioFile,
-            trackName: activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth',
+            audioBlob: rawBlob,       // Variation 1: Raw Blob
+            audioFile: audioFile,     // Variation 2: Unified File Reference
+            audioUrl: generatedUrl,   // Variation 3: Direct Object DOM URL string
+            trackName: trackName,
+            name: trackName,
             mimeType: 'audio/webm'
           }, '*');
           
@@ -649,7 +650,6 @@
     updateParameters();
     updateFX();
 
-    // Mobile Responsive Touch Bindings
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
