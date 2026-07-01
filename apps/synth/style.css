@@ -215,4 +215,35 @@ h1 {
     height: 120px;
     flex-shrink: 0;
   }
+
+  /* Give the keyboard container a locked, playable height */
+  .keyboard-wrap {
+    height: 140px; 
+    margin: 10px auto;
+  }
+
+  .keyboard {
+    height: 100%;
+  }
+
+  /* Force white keys to fill the container height */
+  .white-key {
+    height: 100% !important;
+    padding-bottom: 8px; /* Keeps the note label neatly near the bottom edge */
+  }
+
+  /* Restrict black keys to roughly 60% of the white key length */
+  .black-key {
+    height: 60% !important;
+  }
+  
+  /* Shrink header spacing slightly to prevent page scrolling */
+  main h1 {
+    font-size: 1.5rem;
+    margin-top: 5px;
+    margin-bottom: 2px;
+  }
+  .subtitle {
+    display: none; /* Hides description text to win back crucial vertical space */
+  }
 }
