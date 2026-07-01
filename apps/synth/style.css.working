@@ -1,1 +1,219 @@
+  :root {
+      --bg: #0a0a0f;
+      --panel: #12121c;
+      --border: #26263b;
+      --text: #e2e2e9;
+      --text-dim: #6c6c84;'m
+      --accent: #00e5ff;
+      --accent-alt: #9d4edd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      user-select: none;
+    }
+    button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    
+/* Initial unpressed state: Dark text on glowing cyan background */
+.btn-record {
+  background-color: var(--accent);
+  color: #0a0a0f !important; /* Forces dark contrast on cyan */
+  width: 100%;
+}
+
+/* Active recording state: White text on pulsing red background */
+.btn-recording {
+  background-color: #ef4444 !important; /* Cyberpunk danger red */
+  color: #ffffff !important; /* Forces bright white text contrast */
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+    .container {
+      width: 100%;
+      max-width: 950px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .secondary-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+/* 1. GLOBAL STYLE (Put this first) */
+h1 {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;       /* Big and clean on desktop/portrait */
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  width: 100%; /* Ensures alignment spans full width */
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+    select {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px;
+      border-radius: 4px;
+    }
+    .octave-display {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 70px;
+      text-align: center;
+    }
+
+    /* ─── Keyboard ─────────────────────────────────────────── */
+    .keyboard-wrap {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    .keyboard {
+      position: relative;
+      display: flex;
+      height: 180px;
+      min-width: 700px;
+    }
+    .white-key {
+      position: relative;
+      flex: 1;
+      background: #e9e9f2;
+      border: 1px solid var(--border);
+      border-radius: 0 0 6px 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      font-size: 10px;
+      color: #555;
+      transition: background 0.05s ease;
+    }
+    .white-key.pressed {
+      background: var(--accent);
+    }
+    .black-key {
+      position: absolute;
+      top: 0;
+      width: 6.5%;
+      height: 62%;
+      background: #14141f;
+      border: 1px solid #000;
+      border-radius: 0 0 5px 5px;
+      cursor: pointer;
+      z-index: 2;
+      transition: background 0.05s ease;
+    }
+    .black-key.pressed {
+      background: var(--accent-alt);
+    }
+
+    /* ─── Edit panel ───────────────────────────────────────── */
+    .synth-edit-panel {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .synth-edit-panel.visible { display: block; }
+    .editor-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .editor-row label { width: 110px; }
+    .editor-row input[type="range"] { flex: 1; }
+
+/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 8px; /* Keeps padding tight to save screen real estate */
+  }
+  h1 {
+    font-size: 1.3rem;   /* Automatically shrinks just the size when flipped sideways */
+    margin-bottom: 2px;
+  }
+  
+  .subtitle {
+    display: none;       /* Hides the subtitle to preserve vertical room */
+  }
+  
+  /* Stack synth control modules (Oscillator, Filter, Envelope) vertically */
+  .synth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .knob-panel, .adsr-envelope {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Put knobs into a clean 2-column grid instead of a squished row */
+    gap: 10px;
+  }
+
+  /* Make the piano keyboard scrollable so keys stay wide enough to play chords */
+  .keyboard-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
+  }
+
+  .piano-keyboard {
+    display: flex;
+    width: max-content; /* Forces the keyboard to maintain its full natural width */
+  }
+
+  .white-key {
+    width: 40px; /* Big enough for a finger tap */
+    height: 120px;
+    flex-shrink: 0;
+  }
+}
 
