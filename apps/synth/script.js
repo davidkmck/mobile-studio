@@ -15,6 +15,7 @@
 
   reverb.generate();
 
+
   // ─── Sound engines & Global Effects Chain ─────────────────────
   // 1. Classic Synth Engine
   const synth = new Tone.PolySynth(Tone.Synth, {
@@ -23,17 +24,31 @@
   });
   synth.volume.value = -6;
 
-  // 2. Real Sample-based Multi-Instrument Engine
-  const sampler = new Tone.Sampler({
-    urls: { "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3" },
-    baseUrl: "https://tonejs.github.io/audio/salamander/",
-    onload: () => console.log("Samples loaded successfully!")
-  });
-  sampler.volume.value = -2;
+  // 2. Real Sample-based Multi-Instrument Engine Placeholder
+  let sampler = null;
 
-  // Route BOTH engines into the same effect chain so Echo, Reverb, and Chorus work globally
+  // Function to safely build/rebuild the sampler node when switching instruments
+  function loadSamplerInstrument(config) {
+    // Clean up old sampler memory and disconnect it from the audio effects chain
+    if (sampler) {
+      sampler.disconnect();
+      sampler.dispose();
+    }
+
+    // Instantiation with the fresh instrument sample maps
+    sampler = new Tone.Sampler({
+      urls: config.urls,
+      baseUrl: config.baseUrl,
+      onload: () => console.log("New instrument samples loaded successfully!")
+    });
+    sampler.volume.value = -2;
+
+    // Route the brand new sampler instance into your global effects pipeline
+    sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+  }
+
+  // Route the initial synth engine setup
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
   // ─── Instrument Configurations ────────────────────────────────
   const SAMPLER_MAPS = {
@@ -55,6 +70,9 @@
     }
   };
 
+  // Initialize with the Piano sampler ready immediately on boot
+  loadSamplerInstrument(SAMPLER_MAPS.piano);
+
   // Switch sound engine states dynamically depending on dropdown selection
   document.getElementById('instrumentSelect').addEventListener('change', (e) => {
     const mode = e.target.value;
@@ -63,11 +81,10 @@
     if (mode === 'synth') {
       waveSelect.disabled = false;
     } else {
-      waveSelect.disabled = true; // Disable synth wave selector when an authentic sampled instrument is active
+      waveSelect.disabled = true; // Disable synth wave selector when an instrument sample is active
       const config = SAMPLER_MAPS[mode];
       if (config) {
-        sampler.urls = config.urls;
-        sampler.baseUrl = config.baseUrl;
+        loadSamplerInstrument(config); // Rebuilds the sampler object with correct audio targets
       }
     }
   });
@@ -75,6 +92,7 @@
   document.getElementById('waveSelect').addEventListener('change', (e) => {
     synth.set({ oscillator: { type: e.target.value } });
   });
+
 
   // Helper function to figure out which sound engine instance to trigger
   function getActiveEngine() {
