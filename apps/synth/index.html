@@ -440,8 +440,9 @@
     const recorder = new Tone.Recorder({ mimeType: mimeTypeSelection });
     recordingBus.connect(recorder);
 
-    // ==========================================================================
-    // 1. SIGNAL PROCESSING EFFECTS CHAINS
+
+// ==========================================================================
+    // 1. SIGNAL PROCESSING EFFECTS CHAINS (Keep variables globally scoped)
     // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
@@ -449,7 +450,8 @@
 
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
-    chorusFX.start();
+
+    // Remove the instant chorusFX.start() call here! It's causing the suspension.
 
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
@@ -458,44 +460,107 @@
     reverbFX.connect(recordingBus);
 
     // ==========================================================================
-    // 2. SYNTH ENGINES GENERATION
+    // HELPER TO GUARANTEE CONTEXT IS RESUMED
     // ==========================================================================
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recordingBus);
-
-    const pianoSampler = new Tone.Sampler({
-      urls: {
-        A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
-        A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
-        A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
-        A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
-        A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
-        A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
-        A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
-        A7: "A7.mp3", C8: "C8.mp3"
-      },
-      baseUrl: "https://tonejs.github.io/audio/salamander/",
-      onload: () => {
-        if (activeEngine === pianoSampler) document.getElementById('engine-status').innerText = "READY";
-      }
-    }).connect(chorusFX).connect(recordingBus);
-
-    let activeEngine = electronicSynth;
-    let currentOctaveBase = 4;
-
-    function togglePanel(type) {
-      const controlsPanel = document.getElementById('tweaker-panel');
-      const effectsPanel = document.getElementById('effects-panel');
-      const controlsBtn = document.getElementById('toggle-panel-btn');
-      const effectsBtn = document.getElementById('toggle-fx-btn');
-
-      if (type === 'controls') {
-        controlsPanel.classList.toggle('collapsed');
-        controlsBtn.classList.toggle('active-state', !controlsPanel.classList.contains('collapsed'));
-      } else if (type === 'effects') {
-        effectsPanel.classList.toggle('collapsed');
-        effectsBtn.classList.toggle('active-state', !effectsPanel.classList.contains('collapsed'));
+    async function ensureAudioContext() {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+        // Safe to wake up internal source components now that context is active
+        chorusFX.start(); 
       }
     }
+
+    // ==========================================================================
+    // 2. MODIFIED NOTE INTERACTION MECHANICS
+    // ==========================================================================
+    async function handleNoteOn(element) {
+      await ensureAudioContext(); // Wake up AudioContext on interactive click
+      element.classList.add('active');
+      const targetNote = getTargetNoteString(element.dataset.baseNote);
+      activeEngine.triggerAttack(targetNote);
+    }
+
+    function handleNoteOff(element) {
+      if (element.classList.contains('active')) {
+        element.classList.remove('active');
+        const targetNote = getTargetNoteString(element.dataset.baseNote);
+        activeEngine.triggerRelease(targetNote);
+      }
+    }
+
+    // ==========================================================================
+    // 3. UPDATED TRANSPORT WAKEUP
+    // ==========================================================================
+    async function togglePlay() {
+      await ensureAudioContext();
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('play-btn');
+      
+      if (isPlaying) {
+        btn.innerText = "STOP";
+        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
+      } else {
+        btn.innerText = "PLAY";
+        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      }
+    }
+
+    async function toggleRecord() {
+      await ensureAudioContext();
+      
+      const recBtn = document.getElementById('record-btn');
+      const playBtn = document.getElementById('play-btn');
+      
+      isRecording = !isRecording;
+
+      if (isRecording) {
+        recBtn.innerText = "STOP REC";
+        recBtn.classList.add('recording');
+        
+        recorder.start();
+        
+        isPlaying = true;
+        playBtn.innerText = "STOP";
+        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
+      } else {
+        recBtn.innerText = "REC";
+        recBtn.classList.remove('recording');
+        
+        isPlaying = false;
+        playBtn.innerText = "PLAY";
+        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+        
+        document.getElementById('engine-status').innerText = "SAVING...";
+        
+        try {
+          const rawBlob = await recorder.stop();
+          document.getElementById('engine-status').innerText = "READY";
+
+          const trackName = activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth';
+          
+          const standardizedBlob = new Blob([rawBlob], { type: mimeTypeSelection });
+          const objectUrl = URL.createObjectURL(standardizedBlob);
+
+          // Standardized interface key matching
+          window.parent.postMessage({
+            action: 'ADD_CLIP_TO_TIMELINE',
+            audioBlob: standardizedBlob, 
+            blob: standardizedBlob,
+            url: objectUrl,
+            audioUrl: objectUrl,
+            trackName: trackName,
+            mimeType: mimeTypeSelection
+          }, '*');
+          
+          window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+        } catch (err) {
+          console.error("Recording acquisition failure:", err);
+          document.getElementById('engine-status').innerText = "ERR REC";
+        }
+      }
+    }
+
+
 
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
