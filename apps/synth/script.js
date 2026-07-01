@@ -18,7 +18,7 @@
   // ─── Sound engines & Global Effects Chain ─────────────────────
   // 1. Classic Synth Engine
   const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: 'sine' }, // Matches default Piano Mode (Sine)
+    oscillator: { type: 'sawtooth' },
     envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
   });
   synth.volume.value = -6;
@@ -36,15 +36,11 @@
   sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
   // ─── Instrument Configurations ────────────────────────────────
-  const INSTRUMENT_MAPS = {
+  const SAMPLER_MAPS = {
     piano: {
       baseUrl: "https://tonejs.github.io/audio/salamander/",
       urls: { "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3" }
     },
-    sawtooth: { mode: 'synth', type: 'sawtooth' },
-    square: { mode: 'synth', type: 'square' },
-    triangle: { mode: 'synth', type: 'triangle' },
-    sine: { mode: 'synth', type: 'sine' },
     guitar: {
       baseUrl: "https://tonejs.github.io/audio/casio/",
       urls: { "G2": "G2.mp3", "C3": "C3.mp3", "E3": "E3.mp3", "G3": "G3.mp3" }
@@ -60,22 +56,30 @@
   };
 
   // Switch sound engine states dynamically depending on dropdown selection
-  document.getElementById('waveSelect').addEventListener('change', (e) => {
-    const config = INSTRUMENT_MAPS[e.target.value];
-    if (config && config.mode === 'synth') {
-      synth.set({ oscillator: { type: config.type } });
-    } else if (config) {
-      // Safely swap out target mappings on the sample buffer engine
-      sampler.urls = config.urls;
-      sampler.baseUrl = config.baseUrl;
+  document.getElementById('instrumentSelect').addEventListener('change', (e) => {
+    const mode = e.target.value;
+    const waveSelect = document.getElementById('waveSelect');
+
+    if (mode === 'synth') {
+      waveSelect.disabled = false;
+    } else {
+      waveSelect.disabled = true; // Disable synth wave selector when an authentic sampled instrument is active
+      const config = SAMPLER_MAPS[mode];
+      if (config) {
+        sampler.urls = config.urls;
+        sampler.baseUrl = config.baseUrl;
+      }
     }
+  });
+
+  document.getElementById('waveSelect').addEventListener('change', (e) => {
+    synth.set({ oscillator: { type: e.target.value } });
   });
 
   // Helper function to figure out which sound engine instance to trigger
   function getActiveEngine() {
-    const selection = document.getElementById('waveSelect').value;
-    const config = INSTRUMENT_MAPS[selection];
-    return (config && config.mode === 'synth') ? synth : sampler;
+    const instrumentMode = document.getElementById('instrumentSelect').value;
+    return instrumentMode === 'synth' ? synth : sampler;
   }
 
   // ─── Build keyboard ───────────────────────────────────────────
@@ -198,7 +202,7 @@
       { label: 'Volume', min: -40, max: 0, value: synth.volume.value,
         onInput: v => { 
           synth.volume.value = parseFloat(v); 
-          sampler.volume.value = parseFloat(v) + 4; // Keeps sampler balanced relative to synth
+          sampler.volume.value = parseFloat(v) + 4; 
         } 
       },
       { label: 'Attack', min: 0, max: 1, step: 0.01, value: 0.02,
