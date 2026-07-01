@@ -25,19 +25,30 @@
     </div>
       
     <div class="secondary-controls">
-      <!-- Updated back: Clear voice selection highlighting Piano mode -->
-      <select id="waveSelect">
-        <option value="sine">🎹 Piano Mode (Sine)</option>
-        <option value="sawtooth">🎛️ Sawtooth Synth</option>
-        <option value="square">👾 Square (Chiptune)</option>
-        <option value="triangle">🎻 Triangle (Softer)</option>
-      </select>
-      
-      <button id="octaveDownBtn">Oct −</button>
-      <div class="octave-display" id="octaveDisplay">Octave 4</div>
-      <button id="octaveUpBtn">Oct +</button>
-      <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
-    </div>
+  <!-- 🎹 Authentic Sampled Instruments -->
+  <label for="instrumentSelect">Instrument:</label>
+  <select id="instrumentSelect">
+    <option value="synth">🎛️ Custom Synth Engine</option>
+    <option value="piano">🎹 Grand Piano</option>
+    <option value="guitar">🎸 Acoustic Guitar</option>
+    <option value="bass">🎸 Electric Bass</option>
+    <option value="organ">📻 Hammond Organ</option>
+  </select>
+
+  <!-- 🎛️ Synth Waveforms (Only active when "Custom Synth Engine" is chosen) -->
+  <label for="waveSelect">Synth Wave:</label>
+  <select id="waveSelect">
+    <option value="sine">Sine (Pure)</option>
+    <option value="sawtooth">Sawtooth (Retro)</option>
+    <option value="square">Square (Chiptune)</option>
+    <option value="triangle">Triangle (Soft)</option>
+  </select>
+  
+  <button id="octaveDownBtn">Oct −</button>
+  <div class="octave-display" id="octaveDisplay">Octave 4</div>
+  <button id="octaveUpBtn">Oct +</button>
+  <button id="toggleEditBtn">🎛️ Show Edit Controls</button>
+</div>
 
     <!-- The Editor Panel where Echo, Reverb, Chorus, and ADSR sliders dynamically generate -->
     <div class="synth-edit-panel" id="synthEditor">
