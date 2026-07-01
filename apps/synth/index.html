@@ -15,20 +15,26 @@
 
     * { box-sizing: border-box; }
     
-    body {
+    html, body {
       margin: 0;
-      padding: 16px;
+      padding: 0;
       background: var(--bg);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    body {
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: 12px;
     }
 
     /* ==========================================================================
-       1. TRANSPORT / CONTROL PANEL (Restored original layout + Toggle)
+       1. CONTROL PANEL & TRANSPORT BAR
        ========================================================================== */
     .controls-panel {
       background: var(--panel);
@@ -39,7 +45,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 16px;
+      flex-shrink: 0;
     }
 
     .left-controls {
@@ -77,6 +83,16 @@
       text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
     }
 
+    .status-lamp {
+      font-family: monospace;
+      font-size: 9px;
+      background: #121c12;
+      color: #39ff14;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: 1px solid #091009;
+    }
+
     .transport-group {
       display: flex;
       gap: 8px;
@@ -88,8 +104,15 @@
       color: #fff;
       padding: 8px 16px;
       border-radius: 6px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:active {
+      background: #252538;
     }
 
     .btn-record {
@@ -110,27 +133,26 @@
       100% { opacity: 1; }
     }
 
-    .status-lamp {
-      font-family: monospace;
-      font-size: 9px;
-      background: #121c12;
-      color: #39ff14;
-      padding: 4px 8px;
-      border-radius: 3px;
-      border: 1px solid #091009;
+    /* ==========================================================================
+       2. RESPONSIVE PIANO LAYOUT
+       ========================================================================== */
+    .keyboard-container {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      min-height: 150px;
     }
 
-    /* ==========================================================================
-       2. KEYBOARD CONTAINER (Restored original sizing layout)
-       ========================================================================== */
     .keyboard {
-      position: relative;
-      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 200px;
+      height: 100%;
       background: #000;
       border-radius: 6px;
       overflow: hidden;
+      display: flex;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
 
@@ -153,7 +175,11 @@
     .key.white.active {
       background: #e2e2eb;
       border-bottom-width: 2px;
-      top: 4px;
+      transform: translateY(4px);
+    }
+
+    .key.white:last-child {
+      border-right: none;
     }
 
     .key.black {
@@ -169,10 +195,11 @@
 
     .key.black.active {
       background: #111;
+      transform: translateY(2px);
       height: 59%;
     }
 
-    /* Absolute positioning offsets from your original code layout */
+    /* Traditional key positioning topography matrix */
     .k-Csh1 { left: 5.5%; }
     .k-Dsh1 { left: 14.5%; }
     .k-Fsh1 { left: 32.5%; }
@@ -186,7 +213,6 @@
 
   <div class="controls-panel">
     <div class="left-controls">
-      <!-- Engine Switcher Toggle -->
       <div class="selector-group">
         <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
         <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
@@ -194,56 +220,56 @@
       <div id="engine-status" class="status-lamp">READY</div>
     </div>
 
-    <!-- Restored Original Transport & Record Controls -->
     <div class="transport-group">
       <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
       <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
     </div>
   </div>
 
-  <div class="keyboard">
-    <!-- Octave 1 White Keys -->
-    <div class="key white" data-note="C4" onmousedown="handleNoteOn('C4', this)" onmouseup="handleNoteOff('C4', this)" onmouseleave="handleNoteOff('C4', this)"></div>
-    <div class="key white" data-note="D4" onmousedown="handleNoteOn('D4', this)" onmouseup="handleNoteOff('D4', this)" onmouseleave="handleNoteOff('D4', this)"></div>
-    <div class="key white" data-note="E4" onmousedown="handleNoteOn('E4', this)" onmouseup="handleNoteOff('E4', this)" onmouseleave="handleNoteOff('E4', this)"></div>
-    <div class="key white" data-note="F4" onmousedown="handleNoteOn('F4', this)" onmouseup="handleNoteOff('F4', this)" onmouseleave="handleNoteOff('F4', this)"></div>
-    <div class="key white" data-note="G4" onmousedown="handleNoteOn('G4', this)" onmouseup="handleNoteOff('G4', this)" onmouseleave="handleNoteOff('G4', this)"></div>
-    <div class="key white" data-note="A4" onmousedown="handleNoteOn('A4', this)" onmouseup="handleNoteOff('A4', this)" onmouseleave="handleNoteOff('A4', this)"></div>
-    <div class="key white" data-note="B4" onmousedown="handleNoteOn('B4', this)" onmouseup="handleNoteOff('B4', this)" onmouseleave="handleNoteOff('B4', this)"></div>
+  <div class="keyboard-container">
+    <div class="keyboard">
+      <!-- Octave 1 White Keys -->
+      <div class="key white" data-note="C4" onmousedown="handleNoteOn('C4', this)" onmouseup="handleNoteOff('C4', this)" onmouseleave="handleNoteOff('C4', this)"></div>
+      <div class="key white" data-note="D4" onmousedown="handleNoteOn('D4', this)" onmouseup="handleNoteOff('D4', this)" onmouseleave="handleNoteOff('D4', this)"></div>
+      <div class="key white" data-note="E4" onmousedown="handleNoteOn('E4', this)" onmouseup="handleNoteOff('E4', this)" onmouseleave="handleNoteOff('E4', this)"></div>
+      <div class="key white" data-note="F4" onmousedown="handleNoteOn('F4', this)" onmouseup="handleNoteOff('F4', this)" onmouseleave="handleNoteOff('F4', this)"></div>
+      <div class="key white" data-note="G4" onmousedown="handleNoteOn('G4', this)" onmouseup="handleNoteOff('G4', this)" onmouseleave="handleNoteOff('G4', this)"></div>
+      <div class="key white" data-note="A4" onmousedown="handleNoteOn('A4', this)" onmouseup="handleNoteOff('A4', this)" onmouseleave="handleNoteOff('A4', this)"></div>
+      <div class="key white" data-note="B4" onmousedown="handleNoteOn('B4', this)" onmouseup="handleNoteOff('B4', this)" onmouseleave="handleNoteOff('B4', this)"></div>
 
-    <!-- Octave 2 White Keys -->
-    <div class="key white" data-note="C5" onmousedown="handleNoteOn('C5', this)" onmouseup="handleNoteOff('C5', this)" onmouseleave="handleNoteOff('C5', this)"></div>
-    <div class="key white" data-note="D5" onmousedown="handleNoteOn('D5', this)" onmouseup="handleNoteOff('D5', this)" onmouseleave="handleNoteOff('D5', this)"></div>
-    <div class="key white" data-note="E5" onmousedown="handleNoteOn('E5', this)" onmouseup="handleNoteOff('E5', this)" onmouseleave="handleNoteOff('E5', this)"></div>
-    <div class="key white" data-note="F5" onmousedown="handleNoteOn('F5', this)" onmouseup="handleNoteOff('F5', this)" onmouseleave="handleNoteOff('F5', this)"></div>
-    <div class="key white" data-note="G5" onmousedown="handleNoteOn('G5', this)" onmouseup="handleNoteOff('G5', this)" onmouseleave="handleNoteOff('G5', this)"></div>
-    <div class="key white" data-note="A5" onmousedown="handleNoteOn('A5', this)" onmouseup="handleNoteOff('A5', this)" onmouseleave="handleNoteOff('A5', this)"></div>
-    <div class="key white" data-note="B5" onmousedown="handleNoteOn('B5', this)" onmouseup="handleNoteOff('B5', this)" onmouseleave="handleNoteOff('B5', this)"></div>
-    <div class="key white" data-note="C6" onmousedown="handleNoteOn('C6', this)" onmouseup="handleNoteOff('C6', this)" onmouseleave="handleNoteOff('C6', this)"></div>
+      <!-- Octave 2 White Keys -->
+      <div class="key white" data-note="C5" onmousedown="handleNoteOn('C5', this)" onmouseup="handleNoteOff('C5', this)" onmouseleave="handleNoteOff('C5', this)"></div>
+      <div class="key white" data-note="D5" onmousedown="handleNoteOn('D5', this)" onmouseup="handleNoteOff('D5', this)" onmouseleave="handleNoteOff('D5', this)"></div>
+      <div class="key white" data-note="E5" onmousedown="handleNoteOn('E5', this)" onmouseup="handleNoteOff('E5', this)" onmouseleave="handleNoteOff('E5', this)"></div>
+      <div class="key white" data-note="F5" onmousedown="handleNoteOn('F5', this)" onmouseup="handleNoteOff('F5', this)" onmouseleave="handleNoteOff('F5', this)"></div>
+      <div class="key white" data-note="G5" onmousedown="handleNoteOn('G5', this)" onmouseup="handleNoteOff('G5', this)" onmouseleave="handleNoteOff('G5', this)"></div>
+      <div class="key white" data-note="A5" onmousedown="handleNoteOn('A5', this)" onmouseup="handleNoteOff('A5', this)" onmouseleave="handleNoteOff('A5', this)"></div>
+      <div class="key white" data-note="B5" onmousedown="handleNoteOn('B5', this)" onmouseup="handleNoteOff('B5', this)" onmouseleave="handleNoteOff('B5', this)"></div>
+      <div class="key white" data-note="C6" onmousedown="handleNoteOn('C6', this)" onmouseup="handleNoteOff('C6', this)" onmouseleave="handleNoteOff('C6', this)"></div>
 
-    <!-- Black Keys Overlays -->
-    <div class="key black k-Csh1" data-note="C#4" onmousedown="handleNoteOn('C#4', this)" onmouseup="handleNoteOff('C#4', this)" onmouseleave="handleNoteOff('C#4', this)"></div>
-    <div class="key black k-Dsh1" data-note="D#4" onmousedown="handleNoteOn('D#4', this)" onmouseup="handleNoteOff('D#4', this)" onmouseleave="handleNoteOff('D#4', this)"></div>
-    
-    <div class="key black k-Fsh1" data-note="F#4" onmousedown="handleNoteOn('F#4', this)" onmouseup="handleNoteOff('F#4', this)" onmouseleave="handleNoteOff('F#4', this)"></div>
-    <div class="key black k-Gsh1" data-note="G#4" onmousedown="handleNoteOn('G#4', this)" onmouseup="handleNoteOff('G#4', this)" onmouseleave="handleNoteOff('G#4', this)"></div>
-    <div class="key black k-Ash1" data-note="A#4" onmousedown="handleNoteOn('A#4', this)" onmouseup="handleNoteOff('A#4', this)" onmouseleave="handleNoteOff('A#4', this)"></div>
+      <!-- Black Keys Overlays -->
+      <div class="key black k-Csh1" data-note="C#4" onmousedown="handleNoteOn('C#4', this)" onmouseup="handleNoteOff('C#4', this)" onmouseleave="handleNoteOff('C#4', this)"></div>
+      <div class="key black k-Dsh1" data-note="D#4" onmousedown="handleNoteOn('D#4', this)" onmouseup="handleNoteOff('D#4', this)" onmouseleave="handleNoteOff('D#4', this)"></div>
+      
+      <div class="key black k-Fsh1" data-note="F#4" onmousedown="handleNoteOn('F#4', this)" onmouseup="handleNoteOff('F#4', this)" onmouseleave="handleNoteOff('F#4', this)"></div>
+      <div class="key black k-Gsh1" data-note="G#4" onmousedown="handleNoteOn('G#4', this)" onmouseup="handleNoteOff('G#4', this)" onmouseleave="handleNoteOff('G#4', this)"></div>
+      <div class="key black k-Ash1" data-note="A#4" onmousedown="handleNoteOn('A#4', this)" onmouseup="handleNoteOff('A#4', this)" onmouseleave="handleNoteOff('A#4', this)"></div>
 
-    <div class="key black k-Csh2" data-note="C#5" onmousedown="handleNoteOn('C#5', this)" onmouseup="handleNoteOff('C#5', this)" onmouseleave="handleNoteOff('C#5', this)"></div>
-    <div class="key black k-Dsh2" data-note="D#5" onmousedown="handleNoteOn('D#5', this)" onmouseup="handleNoteOff('D#5', this)" onmouseleave="handleNoteOff('D#5', this)"></div>
+      <div class="key black k-Csh2" data-note="C#5" onmousedown="handleNoteOn('C#5', this)" onmouseup="handleNoteOff('C#5', this)" onmouseleave="handleNoteOff('C#5', this)"></div>
+      <div class="key black k-Dsh2" data-note="D#5" onmousedown="handleNoteOn('D#5', this)" onmouseup="handleNoteOff('D#5', this)" onmouseleave="handleNoteOff('D#5', this)"></div>
+    </div>
   </div>
 
   <script>
-    // 1. Maintain Original Recording & Destination Nodes
     const recorder = new Tone.Recorder();
 
-    // Original Synthetic PolySynth Setup
+    // Sound 1: Original Polyphonic Synth
     const electronicSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sawtooth" },
       envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
     }).connect(recorder).toDestination();
 
-    // Piano Sampler Engine Bank Setup
+    // Sound 2: Premium Piano Sampler
     const pianoSampler = new Tone.Sampler({
       urls: {
         A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -261,7 +287,6 @@
       }
     }).connect(recorder).toDestination();
 
-    // Default Starting Variable Engine
     let activeEngine = electronicSynth;
 
     function setEngine(type, buttonEl) {
@@ -277,15 +302,12 @@
       }
     }
 
-    // ==========================================================================
-    // RESTORED ORIGINAL APP INTERACTION LOGIC (Transport, Messaging & Recording)
-    // ==========================================================================
+    // Transport Systems
     let isPlaying = false;
     let isRecording = false;
 
     function togglePlay() {
       if (Tone.context.state !== 'running') Tone.start();
-      
       isPlaying = !isPlaying;
       const btn = document.getElementById('play-btn');
       
@@ -300,7 +322,6 @@
 
     async function toggleRecord() {
       if (Tone.context.state !== 'running') Tone.start();
-      
       const recBtn = document.getElementById('record-btn');
       isRecording = !isRecording;
 
@@ -338,7 +359,7 @@
       }
     });
 
-    // Keys Triggers Engine Hook
+    // Key Note Mechanics
     function handleNoteOn(note, element) {
       if (Tone.context.state !== 'running') Tone.start();
       element.classList.add('active');
@@ -352,7 +373,7 @@
       }
     }
 
-    // Mobile touch listeners
+    // Touch Support
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
