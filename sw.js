@@ -3,11 +3,20 @@ const CACHE_NAME = 'mobile-studio-v8';
 const ASSETS = [
   '/',
   '/index.html',
+  '/style.css',
+  '/script.js'
 
   // Sub-app HTML
   '/apps/beat-maker/index.html',
   '/apps/multitrack/index.html',
   '/apps/synth/index.html',
+  '/apps/beat-maker/style.css',
+  '/apps/multitrack/style.css',
+  '/apps/synth/style.css',
+  '/apps/beat-maker/script.js',
+  '/apps/multitrack/script.js',
+  '/apps/synth/script.js',
+
 
   // Icons
   '/icon.png',
