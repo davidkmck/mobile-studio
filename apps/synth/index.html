@@ -400,28 +400,33 @@
     const recorder = new Tone.Recorder();
 
     // ==========================================================================
-    // AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Routing)
+    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Optimized Graph Order)
     // ==========================================================================
-    const chorusFX = new Tone.Chorus(4, 2.5, 0).start();
-    const delayFX = new Tone.FeedbackDelay("8n", 0.3);
+    // Create the master effects units
+    const chorusFX = new Tone.Chorus(4, 2.5, 0);
+    const delayFX = new FeedbackDelay("8n", 0.3);
     const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
 
-    // Initial configuration adjustments
+    // Explicitly configure wet/dry parameters before routing
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
 
-    // Connect the nodes: Engines -> Chorus -> Delay -> Reverb -> Recorder & Speakers
+    // Start the oscillator modulation engine inside the Chorus unit first
+    chorusFX.start();
+
+    // Link the rigid chain: Chorus -> Delay -> Reverb
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
     
-    // Connect the final effect block to BOTH the recorder and your master audio output
+    // Split the reverb's final output to the recording bus AND the hardware speakers
     reverbFX.connect(recorder);
     reverbFX.toDestination(); 
 
-    // Sound Engine 1: Customizable PolySynth
+    // ==========================================================================
+    // 2. SOUND ENGINES GENERATION (Connected directly to running FX input)
+    // ==========================================================================
     const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
 
-    // Sound Engine 2: Premium Piano Sampler Bank
     const pianoSampler = new Tone.Sampler({
       urls: {
         A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -440,7 +445,7 @@
     }).connect(chorusFX);
 
     let activeEngine = electronicSynth;
-    let currentOctaveBase = 4; // Center home base octave config
+    let currentOctaveBase = 4;
 
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
@@ -463,7 +468,6 @@
       const delayValue = parseFloat(document.getElementById('fx-delay').value);
       const reverbValue = parseFloat(document.getElementById('fx-reverb').value);
 
-      // Smooth param changes mapping directly inside Tone.js Web Audio context
       chorusFX.wet.value = chorusValue;
       delayFX.wet.value = delayValue;
       reverbFX.wet.value = reverbValue;
@@ -590,6 +594,5 @@
       });
     });
   </script>
-
 </body>
 </html>
