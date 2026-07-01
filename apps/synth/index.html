@@ -473,6 +473,8 @@
         document.getElementById('engine-status').innerText = "LOAD ERROR";
       }
     });
+
+  window.pianoSampler.toDestination();   // restores working behavior
     window.pianoSampler.connect(recordingBus);
 
     window.activeEngine = window.electronicSynth;
