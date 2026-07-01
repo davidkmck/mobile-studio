@@ -267,6 +267,7 @@
   synth.toDestination();
   synth.volume.value = -6;
 
+  // FIXED URL PATHS AND BASE URL TO BYPASS CORS ISSUES COMPLETELY
   const piano = new Tone.Sampler({
     urls: {
       "A0": "A0.mp3", "C1": "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", "A1": "A1.mp3",
@@ -277,10 +278,13 @@
       "C6": "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3", "A6": "A6.mp3",
       "C7": "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3", "A7": "A7.mp3", "C8": "C8.mp3"
     },
-    baseUrl: "https://g200kg.github.io/soundfonts/SalamanderPiano/",
+    baseUrl: "https://tonejs.github.io/audio/salamander/",
     onload: () => {
       console.log("Piano soundfont ready.");
       if (activeEngine === piano) document.getElementById('engineStatus').innerText = "READY";
+    },
+    onerror: (err) => {
+      console.error("Sampler loading error:", err);
     }
   });
   piano.connect(chorusFX);
@@ -356,14 +360,22 @@
       if (activeNotes.has(note)) return;
       activeNotes.add(note);
       el.classList.add('pressed');
-      activeEngine.triggerAttack(note);
+      try {
+        activeEngine.triggerAttack(note);
+      } catch (err) {
+        console.error("Trigger attack failure:", err);
+      }
     };
     const release = (e) => {
       if (e) e.preventDefault();
       if (!activeNotes.has(note)) return;
       activeNotes.delete(note);
       el.classList.remove('pressed');
-      activeEngine.triggerRelease(note);
+      try {
+        activeEngine.triggerRelease(note);
+      } catch (err) {
+        console.error("Trigger release failure:", err);
+      }
     };
 
     el.addEventListener('mousedown', press);
