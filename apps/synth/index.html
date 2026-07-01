@@ -30,11 +30,10 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 12px;
     }
 
     /* ==========================================================================
-       1. CONTROL PANEL & TRANSPORT BAR
+       1. CONTROLS PANEL (Restored Exact Header Dimensions)
        ========================================================================== */
     .controls-panel {
       background: var(--panel);
@@ -45,7 +44,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-shrink: 0;
     }
 
     .left-controls {
@@ -108,11 +106,6 @@
       font-weight: 700;
       letter-spacing: 0.5px;
       cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn:active {
-      background: #252538;
     }
 
     .btn-record {
@@ -134,26 +127,18 @@
     }
 
     /* ==========================================================================
-       2. RESPONSIVE PIANO LAYOUT
+       2. KEYBOARD (Exact Restored CSS Layout)
        ========================================================================== */
-    .keyboard-container {
-      flex: 1;
-      width: 100%;
-      position: relative;
-      min-height: 150px;
-    }
-
     .keyboard {
-      position: absolute;
-      top: 0;
-      left: 0;
+      position: relative;
+      display: flex;
       width: 100%;
-      height: 100%;
+      height: 70vh; /* Dynamic stretch taking up the core layout space */
       background: #000;
       border-radius: 6px;
       overflow: hidden;
-      display: flex;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      margin-top: auto;
     }
 
     .key {
@@ -175,7 +160,7 @@
     .key.white.active {
       background: #e2e2eb;
       border-bottom-width: 2px;
-      transform: translateY(4px);
+      top: 4px;
     }
 
     .key.white:last-child {
@@ -195,11 +180,10 @@
 
     .key.black.active {
       background: #111;
-      transform: translateY(2px);
       height: 59%;
     }
 
-    /* Traditional key positioning topography matrix */
+    /* Original key matrix spacing */
     .k-Csh1 { left: 5.5%; }
     .k-Dsh1 { left: 14.5%; }
     .k-Fsh1 { left: 32.5%; }
@@ -211,6 +195,7 @@
 </head>
 <body>
 
+  <!-- Controls Header Container -->
   <div class="controls-panel">
     <div class="left-controls">
       <div class="selector-group">
@@ -226,50 +211,49 @@
     </div>
   </div>
 
-  <div class="keyboard-container">
-    <div class="keyboard">
-      <!-- Octave 1 White Keys -->
-      <div class="key white" data-note="C4" onmousedown="handleNoteOn('C4', this)" onmouseup="handleNoteOff('C4', this)" onmouseleave="handleNoteOff('C4', this)"></div>
-      <div class="key white" data-note="D4" onmousedown="handleNoteOn('D4', this)" onmouseup="handleNoteOff('D4', this)" onmouseleave="handleNoteOff('D4', this)"></div>
-      <div class="key white" data-note="E4" onmousedown="handleNoteOn('E4', this)" onmouseup="handleNoteOff('E4', this)" onmouseleave="handleNoteOff('E4', this)"></div>
-      <div class="key white" data-note="F4" onmousedown="handleNoteOn('F4', this)" onmouseup="handleNoteOff('F4', this)" onmouseleave="handleNoteOff('F4', this)"></div>
-      <div class="key white" data-note="G4" onmousedown="handleNoteOn('G4', this)" onmouseup="handleNoteOff('G4', this)" onmouseleave="handleNoteOff('G4', this)"></div>
-      <div class="key white" data-note="A4" onmousedown="handleNoteOn('A4', this)" onmouseup="handleNoteOff('A4', this)" onmouseleave="handleNoteOff('A4', this)"></div>
-      <div class="key white" data-note="B4" onmousedown="handleNoteOn('B4', this)" onmouseup="handleNoteOff('B4', this)" onmouseleave="handleNoteOff('B4', this)"></div>
+  <!-- Perfectly Formatted Main Keyboard -->
+  <div class="keyboard">
+    <!-- Octave 1 White Keys -->
+    <div class="key white" data-note="C4" onmousedown="handleNoteOn('C4', this)" onmouseup="handleNoteOff('C4', this)" onmouseleave="handleNoteOff('C4', this)"></div>
+    <div class="key white" data-note="D4" onmousedown="handleNoteOn('D4', this)" onmouseup="handleNoteOff('D4', this)" onmouseleave="handleNoteOff('D4', this)"></div>
+    <div class="key white" data-note="E4" onmousedown="handleNoteOn('E4', this)" onmouseup="handleNoteOff('E4', this)" onmouseleave="handleNoteOff('E4', this)"></div>
+    <div class="key white" data-note="F4" onmousedown="handleNoteOn('F4', this)" onmouseup="handleNoteOff('F4', this)" onmouseleave="handleNoteOff('F4', this)"></div>
+    <div class="key white" data-note="G4" onmousedown="handleNoteOn('G4', this)" onmouseup="handleNoteOff('G4', this)" onmouseleave="handleNoteOff('G4', this)"></div>
+    <div class="key white" data-note="A4" onmousedown="handleNoteOn('A4', this)" onmouseup="handleNoteOff('A4', this)" onmouseleave="handleNoteOff('A4', this)"></div>
+    <div class="key white" data-note="B4" onmousedown="handleNoteOn('B4', this)" onmouseup="handleNoteOff('B4', this)" onmouseleave="handleNoteOff('B4', this)"></div>
 
-      <!-- Octave 2 White Keys -->
-      <div class="key white" data-note="C5" onmousedown="handleNoteOn('C5', this)" onmouseup="handleNoteOff('C5', this)" onmouseleave="handleNoteOff('C5', this)"></div>
-      <div class="key white" data-note="D5" onmousedown="handleNoteOn('D5', this)" onmouseup="handleNoteOff('D5', this)" onmouseleave="handleNoteOff('D5', this)"></div>
-      <div class="key white" data-note="E5" onmousedown="handleNoteOn('E5', this)" onmouseup="handleNoteOff('E5', this)" onmouseleave="handleNoteOff('E5', this)"></div>
-      <div class="key white" data-note="F5" onmousedown="handleNoteOn('F5', this)" onmouseup="handleNoteOff('F5', this)" onmouseleave="handleNoteOff('F5', this)"></div>
-      <div class="key white" data-note="G5" onmousedown="handleNoteOn('G5', this)" onmouseup="handleNoteOff('G5', this)" onmouseleave="handleNoteOff('G5', this)"></div>
-      <div class="key white" data-note="A5" onmousedown="handleNoteOn('A5', this)" onmouseup="handleNoteOff('A5', this)" onmouseleave="handleNoteOff('A5', this)"></div>
-      <div class="key white" data-note="B5" onmousedown="handleNoteOn('B5', this)" onmouseup="handleNoteOff('B5', this)" onmouseleave="handleNoteOff('B5', this)"></div>
-      <div class="key white" data-note="C6" onmousedown="handleNoteOn('C6', this)" onmouseup="handleNoteOff('C6', this)" onmouseleave="handleNoteOff('C6', this)"></div>
+    <!-- Octave 2 White Keys -->
+    <div class="key white" data-note="C5" onmousedown="handleNoteOn('C5', this)" onmouseup="handleNoteOff('C5', this)" onmouseleave="handleNoteOff('C5', this)"></div>
+    <div class="key white" data-note="D5" onmousedown="handleNoteOn('D5', this)" onmouseup="handleNoteOff('D5', this)" onmouseleave="handleNoteOff('D5', this)"></div>
+    <div class="key white" data-note="E5" onmousedown="handleNoteOn('E5', this)" onmouseup="handleNoteOff('E5', this)" onmouseleave="handleNoteOff('E5', this)"></div>
+    <div class="key white" data-note="F5" onmousedown="handleNoteOn('F5', this)" onmouseup="handleNoteOff('F5', this)" onmouseleave="handleNoteOff('F5', this)"></div>
+    <div class="key white" data-note="G5" onmousedown="handleNoteOn('G5', this)" onmouseup="handleNoteOff('G5', this)" onmouseleave="handleNoteOff('G5', this)"></div>
+    <div class="key white" data-note="A5" onmousedown="handleNoteOn('A5', this)" onmouseup="handleNoteOff('A5', this)" onmouseleave="handleNoteOff('A5', this)"></div>
+    <div class="key white" data-note="B5" onmousedown="handleNoteOn('B5', this)" onmouseup="handleNoteOff('B5', this)" onmouseleave="handleNoteOff('B5', this)"></div>
+    <div class="key white" data-note="C6" onmousedown="handleNoteOn('C6', this)" onmouseup="handleNoteOff('C6', this)" onmouseleave="handleNoteOff('C6', this)"></div>
 
-      <!-- Black Keys Overlays -->
-      <div class="key black k-Csh1" data-note="C#4" onmousedown="handleNoteOn('C#4', this)" onmouseup="handleNoteOff('C#4', this)" onmouseleave="handleNoteOff('C#4', this)"></div>
-      <div class="key black k-Dsh1" data-note="D#4" onmousedown="handleNoteOn('D#4', this)" onmouseup="handleNoteOff('D#4', this)" onmouseleave="handleNoteOff('D#4', this)"></div>
-      
-      <div class="key black k-Fsh1" data-note="F#4" onmousedown="handleNoteOn('F#4', this)" onmouseup="handleNoteOff('F#4', this)" onmouseleave="handleNoteOff('F#4', this)"></div>
-      <div class="key black k-Gsh1" data-note="G#4" onmousedown="handleNoteOn('G#4', this)" onmouseup="handleNoteOff('G#4', this)" onmouseleave="handleNoteOff('G#4', this)"></div>
-      <div class="key black k-Ash1" data-note="A#4" onmousedown="handleNoteOn('A#4', this)" onmouseup="handleNoteOff('A#4', this)" onmouseleave="handleNoteOff('A#4', this)"></div>
+    <!-- Black Keys Overlays -->
+    <div class="key black k-Csh1" data-note="C#4" onmousedown="handleNoteOn('C#4', this)" onmouseup="handleNoteOff('C#4', this)" onmouseleave="handleNoteOff('C#4', this)"></div>
+    <div class="key black k-Dsh1" data-note="D#4" onmousedown="handleNoteOn('D#4', this)" onmouseup="handleNoteOff('D#4', this)" onmouseleave="handleNoteOff('D#4', this)"></div>
+    
+    <div class="key black k-Fsh1" data-note="F#4" onmousedown="handleNoteOn('F#4', this)" onmouseup="handleNoteOff('F#4', this)" onmouseleave="handleNoteOff('F#4', this)"></div>
+    <div class="key black k-Gsh1" data-note="G#4" onmousedown="handleNoteOn('G#4', this)" onmouseup="handleNoteOff('G#4', this)" onmouseleave="handleNoteOff('G#4', this)"></div>
+    <div class="key black k-Ash1" data-note="A#4" onmousedown="handleNoteOn('A#4', this)" onmouseup="handleNoteOff('A#4', this)" onmouseleave="handleNoteOff('A#4', this)"></div>
 
-      <div class="key black k-Csh2" data-note="C#5" onmousedown="handleNoteOn('C#5', this)" onmouseup="handleNoteOff('C#5', this)" onmouseleave="handleNoteOff('C#5', this)"></div>
-      <div class="key black k-Dsh2" data-note="D#5" onmousedown="handleNoteOn('D#5', this)" onmouseup="handleNoteOff('D#5', this)" onmouseleave="handleNoteOff('D#5', this)"></div>
-    </div>
+    <div class="key black k-Csh2" data-note="C#5" onmousedown="handleNoteOn('C#5', this)" onmouseup="handleNoteOff('C#5', this)" onmouseleave="handleNoteOff('C#5', this)"></div>
+    <div class="key black k-Dsh2" data-note="D#5" onmousedown="handleNoteOn('D#5', this)" onmouseup="handleNoteOff('D#5', this)" onmouseleave="handleNoteOff('D#5', this)"></div>
   </div>
 
   <script>
     const recorder = new Tone.Recorder();
 
-    // Sound 1: Original Polyphonic Synth
+    // Sound Engine 1: Sawtooth PolySynth
     const electronicSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sawtooth" },
       envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
     }).connect(recorder).toDestination();
 
-    // Sound 2: Premium Piano Sampler
+    // Sound Engine 2: Salamander Piano Sampler Bank
     const pianoSampler = new Tone.Sampler({
       urls: {
         A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -359,7 +343,7 @@
       }
     });
 
-    // Key Note Mechanics
+    // Key Note Triggers
     function handleNoteOn(note, element) {
       if (Tone.context.state !== 'running') Tone.start();
       element.classList.add('active');
