@@ -36,7 +36,7 @@
     /* ==========================================================================
        1. TOP MASTER PANEL (Transport + Engine Switcher)
        ========================================================================== */
-    .controls-panel {
+.controls-panel {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -45,7 +45,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-shrink: 0;
+      flex-shrink: 0; /* Keeps the transport bar strictly locked on screen */
     }
 
     .left-controls {
@@ -539,7 +539,7 @@
       return `${cleanNote}${octave}`;
     }
 
-    // Transport Systems
+// Transport Systems
     let isPlaying = false;
     let isRecording = false;
 
@@ -560,15 +560,28 @@
     async function toggleRecord() {
       if (Tone.context.state !== 'running') Tone.start();
       const recBtn = document.getElementById('record-btn');
+      const playBtn = document.getElementById('play-btn');
       isRecording = !isRecording;
 
       if (isRecording) {
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
+        
+        // 1. Start the local audio data capture
         recorder.start();
+        
+        // 2. FORCE Parent Timeline Playback so you hear the other tracks!
+        isPlaying = true;
+        playBtn.innerText = "STOP";
+        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
       } else {
         recBtn.innerText = "REC";
         recBtn.classList.remove('recording');
+        
+        // Stop the parent playback alongside the recording
+        isPlaying = false;
+        playBtn.innerText = "PLAY";
+        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
         
         document.getElementById('engine-status').innerText = "SAVING...";
         const recordingBlob = await recorder.stop();
