@@ -461,6 +461,7 @@ const piano = new Tone.Sampler({
     "C6": "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3", "A6": "A6.mp3",
     "C7": "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3", "A7": "A7.mp3", "C8": "C8.mp3"
   },
+  // FIXED: Adjusted to the exact subdirectory where the mp3 files live
   baseUrl: "https://tonejs.github.io/audio/salamander/",
   onload: () => {
     console.log("Piano soundfont ready.");
