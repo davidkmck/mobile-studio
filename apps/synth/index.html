@@ -396,12 +396,11 @@
       <div class="key black k-Dsh2" data-base-note="D#+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
     </div>
   </div>
-
-  <script>
+<script>
     const recorder = new Tone.Recorder();
 
     // ==========================================================================
-    // AUDIO SIGNAL EFFECTS CHAIN SETUP
+    // AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Routing)
     // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0).start();
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
@@ -411,11 +410,13 @@
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
 
-    // Connect the nodes: Engines -> Chorus -> Delay -> Reverb -> Recorder -> Output
+    // Connect the nodes: Engines -> Chorus -> Delay -> Reverb -> Recorder & Speakers
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
+    
+    // Connect the final effect block to BOTH the recorder and your master audio output
     reverbFX.connect(recorder);
-    recorder.toDestination();
+    reverbFX.toDestination(); 
 
     // Sound Engine 1: Customizable PolySynth
     const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX);
@@ -589,5 +590,6 @@
       });
     });
   </script>
+
 </body>
 </html>
