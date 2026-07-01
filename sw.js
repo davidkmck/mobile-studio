@@ -14,6 +14,10 @@ const ASSETS = [
   '/icon-sml.png'
 ];
 
+self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Forces the waiting service worker to become the active one
+});
+/*
 // Install and cache assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -21,7 +25,17 @@ self.addEventListener('install', (event) => {
   );
   self.skipWaiting();
 });
+*/
+// Intercept requests to serve from cache if offline
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((response) => {
+      return response || fetch(e.request);
+    })
+  );
+});
 
+/*
 // Activate and clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -52,3 +66,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+*/
