@@ -9,26 +9,74 @@
   const activeNotes = new Set();
 
   // ─── Effects Setup ────────────────────────────────────────────
-  // We initialize the effects chains with a default 'wet' level of 0 (dry)
   const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 }).start();
   const feedbackDelay = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.4, wet: 0 });
   const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
 
-  // Pre-generate reverb so it's ready instantly
   reverb.generate();
 
-  // ─── Sound engine & Effects Chain ─────────────────────────────
-  // Chain: Synth -> Chorus -> Echo -> Reverb -> Speakers
+  // ─── Sound engines & Global Effects Chain ─────────────────────
+  // 1. Classic Synth Engine
   const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: 'sine' }, // Starts on Piano Mode (Sine) by default matching HTML
+    oscillator: { type: 'sine' }, // Matches default Piano Mode (Sine)
     envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
-  }).chain(chorus, feedbackDelay, reverb, Tone.Destination);
-
+  });
   synth.volume.value = -6;
 
-  document.getElementById('waveSelect').addEventListener('change', (e) => {
-    synth.set({ oscillator: { type: e.target.value } });
+  // 2. Real Sample-based Multi-Instrument Engine
+  const sampler = new Tone.Sampler({
+    urls: { "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3" },
+    baseUrl: "https://tonejs.github.io/audio/salamander/",
+    onload: () => console.log("Samples loaded successfully!")
   });
+  sampler.volume.value = -2;
+
+  // Route BOTH engines into the same effect chain so Echo, Reverb, and Chorus work globally
+  synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+  sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+
+  // ─── Instrument Configurations ────────────────────────────────
+  const INSTRUMENT_MAPS = {
+    piano: {
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      urls: { "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3" }
+    },
+    sawtooth: { mode: 'synth', type: 'sawtooth' },
+    square: { mode: 'synth', type: 'square' },
+    triangle: { mode: 'synth', type: 'triangle' },
+    sine: { mode: 'synth', type: 'sine' },
+    guitar: {
+      baseUrl: "https://tonejs.github.io/audio/casio/",
+      urls: { "G2": "G2.mp3", "C3": "C3.mp3", "E3": "E3.mp3", "G3": "G3.mp3" }
+    },
+    bass: {
+      baseUrl: "https://tonejs.github.io/audio/applause/",
+      urls: { "E1": "E1.mp3", "A1": "A1.mp3", "D2": "D2.mp3", "G2": "G2.mp3" }
+    },
+    organ: {
+      baseUrl: "https://tonejs.github.io/audio/bermuda/",
+      urls: { "C3": "C3.mp3", "G3": "G3.mp3", "C4": "C4.mp3", "G4": "G4.mp3" }
+    }
+  };
+
+  // Switch sound engine states dynamically depending on dropdown selection
+  document.getElementById('waveSelect').addEventListener('change', (e) => {
+    const config = INSTRUMENT_MAPS[e.target.value];
+    if (config && config.mode === 'synth') {
+      synth.set({ oscillator: { type: config.type } });
+    } else if (config) {
+      // Safely swap out target mappings on the sample buffer engine
+      sampler.urls = config.urls;
+      sampler.baseUrl = config.baseUrl;
+    }
+  });
+
+  // Helper function to figure out which sound engine instance to trigger
+  function getActiveEngine() {
+    const selection = document.getElementById('waveSelect').value;
+    const config = INSTRUMENT_MAPS[selection];
+    return (config && config.mode === 'synth') ? synth : sampler;
+  }
 
   // ─── Build keyboard ───────────────────────────────────────────
   function buildKeyboard() {
@@ -52,7 +100,6 @@
       });
     }
 
-    // Position black keys relative to white key width
     const totalWhite = whiteKeyEls.length;
     const whiteKeyPercent = 100 / totalWhite;
 
@@ -84,14 +131,14 @@
       if (activeNotes.has(note)) return;
       activeNotes.add(note);
       el.classList.add('pressed');
-      synth.triggerAttack(note);
+      getActiveEngine().triggerAttack(note);
     };
     const release = (e) => {
       if (e) e.preventDefault();
       if (!activeNotes.has(note)) return;
       activeNotes.delete(note);
       el.classList.remove('pressed');
-      synth.triggerRelease(note);
+      getActiveEngine().triggerRelease(note);
     };
 
     el.addEventListener('mousedown', press);
@@ -125,7 +172,7 @@
     const fullNote = `${note}${baseOctave}`;
     if (!activeNotes.has(fullNote)) {
       activeNotes.add(fullNote);
-      synth.triggerAttack(fullNote);
+      getActiveEngine().triggerAttack(fullNote);
       const el = document.querySelector(`[data-note="${fullNote}"]`);
       if (el) el.classList.add('pressed');
     }
@@ -137,7 +184,7 @@
     heldKeys.delete(e.key);
     const fullNote = `${note}${baseOctave}`;
     activeNotes.delete(fullNote);
-    synth.triggerRelease(fullNote);
+    getActiveEngine().triggerRelease(fullNote);
     const el = document.querySelector(`[data-note="${fullNote}"]`);
     if (el) el.classList.remove('pressed');
   });
@@ -149,7 +196,11 @@
 
     const rows = [
       { label: 'Volume', min: -40, max: 0, value: synth.volume.value,
-        onInput: v => { synth.volume.value = parseFloat(v); } },
+        onInput: v => { 
+          synth.volume.value = parseFloat(v); 
+          sampler.volume.value = parseFloat(v) + 4; // Keeps sampler balanced relative to synth
+        } 
+      },
       { label: 'Attack', min: 0, max: 1, step: 0.01, value: 0.02,
         onInput: v => synth.set({ envelope: { attack: parseFloat(v) } }) },
       { label: 'Decay', min: 0, max: 1, step: 0.01, value: 0.2,
@@ -159,7 +210,7 @@
       { label: 'Release', min: 0, max: 2, step: 0.01, value: 0.8,
         onInput: v => synth.set({ envelope: { release: parseFloat(v) } }) },
       
-      // ─── Added Back: Effects Knobs / Sliders Mapping ───
+      // ─── Effects Knobs ───
       { label: 'Chorus Mix', min: 0, max: 1, step: 0.01, value: chorus.wet.value,
         onInput: v => { chorus.wet.value = parseFloat(v); } },
       { label: 'Echo Mix', min: 0, max: 1, step: 0.01, value: feedbackDelay.wet.value,
@@ -208,7 +259,6 @@
     if (!isRecording) {
       if (!recorder) {
         recorder = new Tone.Recorder();
-        // Connect Master Destination containing the full chained effects output to recorder
         Tone.Destination.connect(recorder);
       }
       window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
@@ -224,7 +274,7 @@
 
       window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
       
-      activeNotes.forEach(note => synth.triggerRelease(note));
+      activeNotes.forEach(note => getActiveEngine().triggerRelease(note));
       activeNotes.clear();
       document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
 
@@ -244,7 +294,6 @@
     }
   }
 
-  // Multitrack timeline listeners
   window.addEventListener('message', (event) => {
     if (event.data.action === 'START_AUDIO') {
       Tone.start();
