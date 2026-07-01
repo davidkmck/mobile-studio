@@ -4,7 +4,105 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Mobile Studio</title>
+  
   <style>
+
+:root {
+  --cable-left-color: #ff3366;  /* Hot pink for drums */
+  --cable-right-color: #00e5ff; /* Electric cyan for synth */
+  --port-border: #44445c;
+}
+
+.studio-rack {
+  position: relative; /* Anchor context for the absolute canvas */
+  display: flex;
+  justify-content: space-between;
+  background: #0a0a0f;
+  padding: 15px 5px 30px 5px; /* Added bottom padding to give cables "room to droop" */
+}
+
+.rack-device {
+  position: relative;
+  background: #12121c;
+  border: 2px solid #26263b;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  flex: 1;
+  margin: 0 8px;
+  z-index: 2; /* Keeps text interacting neatly above the background */
+}
+
+    /* Authentic Hardware Port Aesthetics */
+.audio-port {
+  width: 14px;
+  height: 14px;
+  background: #050508;
+  border: 2px solid var(--port-border);
+  border-radius: 50%;
+  position: absolute;
+  bottom: -7px; 
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+    
+/* Offset double jacks on the mixer board */
+.mixer-tab #port-mixer-left { left: 25%; }
+.mixer-tab #port-mixer-right { left: 75%; }
+
+/* Canvas & Patch Cable Paths */
+.patch-bay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allows buttons to be fully tappable underneath */
+  z-index: 5;
+}
+
+.patch-cable {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.45)); /* Realistic physical depth shadow */
+}
+
+.cable-left { stroke: var(--cable-left-color); }
+.cable-right { stroke: var(--cable-right-color); }    
+
+/* Position ports logically */
+.drum-kit-tab .audio-out-port { right: 15px; }
+.synth-tab .audio-out-port { left: 15px; }
+.mixer-tab .left-port { left: 15px; }
+.mixer-tab .right-port { right: 15px; }
+
+/* The Cables (Using border-radius to create a droop effect) */
+.cable {
+  position: absolute;
+  border: 4px solid var(--cable-color);
+  border-top: none; /* Only show the bottom curved part */
+  border-radius: 0 0 50% 50%;
+  pointer-events: none; /* Make sure users can still click the tabs underneath */
+  z-index: 10;
+}
+
+/* Adjust these coordinates to bridge your exact layout layout */
+.cable-left {
+  left: 20%; 
+  width: 25%;
+  height: 25px;
+  top: 30px;
+}
+
+.cable-right {
+  right: 20%;
+  width: 25%;
+  height: 25px;
+  top: 30px;
+}
+    /* previous!
   :root {
     --bg: #0a0a0f;
     --panel: #12121c;
@@ -13,7 +111,8 @@
     --accent: #00e5ff;
     --nav-height: 60px;
   }
-
+*/
+    
   * { box-sizing: border-box; }
 
   html, body {
@@ -106,12 +205,46 @@
   </div>
 
   <!-- Persistent Global Bottom Navigation Banner -->
+  <!-- Before 06/30 update...
   <div class="global-app-banner">
     <a href="#" class="banner-icon active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">🎛️ BEAT</a>
     <a href="#" class="banner-icon" data-app="multitrack" onclick="loadApp('multitrack', event)">🎚️ TRACKS</a>
     <a href="#" class="banner-icon" data-app="synth" onclick="loadApp('synth', event)">🎹 SYNTH</a>
   </div>
+  -->
 
+    <!-- 06/30 update -->
+<div class="studio-rack">
+  <!-- BEAT (Drum Kit) -->
+  <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)" id="tab-beat">
+    <div class="device-body">🥁 BEAT</div>
+    <div class="audio-port out-port" id="port-beat-out"></div>
+  </a>
+
+  <!-- TRACKS (The Mixer - Central Hub) -->
+  <a href="#" class="rack-device mixer-tab" data-app="multitrack" onclick="loadApp('multitrack', event)" id="tab-tracks">
+    <div class="audio-port in-port" id="port-mixer-left"></div>
+    <div class="audio-port in-port" id="port-mixer-right"></div>
+    <div class="device-body">🎛️ TRACKS</div>
+  </a>
+
+  <!-- SYNTH (Keyboard) -->
+  <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)" id="tab-synth">
+    <div class="audio-port out-port" id="port-synth-out"></div>
+    <div class="device-body">🎹 SYNTH</div>
+  </a>
+  
+  <!-- Overlay SVG Canvas for Perfect Cable Droops -->
+  <svg class="patch-bay-canvas" xmlns="http://www.w3.org/2000/svg">
+    <!-- Left Cable: Drum Kit to Mixer -->
+    <path class="patch-cable cable-left" d="M 0 0" />
+    <!-- Right Cable: Synth to Mixer -->
+    <path class="patch-cable cable-right" d="M 0 0" />
+  </svg>
+</div>
+    <!-- 06/30 update -->
+
+  
   <script>
     let pendingClip = null; // holds audio waiting to be delivered to the Tracks app
 
@@ -159,6 +292,44 @@
       }
     });
 
+    function patchStudioCables() {
+  const rack = document.querySelector('.studio-rack').getBoundingClientRect();
+  
+  const getPortCoords = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return { x: 0, y: 0 };
+    const rect = el.getBoundingClientRect();
+    // Midpoint calculations relative to the outer container
+    return {
+      x: rect.left - rack.left + (rect.width / 2),
+      y: rect.top - rack.top + (rect.height / 2)
+    };
+  };
+
+  const pBeatOut = getPortCoords('port-beat-out');
+  const pMixerLeft = getPortCoords('port-mixer-left');
+  const pMixerRight = getPortCoords('port-mixer-right');
+  const pSynthOut = getPortCoords('port-synth-out');
+
+  // Generate cubic curves (Droop depth handled by the 'droop' variable)
+  const droop = 45; 
+
+  const drawCable = (pathClass, start, end) => {
+    const path = document.querySelector(pathClass);
+    if (!path) return;
+    const dStr = `M ${start.x} ${start.y} C ${start.x} ${start.y + droop}, ${end.x} ${end.y + droop}, ${end.x} ${end.y}`;
+    path.setAttribute('d', dStr);
+  };
+
+  drawCable('.cable-left', pBeatOut, pMixerLeft);
+  drawCable('.cable-right', pSynthOut, pMixerRight);
+}
+
+// Draw paths instantly on load and automatically keep up with orientation flips
+window.addEventListener('DOMContentLoaded', patchStudioCables);
+window.addEventListener('resize', patchStudioCables);
+    
+    
     function switchApp(targetAppId) {
       document.querySelectorAll('.app-frame').forEach(frame => frame.classList.remove('active'));
       const activeFrame = document.getElementById(targetAppId);
