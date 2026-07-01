@@ -15,7 +15,48 @@
       --cable-right-color: #00e5ff; 
     }
 
-    /* Base Rack Navigation Wrapper */
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      overflow: hidden;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       1. CORE VIEWPORT LAYOUT (Fixes the overlapping/simultaneous app bug)
+       ========================================================================== */
+    #app-container {
+      width: 100%;
+      height: calc(100dvh - var(--nav-height));
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .app-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none; /* Keeps apps hidden by default */
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .app-frame.active {
+      display: block; /* Only displays the currently selected sub-app */
+    }
+
+    /* ==========================================================================
+       2. WIRED HARDWARE STUDIO RACK
+       ========================================================================== */
     .studio-rack {
       position: relative; 
       display: flex; 
@@ -24,7 +65,7 @@
       background: var(--panel); 
       border-top: 1px solid var(--border); 
       padding: 10px 5px 25px 5px;
-      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
     /* Individual hardware unit tabs */
