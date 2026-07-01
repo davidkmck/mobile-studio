@@ -23,21 +23,24 @@
   padding-bottom: calc(15px + env(safe-area-inset-bottom));
 }
 
+/* ==========================================================================
+   2. WIRED HARDWARE STUDIO RACK
+   ========================================================================== */
 .rack-device {
-  position: relative; /* CRITICAL: Re-anchors absolute child ports to the tab frame */
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  flex: 1; 
-  margin: 0 8px; 
-  padding: 10px; 
-  background: #0a0a0f; 
-  border: 2px solid var(--border); 
-  border-radius: 8px; 
-  z-index: 2; 
-  text-decoration: none; 
-  color: #6c6c84; 
+  position: relative; /* 👈 CRITICAL FIX: Re-anchors the ports to each individual tab */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: 0 8px;
+  padding: 10px;
+  background: #0a0a0f;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  z-index: 2;
+  text-decoration: none;
+  color: #6c6c84;
   font-size: 13px;
   font-weight: 600;
 }
