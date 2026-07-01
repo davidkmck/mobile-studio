@@ -11,7 +11,6 @@
       --panel: #12121c;
       --border: #26263b;
       --accent: #00e5ff;
-      --accent-fx: #d400ff;
     }
 
     * { box-sizing: border-box; }
@@ -35,8 +34,8 @@
     }
 
     /* ==========================================================================
-       1. TOP MASTER PANEL (Mobile Accessible Layout)
-       ========================================================================= */
+       1. TOP MASTER PANEL (Transport + Engine Switcher)
+       ========================================================================== */
     .controls-panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -49,17 +48,10 @@
       flex-shrink: 0;
     }
 
-    .transport-group {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .right-controls {
+    .left-controls {
       display: flex;
       align-items: center;
       gap: 12px;
-      overflow-x: auto;
     }
 
     .selector-group {
@@ -99,41 +91,22 @@
       padding: 4px 8px;
       border-radius: 3px;
       border: 1px solid #091009;
-      white-space: nowrap;
+    }
+
+    .transport-group {
+      display: flex;
+      gap: 8px;
     }
 
     .btn {
       background: #1c1c2b;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 8px 12px;
+      padding: 8px 16px;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn:active {
-      background: #26263b;
-    }
-
-    .btn-toggle-panel {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .btn-toggle-panel.active-state {
-      background: var(--accent);
-      color: #000;
-    }
-
-    .btn-toggle-fx {
-      border-color: var(--accent-fx);
-      color: var(--accent-fx);
-    }
-    .btn-toggle-fx.active-state {
-      background: var(--accent-fx);
-      color: #fff;
     }
 
     .btn-record {
@@ -141,6 +114,7 @@
       border-color: #5c2626;
       color: #ff4444;
     }
+    
     .btn-record.recording {
       background: #ff4444;
       color: #fff;
@@ -154,26 +128,17 @@
     }
 
     /* ==========================================================================
-       2. SEPARATED CONFIGURATION PANELS
-       ========================================================================= */
+       2. SYNTH PARAMETERS EDITING PANEL (Restored Tweaking Knobs)
+       ========================================================================== */
     .synth-tweaker-panel {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px;
       display: flex;
-      gap: 12px;
+      gap: 16px;
       overflow-x: auto;
       flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .synth-tweaker-panel.collapsed {
-      display: none !important;
-    }
-
-    .synth-tweaker-panel::-webkit-scrollbar {
-      display: none;
     }
 
     .tweak-section {
@@ -210,26 +175,22 @@
     }
 
     .knob-box input[type="range"] {
-      width: 55px;
+      width: 60px;
       accent-color: var(--accent);
-    }
-
-    .fx-box input[type="range"] {
-      accent-color: var(--accent-fx);
     }
 
     .select-dark {
       background: #1c1c2b;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 4px 6px;
+      padding: 4px 8px;
       font-size: 11px;
       border-radius: 4px;
       outline: none;
     }
 
     /* ==========================================================================
-       3. KEYBOARD AREA
+       3. FLEXIBLE KEYBOARD ENVIRONMENT
        ========================================================================= */
     .keyboard-space {
       flex: 1;
@@ -293,6 +254,7 @@
       height: 57%;
     }
 
+    /* Traditional layout geometry offsets */
     .k-Csh1 { left: 5.5%; }
     .k-Dsh1 { left: 14.5%; }
     .k-Fsh1 { left: 32.5%; }
@@ -304,26 +266,25 @@
 </head>
 <body>
 
-  <!-- Top Utilities Bar -->
+  <!-- Top Master Utility Block -->
   <div class="controls-panel">
-    <div class="transport-group">
-      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
-      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
-      <button id="toggle-panel-btn" class="btn btn-toggle-panel active-state" onclick="togglePanel('controls')">🎛️ SYNTH</button>
-      <button id="toggle-fx-btn" class="btn btn-toggle-fx" onclick="togglePanel('effects')">✨ EFFECTS</button>
-    </div>
-
-    <div class="right-controls">
+    <div class="left-controls">
       <div class="selector-group">
         <button class="sound-btn active" onclick="setEngine('synth', this)">⚡ SYNTH</button>
         <button class="sound-btn" onclick="setEngine('piano', this)">🎹 PIANO</button>
       </div>
       <div id="engine-status" class="status-lamp">READY</div>
     </div>
+
+    <div class="transport-group">
+      <button id="play-btn" class="btn" onclick="togglePlay()">PLAY</button>
+      <button id="record-btn" class="btn btn-record" onclick="toggleRecord()">REC</button>
+    </div>
   </div>
 
-  <!-- Panel 1: Synth Parameters -->
-  <div id="tweaker-panel" class="synth-tweaker-panel">
+  <!-- Restored Sound Editing Parameters Grid -->
+  <div class="synth-tweaker-panel">
+    <!-- Generator Source -->
     <div class="tweak-section">
       <span class="section-title">Osc</span>
       <div class="knob-box">
@@ -338,15 +299,14 @@
       <div class="knob-box">
         <label>Octave</label>
         <select id="octave-shift" class="select-dark" onchange="shiftOctave()">
-          <option value="-2">C2 - Bass</option>
-          <option value="-1">C3 - Low</option>
-          <option value="0" selected>C4 - Mid</option>
-          <option value="1">C5 - High</option>
-          <option value="2">C6 - Lead</option>
+          <option value="-1">Lower</option>
+          <option value="0" selected>Normal</option>
+          <option value="1">Higher</option>
         </select>
       </div>
     </div>
 
+    <!-- Envelope Modifiers -->
     <div class="tweak-section">
       <span class="section-title">Env</span>
       <div class="knob-box">
@@ -367,6 +327,7 @@
       </div>
     </div>
 
+    <!-- Master Amp Gain -->
     <div class="tweak-section">
       <span class="section-title">Amp</span>
       <div class="knob-box">
@@ -376,29 +337,10 @@
     </div>
   </div>
 
-  <!-- Panel 2: Effects Panel -->
-  <div id="effects-panel" class="synth-tweaker-panel collapsed">
-    <div class="tweak-section">
-      <span class="section-title" style="color: var(--accent-fx);">FX</span>
-      <div class="knob-box fx-box">
-        <label>Chorus</label>
-        <input id="fx-chorus" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
-      </div>
-      <div class="knob-box fx-box">
-        <label>Echo (Delay)</label>
-        <input id="fx-delay" type="range" min="0" max="1" step="0.05" value="0" oninput="updateFX()">
-      </div>
-      <div class="knob-box fx-box">
-        <label>Reverb</label>
-        <input id="fx-reverb" type="range" min="0" max="1" step="0.05" value="0.1" oninput="updateFX()">
-      </div>
-    </div>
-  </div>
-
-  <!-- Piano -->
+  <!-- Main Self-Sizing Dynamic Piano Workspace -->
   <div class="keyboard-space">
     <div class="keyboard">
-      <!-- White Keys -->
+      <!-- Octave 1 White Keys -->
       <div class="key white" data-base-note="C" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="D" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="E" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
@@ -407,6 +349,7 @@
       <div class="key white" data-base-note="A" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="B" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
 
+      <!-- Octave 2 White Keys -->
       <div class="key white" data-base-note="C+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="D+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
       <div class="key white" data-base-note="E+" onmousedown="handleNoteOn(this)" onmouseup="handleNoteOff(this)" onmouseleave="handleNoteOff(this)"></div>
@@ -430,209 +373,40 @@
   </div>
 
   <script>
-    // ==========================================================================
-    // 1. ALL GLOBAL ENVIRONMENT & ENGINE DECLARATIONS FIRST
-    // ==========================================================================
-    let isPlaying = false;
-    let isRecording = false;
-    let currentOctaveBase = 4;
+    // Global variable state references declared early to prevent runtime errors
+    let activeEngine = null;
+    let currentOctaveBase = 4; // Mid-scale C4 standard default
 
-    // Build Synth Audio Engines
-    const electronicSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+    const recorder = new Tone.Recorder();
+
+    // Sound Engine 1: Fully Customizable Electronic PolySynth
+    const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(recorder).toDestination();
+
+    // Sound Engine 2: Premium Piano Sampler (Configured with safe CORS mirror endpoints)
     const pianoSampler = new Tone.Sampler({
       urls: {
-        A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", F1: "F1.mp3", A1: "A1.mp3",
-        C2: "C2.mp3", "D#2": "Ds2.mp3", F2: "F2.mp3", A2: "A2.mp3",
-        C3: "C3.mp3", "D#3": "Ds3.mp3", F3: "F3.mp3", A3: "A3.mp3",
-        C4: "C4.mp3", "D#4": "Ds4.mp3", F4: "F4.mp3", A4: "A4.mp3",
-        C5: "C5.mp3", "D#5": "Ds5.mp3", F5: "F5.mp3", A5: "A5.mp3",
-        C6: "C6.mp3", "D#6": "Ds6.mp3", F6: "F6.mp3", A6: "A6.mp3",
-        C7: "C7.mp3", "D#7": "Ds7.mp3", F7: "F7.mp3", A7: "A7.mp3", C8: "C8.mp3"
+        A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
+        A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3",
+        A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3",
+        A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3",
+        A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3",
+        A5: "A5.mp3", C6: "C6.mp3", "D#6": "Ds6.mp3", "F#6": "Fs6.mp3",
+        A6: "A6.mp3", C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3",
+        A7: "A7.mp3", C8: "C8.mp3"
       },
-      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/piano/",
       onload: () => {
         if (activeEngine === pianoSampler) {
-          document.getElementById('engine-status').innerText = "READY";
+          const statusEl = document.getElementById('engine-status');
+          if (statusEl) statusEl.innerText = "READY";
         }
       }
-    });
+    }).connect(recorder).toDestination();
 
-    let activeEngine = electronicSynth;
+    // Establish active initialization engine target safely
+    activeEngine = electronicSynth;
 
-    // Detect format compatibility for the pipeline
-    let mimeTypeSelection = "audio/webm;codecs=opus";
-    if (!MediaRecorder.isTypeSupported(mimeTypeSelection)) {
-      mimeTypeSelection = "audio/webm";
-    }
-
-    const recordingBus = new Tone.Gain();
-    const recorder = new Tone.Recorder({ mimeType: mimeTypeSelection });
-    recordingBus.connect(recorder);
-
-    electronicSynth.connect(recordingBus);
-    pianoSampler.connect(recordingBus);
-
-    // ==========================================================================
-    // 2. SIGNAL PROCESSING EFFECTS CHAINS
-    // ==========================================================================
-    const chorusFX = new Tone.Chorus(4, 2.5, 0);
-    const delayFX = new Tone.FeedbackDelay("8n", 0.3);
-    const reverbFX = new Tone.Reverb({ roomSize: 0.7, wet: 0.1 });
-
-    delayFX.wet.value = 0;
-    chorusFX.wet.value = 0;
-
-    chorusFX.connect(delayFX);
-    delayFX.connect(reverbFX);
-    reverbFX.toDestination(); 
-    reverbFX.connect(recordingBus);
-
-    // ==========================================================================
-    // 3. CORE AUDIO AUXILIARY HELPERS
-    // ==========================================================================
-    async function ensureAudioContext() {
-      if (Tone.context.state !== 'running') {
-        await Tone.start();
-        chorusFX.start(); 
-      }
-    }
-
-    function getTargetNoteString(baseToken) {
-      let octave = currentOctaveBase;
-      let cleanNote = baseToken;
-
-      if (baseToken.includes('++')) {
-        octave += 2;
-        cleanNote = baseToken.replace('++', '');
-      } else if (baseToken.includes('+')) {
-        octave += 1;
-        cleanNote = baseToken.replace('+', '');
-      }
-      return `${cleanNote}${octave}`;
-    }
-
-    // ==========================================================================
-    // 4. INTERACTIVE ACTIONS (Panels & Notes)
-    // ==========================================================================
-    function togglePanel(panelName) {
-      const tweaker = document.getElementById('tweaker-panel');
-      const fxPanel = document.getElementById('effects-panel');
-      const synthBtn = document.getElementById('toggle-panel-btn');
-      const fxBtn = document.getElementById('toggle-fx-btn');
-
-      if (panelName === 'controls') {
-        tweaker.classList.remove('collapsed');
-        fxPanel.classList.add('collapsed');
-        synthBtn.classList.add('active-state');
-        fxBtn.classList.remove('active-state');
-      } else {
-        tweaker.classList.add('collapsed');
-        fxPanel.classList.remove('collapsed');
-        synthBtn.classList.remove('active-state');
-        fxBtn.classList.add('active-state');
-      }
-    }
-
-    async function handleNoteOn(element) {
-      await ensureAudioContext(); 
-      element.classList.add('active');
-      const targetNote = getTargetNoteString(element.dataset.baseNote);
-      activeEngine.triggerAttack(targetNote);
-    }
-
-    function handleNoteOff(element) {
-      if (element.classList.contains('active')) {
-        element.classList.remove('active');
-        const targetNote = getTargetNoteString(element.dataset.baseNote);
-        activeEngine.triggerRelease(targetNote);
-      }
-    }
-
-    // ==========================================================================
-    // 5. TIMELINE TRANSPORT & BLOB FORWARDING
-    // ==========================================================================
-    async function togglePlay() {
-      await ensureAudioContext();
-      isPlaying = !isPlaying;
-      const btn = document.getElementById('play-btn');
-      
-      if (isPlaying) {
-        btn.innerText = "STOP";
-        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
-      } else {
-        btn.innerText = "PLAY";
-        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-      }
-    }
-
-    async function toggleRecord() {
-      await ensureAudioContext();
-      
-      const recBtn = document.getElementById('record-btn');
-      const playBtn = document.getElementById('play-btn');
-      
-      isRecording = !isRecording;
-
-      if (isRecording) {
-        recBtn.innerText = "STOP REC";
-        recBtn.classList.add('recording');
-        
-        recorder.start();
-        
-        isPlaying = true;
-        playBtn.innerText = "STOP";
-        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
-      } else {
-        recBtn.innerText = "REC";
-        recBtn.classList.remove('recording');
-        
-        isPlaying = false;
-        playBtn.innerText = "PLAY";
-        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-        
-        document.getElementById('engine-status').innerText = "SAVING...";
-        
-        try {
-          const rawBlob = await recorder.stop();
-          document.getElementById('engine-status').innerText = "READY";
-
-          const standardizedBlob = new Blob([rawBlob], { type: mimeTypeSelection });
-          const objectUrl = URL.createObjectURL(standardizedBlob);
-
-          // Satisfy multitrack internal fetch requirements directly using the memory URL stream
-          window.parent.postMessage({
-            action: 'ADD_CLIP_TO_TIMELINE',
-            blob: standardizedBlob,       
-            audioBlob: standardizedBlob,  
-            audioUrl: objectUrl,          
-            url: objectUrl,               
-            trackName: objectUrl,
-            name: activeEngine === pianoSampler ? 'Keyboard Piano' : 'Keyboard Synth',
-            mimeType: mimeTypeSelection
-          }, '*');
-          
-          window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
-        } catch (err) {
-          console.error("Recording acquisition failure:", err);
-          document.getElementById('engine-status').innerText = "ERR REC";
-        }
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.data.action === 'START_AUDIO') {
-        isPlaying = true;
-        document.getElementById('play-btn').innerText = "STOP";
-      }
-      if (event.data.action === 'STOP_AUDIO') {
-        isPlaying = false;
-        document.getElementById('play-btn').innerText = "PLAY";
-      }
-    });
-
-    // ==========================================================================
-    // 6. ENGINE CONTROL MODIFIERS
-    // ==========================================================================
+    // Push slider/select values straight into the Tone parameters matrix
     function updateParameters() {
       const wave = document.getElementById('wave-type').value;
       const attack = parseFloat(document.getElementById('p-attack').value);
@@ -641,22 +415,20 @@
       const release = parseFloat(document.getElementById('p-release').value);
       const volume = parseFloat(document.getElementById('p-volume').value);
 
+      // Apply modifiers to Customizable Synth
       electronicSynth.set({
         oscillator: { type: wave },
         envelope: { attack, decay, sustain, release }
       });
       electronicSynth.volume.value = volume;
+
+      // Apply modifications to Sampler (Volume/Envelope Release adjustments)
       pianoSampler.volume.value = volume;
     }
 
-    function updateFX() {
-      chorusFX.wet.value = parseFloat(document.getElementById('fx-chorus').value);
-      delayFX.wet.value = parseFloat(document.getElementById('fx-delay').value);
-      reverbFX.wet.value = parseFloat(document.getElementById('fx-reverb').value);
-    }
-
     function shiftOctave() {
-      currentOctaveBase = 4 + parseInt(document.getElementById('octave-shift').value);
+      const shift = parseInt(document.getElementById('octave-shift').value);
+      currentOctaveBase = 4 + shift;
     }
 
     function setEngine(type, buttonEl) {
@@ -672,11 +444,98 @@
       }
     }
 
-    // Bootstrap values once definitions are safely configured
-    updateParameters();
-    updateFX();
+    // Map the relative DOM data tokens to strict scientific musical note notation values
+    function getTargetNoteString(baseToken) {
+      let octave = currentOctaveBase;
+      let cleanNote = baseToken;
 
-    // Mobile touch interaction event maps
+      if (baseToken.includes('++')) {
+        octave += 2;
+        cleanNote = baseToken.replace('++', '');
+      } else if (baseToken.includes('+')) {
+        octave += 1;
+        cleanNote = baseToken.replace('+', '');
+      }
+      return `${cleanNote}${octave}`;
+    }
+
+    // Transport Systems
+    let isPlaying = false;
+    let isRecording = false;
+
+    function togglePlay() {
+      if (Tone.context.state !== 'running') Tone.start();
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('play-btn');
+      
+      if (isPlaying) {
+        btn.innerText = "STOP";
+        window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
+      } else {
+        btn.innerText = "PLAY";
+        window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+      }
+    }
+
+    async function toggleRecord() {
+      if (Tone.context.state !== 'running') Tone.start();
+      const recBtn = document.getElementById('record-btn');
+      isRecording = !isRecording;
+
+      if (isRecording) {
+        recBtn.innerText = "STOP REC";
+        recBtn.classList.add('recording');
+        recorder.start();
+      } else {
+        recBtn.innerText = "REC";
+        recBtn.classList.remove('recording');
+        
+        document.getElementById('engine-status').innerText = "SAVING...";
+        const recordingBlob = await recorder.stop();
+        document.getElementById('engine-status').innerText = "READY";
+
+        window.parent.postMessage({
+          action: 'EXPORT_AUDIO_TO_TRACKS',
+          audioBlob: recordingBlob,
+          trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
+          mimeType: 'audio/webm'
+        }, '*');
+        
+        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.data.action === 'START_AUDIO') {
+        isPlaying = true;
+        document.getElementById('play-btn').innerText = "STOP";
+      }
+      if (event.data.action === 'STOP_AUDIO') {
+        isPlaying = false;
+        document.getElementById('play-btn').innerText = "PLAY";
+      }
+    });
+
+    // Interaction Note Mechanics
+    function handleNoteOn(element) {
+      if (Tone.context.state !== 'running') Tone.start();
+      element.classList.add('active');
+      const targetNote = getTargetNoteString(element.dataset.baseNote);
+      if (activeEngine) activeEngine.triggerAttack(targetNote);
+    }
+
+    function handleNoteOff(element) {
+      if (element.classList.contains('active')) {
+        element.classList.remove('active');
+        const targetNote = getTargetNoteString(element.dataset.baseNote);
+        if (activeEngine) activeEngine.triggerRelease(targetNote);
+      }
+    }
+
+    // Init values on run
+    updateParameters();
+
+    // Mobile Responsive Touch Hooks
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
