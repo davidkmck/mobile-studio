@@ -419,11 +419,12 @@
     </div>
   </div>
 
-  <script>
-    const recorder = new Tone.Recorder();
+ <script>
+    // Initialize the recorder with explicit settings to ensure broad mobile compatibility
+    const recorder = new Tone.Recorder({ mimeType: "audio/webm" });
 
-// ==========================================================================
-    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP (Fixed Recording Bus)
+    // ==========================================================================
+    // 1. AUDIO SIGNAL EFFECTS CHAIN SETUP
     // ==========================================================================
     const chorusFX = new Tone.Chorus(4, 2.5, 0);
     const delayFX = new Tone.FeedbackDelay("8n", 0.3);
@@ -432,19 +433,17 @@
     delayFX.wet.value = 0;
     chorusFX.wet.value = 0;
 
+    // Spin up the modulation engine inside Chorus
     chorusFX.start();
 
-    // Main FX chain routing
+    // Setup main effects route
     chorusFX.connect(delayFX);
     delayFX.connect(reverbFX);
-    
-    // The FX chain outputs directly to the speakers
     reverbFX.toDestination(); 
 
     // ==========================================================================
-    // 2. SOUND ENGINES GENERATION (Dual routed to FX AND Recorder)
+    // 2. SOUND ENGINES GENERATION (Dual-routed to Master Out AND Recording Bus)
     // ==========================================================================
-    // Connect to chorusFX for hearing it live, and recorder to catch the raw notes!
     const electronicSynth = new Tone.PolySynth(Tone.Synth).connect(chorusFX).connect(recorder);
 
     const pianoSampler = new Tone.Sampler({
@@ -467,18 +466,11 @@
     let activeEngine = electronicSynth;
     let currentOctaveBase = 4;
 
-    // Interface toggling feature for tiny screens / landscape modes
     function toggleTweakerPanel() {
       const panel = document.getElementById('tweaker-panel');
       const btn = document.getElementById('toggle-panel-btn');
-      
       panel.classList.toggle('collapsed');
-      
-      if (panel.classList.contains('collapsed')) {
-        btn.classList.add('hidden-state');
-      } else {
-        btn.classList.remove('hidden-state');
-      }
+      btn.classList.toggle('hidden-state', panel.classList.contains('collapsed'));
     }
 
     function updateParameters() {
@@ -498,18 +490,13 @@
     }
 
     function updateFX() {
-      const chorusValue = parseFloat(document.getElementById('fx-chorus').value);
-      const delayValue = parseFloat(document.getElementById('fx-delay').value);
-      const reverbValue = parseFloat(document.getElementById('fx-reverb').value);
-
-      chorusFX.wet.value = chorusValue;
-      delayFX.wet.value = delayValue;
-      reverbFX.wet.value = reverbValue;
+      chorusFX.wet.value = parseFloat(document.getElementById('fx-chorus').value);
+      delayFX.wet.value = parseFloat(document.getElementById('fx-delay').value);
+      reverbFX.wet.value = parseFloat(document.getElementById('fx-reverb').value);
     }
 
     function shiftOctave() {
-      const shift = parseInt(document.getElementById('octave-shift').value);
-      currentOctaveBase = 4 + shift;
+      currentOctaveBase = 4 + parseInt(document.getElementById('octave-shift').value);
     }
 
     function setEngine(type, buttonEl) {
@@ -539,7 +526,9 @@
       return `${cleanNote}${octave}`;
     }
 
-// Transport Systems
+    // ==========================================================================
+    // 3. TRANSPORT & MESSAGING TRACK LIFECYCLE
+    // ==========================================================================
     let isPlaying = false;
     let isRecording = false;
 
@@ -558,43 +547,53 @@
     }
 
     async function toggleRecord() {
-      if (Tone.context.state !== 'running') Tone.start();
+      if (Tone.context.state !== 'running') await Tone.start();
+      
       const recBtn = document.getElementById('record-btn');
       const playBtn = document.getElementById('play-btn');
+      
       isRecording = !isRecording;
 
       if (isRecording) {
         recBtn.innerText = "STOP REC";
         recBtn.classList.add('recording');
         
-        // 1. Start the local audio data capture
-        recorder.start();
-        
-        // 2. FORCE Parent Timeline Playback so you hear the other tracks!
+        // A. Fire playback command to parent container first so timeline starts ticking
         isPlaying = true;
         playBtn.innerText = "STOP";
         window.parent.postMessage({ action: 'REQUEST_PLAY' }, '*');
+        
+        // B. Start recording audio buffer stream
+        recorder.start();
       } else {
         recBtn.innerText = "REC";
         recBtn.classList.remove('recording');
         
-        // Stop the parent playback alongside the recording
+        // Stop playback globally
         isPlaying = false;
         playBtn.innerText = "PLAY";
         window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
         
         document.getElementById('engine-status').innerText = "SAVING...";
-        const recordingBlob = await recorder.stop();
-        document.getElementById('engine-status').innerText = "READY";
-
-        window.parent.postMessage({
-          action: 'EXPORT_AUDIO_TO_TRACKS',
-          audioBlob: recordingBlob,
-          trackName: activeEngine === pianoSampler ? 'Piano' : 'Synth',
-          mimeType: 'audio/webm'
-        }, '*');
         
-        window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+        try {
+          const recordingBlob = await recorder.stop();
+          document.getElementById('engine-status').innerText = "READY";
+
+          // C. Ship the blob up to the parent application frame
+          window.parent.postMessage({
+            action: 'EXPORT_AUDIO_TO_TRACKS',
+            audioBlob: recordingBlob,
+            trackName: activeEngine === pianoSampler ? 'Piano Layer' : 'Synth Layer',
+            mimeType: 'audio/webm'
+          }, '*');
+          
+          // D. Force layout focus view back to the Multitrack environment view
+          window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+        } catch (err) {
+          console.error("Recording acquisition failure:", err);
+          document.getElementById('engine-status').innerText = "ERR REC";
+        }
       }
     }
 
@@ -609,7 +608,9 @@
       }
     });
 
-    // Interaction Note Mechanics
+    // ==========================================================================
+    // 4. INTERACTION MECHANICS
+    // ==========================================================================
     function handleNoteOn(element) {
       if (Tone.context.state !== 'running') Tone.start();
       element.classList.add('active');
@@ -625,11 +626,11 @@
       }
     }
 
-    // Initialize defaults on runtime initialization
+    // Initialize defaults on boot
     updateParameters();
     updateFX();
 
-    // Mobile Responsive Touch Hooks
+    // Mobile Touch Bindings
     document.querySelectorAll('.key').forEach(key => {
       key.addEventListener('touchstart', (e) => {
         e.preventDefault();
