@@ -607,6 +607,20 @@
           const standardizedBlob = new Blob([rawBlob], { type: mimeTypeSelection });
           const objectUrl = URL.createObjectURL(standardizedBlob);
 
+          // Send the payload saturating the common key variations
+window.parent.postMessage({
+  action: 'ADD_CLIP_TO_TIMELINE', // Ensure this matches the exact action string your multitrack listens for
+  blob: standardizedBlob,       
+  audioBlob: standardizedBlob,  
+  audioUrl: objectUrl,          
+  url: objectUrl,               
+  trackName: trackName,
+  name: trackName,
+  mimeType: mimeTypeSelection
+}, '*');
+
+window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+          /*
           // We pass down trackName as explicit labels and the objectURL explicitly as the sound block target
           window.parent.postMessage({
             action: 'EXPORT_AUDIO_TO_TRACKS',
@@ -619,6 +633,7 @@
           }, '*');
           
           window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
+          */
         } catch (err) {
           console.error("Recording acquisition failure:", err);
           document.getElementById('engine-status').innerText = "ERR REC";
