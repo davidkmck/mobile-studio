@@ -1,8 +1,8 @@
 // ─── Keyboard layout ──────────────────────────────────────────
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const BLACK_NOTES = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
-const NUM_OCTAVES_SHOWN = 2; 
-let baseOctave = 4; 
+const NUM_OCTAVES_SHOWN = 2;
+let baseOctave = 4;
 
 let isRecording = false;
 let recorder = null;
@@ -31,13 +31,22 @@ function loadSamplerInstrument(config) {
   if (sampler) {
     sampler.disconnect();
     sampler.dispose();
+    sampler = null;
   }
+
+  console.log(`Attempting to load instrument from: ${config.baseUrl}`);
 
   sampler = new Tone.Sampler({
     urls: config.urls,
     baseUrl: config.baseUrl,
-    onload: () => console.log("New instrument samples loaded successfully!")
+    onload: () => {
+      console.log("New instrument samples successfully mapped and ready to play!");
+    },
+    onerror: (err) => {
+      console.error("Error loading sample files from remote repository:", err);
+    }
   });
+  
   sampler.volume.value = -2;
 
   // Route the brand new sampler instance into your global effects pipeline
@@ -47,23 +56,23 @@ function loadSamplerInstrument(config) {
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-// ─── Instrument Configurations (Distinct High-Quality Paths) ──────
+// ─── Instrument Configurations (Fixed Mapping Configurations) ──────
 const SAMPLER_MAPS = {
   piano: {
     baseUrl: "https://tonejs.github.io/audio/salamander/",
-    urls: { "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3" }
+    urls: { "A0": "A0.mp3", "C1": "C1.mp3", "A1": "A1.mp3", "C2": "C2.mp3", "A2": "A2.mp3", "C3": "C3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3", "C6": "C6.mp3", "A6": "A6.mp3", "C7": "C7.mp3", "A7": "A7.mp3", "C8": "C8.mp3" }
   },
   guitar: {
     baseUrl: "https://tonejs.github.io/audio/guitar-acoustic/",
-    urls: { "C3": "C3.mp3", "G3": "G3.mp3", "C4": "C4.mp3", "G4": "G4.mp3" }
+    urls: { "F#1": "Fs1.mp3", "A1": "A1.mp3", "D2": "D2.mp3", "G2": "G2.mp3", "B2": "B2.mp3", "E3": "E3.mp3", "E4": "E4.mp3" }
   },
   bass: {
     baseUrl: "https://tonejs.github.io/audio/bass-electric/",
-    urls: { "C1": "C1.mp3", "G1": "G1.mp3", "C2": "C2.mp3", "G2": "G2.mp3" }
+    urls: { "C1": "C1.mp3", "E1": "E1.mp3", "G1": "G1.mp3", "C2": "C2.mp3", "E2": "E2.mp3", "G2": "G2.mp3", "C3": "C3.mp3" }
   },
   organ: {
     baseUrl: "https://tonejs.github.io/audio/organ/",
-    urls: { "C3": "C3.mp3", "G3": "G3.mp3", "C4": "C4.mp3", "G4": "G4.mp3" }
+    urls: { "C3": "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3", "C5": "C5.mp3" }
   }
 };
 
@@ -130,6 +139,9 @@ if (instrumentSelect) {
     
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
+      if (sampler) {
+        sampler.disconnect();
+      }
     } else {
       if (waveSelect) waveSelect.disabled = true;
       const config = SAMPLER_MAPS[mode];
