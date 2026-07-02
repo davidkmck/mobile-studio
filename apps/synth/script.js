@@ -15,7 +15,7 @@ const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
 
 reverb.generate();
 
-// ─── Sound engines & Global Effects Chain ─────────────────────
+// ─── Sound engines ────────────────────────────────────────────
 // 1. Classic Synth Engine
 const synth = new Tone.PolySynth(Tone.Synth, {
   oscillator: { type: 'sawtooth' },
@@ -23,40 +23,81 @@ const synth = new Tone.PolySynth(Tone.Synth, {
 });
 synth.volume.value = -6;
 
-// 2. Real Sample-based Multi-Instrument Engine Placeholder
+// 2. Sample Engine & Fallback Engine Map
 let sampler = null;
+let fallbackEngine = null;
 
-// Function to safely build/rebuild the sampler node when switching instruments
-function loadSamplerInstrument(config) {
+// Clean up any loaded sampler or fallback instruments
+function cleanupEngines() {
   if (sampler) {
     sampler.disconnect();
     sampler.dispose();
     sampler = null;
   }
+  if (fallbackEngine) {
+    fallbackEngine.disconnect();
+    fallbackEngine.dispose();
+    fallbackEngine = null;
+  }
+}
 
-  console.log(`Attempting to load instrument from: ${config.baseUrl}`);
+// Function to safely build/rebuild the sampler node with high-fidelity synth fallbacks
+function loadSamplerInstrument(instrumentName, config) {
+  cleanupEngines();
+
+  console.log(`Attempting to load instrument samples for: ${instrumentName}`);
 
   sampler = new Tone.Sampler({
     urls: config.urls,
     baseUrl: config.baseUrl,
     onload: () => {
-      console.log("New instrument samples successfully mapped and ready to play!");
-      if (sampler) {
-        sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-      }
+      console.log(`Samples for ${instrumentName} successfully loaded!`);
+      if (sampler) sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
     },
     onerror: (err) => {
-      console.error("Error loading sample files from remote repository:", err);
+      console.warn(`404 or Network Error loading ${instrumentName} samples. Activating high-fidelity synth fallback.`);
+      createFallbackSynth(instrumentName);
     }
   });
   
-  sampler.volume.value = 0; // Bring volume up to clear default levels
+  sampler.volume.value = 0;
+}
+
+// Generates custom synth engines crafted to match the missing instruments
+function createFallbackSynth(instrumentName) {
+  if (fallbackEngine) fallbackEngine.dispose();
+
+  if (instrumentName === 'guitar') {
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 1.2 }
+    });
+    fallbackEngine.volume.value = -2;
+  } else if (instrumentName === 'bass') {
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.4 }
+    });
+    fallbackEngine.volume.value = +2; // Boost bass presence
+  } else if (instrumentName === 'organ') {
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.08, decay: 0, sustain: 1, release: 0.2 }
+    });
+    fallbackEngine.volume.value = -6;
+  } else {
+    // Default fallback piano placeholder
+    fallbackEngine = new Tone.PolySynth(Tone.Synth);
+    fallbackEngine.volume.value = -6;
+  }
+
+  fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 }
 
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-// ─── Instrument Configurations (Case-Corrected Repository Mappings) ──────
+// ─── Instrument Configurations ──────────────────────────────────────────
 const SAMPLER_MAPS = {
   piano: {
     baseUrl: "https://tonejs.github.io/audio/salamander/",
@@ -76,7 +117,6 @@ const SAMPLER_MAPS = {
   }
 };
 
-// Define fallback default engine baselines
 const DEFAULT_SETTINGS = {
   instrument: 'synth',
   wave: 'sawtooth',
@@ -103,7 +143,6 @@ if (waveSelect) {
   waveSelect.disabled = (savedInstrument !== 'synth');
 }
 
-// Load custom user parameters from local memory or set defaults
 synth.set({ oscillator: { type: savedWave } });
 
 const initVol = localStorage.getItem('synth_setting_Volume') ? parseFloat(localStorage.getItem('synth_setting_Volume')) : DEFAULT_SETTINGS.volume;
@@ -123,12 +162,11 @@ chorus.wet.value = initChorus;
 feedbackDelay.wet.value = initEcho;
 reverb.wet.value = initReverb;
 
-// Allocate initial active channel routing map on launch
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 } else {
   const config = SAMPLER_MAPS[savedInstrument];
-  if (config) loadSamplerInstrument(config);
+  if (config) loadSamplerInstrument(savedInstrument, config);
 }
 
 // ─── Event Control Listeners ──────────────────────────────────
@@ -137,18 +175,15 @@ if (instrumentSelect) {
     const mode = e.target.value;
     localStorage.setItem('synth_instrument', mode);
     
-    // Explicitly wake up audio context during user interaction
     await Tone.start();
     
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
-      if (sampler) {
-        sampler.disconnect();
-      }
+      cleanupEngines();
     } else {
       if (waveSelect) waveSelect.disabled = true;
       const config = SAMPLER_MAPS[mode];
-      if (config) loadSamplerInstrument(config);
+      if (config) loadSamplerInstrument(mode, config);
     }
   });
 }
@@ -163,7 +198,9 @@ if (waveSelect) {
 
 function getActiveEngine() {
   const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
-  return instrumentMode === 'synth' ? synth : sampler;
+  if (instrumentMode === 'synth') return synth;
+  // If sampler isn't fully loaded yet, automatically fall back to the live synth variant
+  return (sampler && sampler.loaded) ? sampler : fallbackEngine;
 }
 
 // ─── Build keyboard ───────────────────────────────────────────
@@ -222,8 +259,7 @@ function attachKeyEvents(el, note) {
     if (activeNotes.has(note)) return;
     const engine = getActiveEngine();
     
-    // Explicit safety check: don't play sampler notes until they are completely loaded
-    if (engine && (engine !== sampler || sampler.loaded)) {
+    if (engine) {
       activeNotes.add(note);
       el.classList.add('pressed');
       engine.triggerAttack(note);
@@ -269,7 +305,7 @@ window.addEventListener('keydown', async (e) => {
   const fullNote = `${note}${baseOctave}`;
   if (!activeNotes.has(fullNote)) {
     const engine = getActiveEngine();
-    if (engine && (engine !== sampler || sampler.loaded)) {
+    if (engine) {
       activeNotes.add(fullNote);
       engine.triggerAttack(fullNote);
       const el = document.querySelector(`[data-note="${fullNote}"]`);
@@ -300,7 +336,8 @@ function buildEditorControls() {
     { label: 'Volume', min: -40, max: 0, value: localStorage.getItem('synth_setting_Volume') ? parseFloat(localStorage.getItem('synth_setting_Volume')) : synth.volume.value,
       onInput: v => { 
         synth.volume.value = parseFloat(v); 
-        if (sampler) sampler.volume.value = parseFloat(v) + 6; 
+        if (sampler) sampler.volume.value = parseFloat(v) + 6;
+        if (fallbackEngine) fallbackEngine.volume.value = parseFloat(v);
       } 
     },
     { label: 'Attack', min: 0, max: 1, step: 0.01, value: localStorage.getItem('synth_setting_Attack') ? parseFloat(localStorage.getItem('synth_setting_Attack')) : initAtk,
@@ -357,7 +394,6 @@ document.getElementById('toggleEditBtn')?.addEventListener('click', () => {
   }
 });
 
-// ─── Reset Engine Settings Event Handler ───────────────────────
 const resetBtn = document.getElementById('resetSettingsBtn');
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
@@ -401,7 +437,7 @@ async function recordWav() {
     window.parent.postMessage({
       action: 'ADD_TRACK',
       audioBuffer: audioBuffer,
-      trackName: `Synth_${Date.now()}`
+      trackName: `${instrumentSelect.value || 'Synth'}_${Date.now()}`
     }, '*');
     
     window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
