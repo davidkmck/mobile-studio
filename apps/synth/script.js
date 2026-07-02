@@ -41,6 +41,10 @@ function loadSamplerInstrument(config) {
     baseUrl: config.baseUrl,
     onload: () => {
       console.log("New instrument samples successfully mapped and ready to play!");
+      // Connect to audio pipeline ONLY after files are confirmed fully loaded
+      if (sampler) {
+        sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+      }
     },
     onerror: (err) => {
       console.error("Error loading sample files from remote repository:", err);
@@ -48,15 +52,12 @@ function loadSamplerInstrument(config) {
   });
   
   sampler.volume.value = -2;
-
-  // Route the brand new sampler instance into your global effects pipeline
-  sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 }
 
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-// ─── Instrument Configurations (Fixed Mapping Configurations) ──────
+// ─── Instrument Configurations (Case-Corrected Repository Mappings) ──────
 const SAMPLER_MAPS = {
   piano: {
     baseUrl: "https://tonejs.github.io/audio/salamander/",
