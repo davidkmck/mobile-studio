@@ -1,91 +1,102 @@
-  :root {
-      --bg: #0a0a0f;
-      --panel: #12121c;
-      --border: #26263b;
-      --text: #e2e2e9;
-      --text-dim: #6c6c84;'m
-      --accent: #00e5ff;
-      --accent-alt: #9d4edd;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Share Tech Mono', monospace;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      user-select: none;
-    }
-    button {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover { border-color: var(--accent); }
-
-/* Initial unpressed state: Dark text on glowing cyan background */
-.btn-record {
-  background-color: var(--accent) !important;
-  color: #0a0a0f !important; /* Forces dark contrast on cyan */
-  width: 100%;
-  font-weight: bold;
+:root {
+  --bg: #0a0a0f;
+  --panel: #12121c;
+  --border: #26263b;
+  --text: #e2e2e9;
+  --text-dim: #6c6c84;
+  --accent: #00e5ff;
+  --accent-alt: #9d4edd;
 }
 
-/* Active recording state: White text on pulsing red background */
-.btn-recording {
-  background-color: #ef4444 !important; /* Cyberpunk danger red */
-  color: #ffffff !important; /* Forces bright white text contrast */
-  width: 100%;
-  font-weight: bold;
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  user-select: none;
+}
+
+button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover { 
+  border-color: var(--accent); 
+}
+
+/* ─── Record Button Fixes (Shorthand 'background' forces cyan override) ─── */
+button#recordBtn, .btn-record {
+  background: var(--accent) !important; 
+  color: #0a0a0f !important; 
+  font-weight: bold !important;
+  min-width: 110px; /* Guarantees space so the emoji + text never get cut off */
+}
+
+button#recordBtn.btn-recording, .btn-recording {
+  background: #ef4444 !important; 
+  color: #ffffff !important; 
+  font-weight: bold !important;
+  min-width: 110px;
   animation: pulse 1.5s infinite;
 }
-
 
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.6; }
   100% { opacity: 1; }
 }
-    .container {
-      width: 100%;
-      max-width: 950px;
-      margin: 0 auto;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      flex-grow: 1;
-    }
-    header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 25px;
-    }
-    .secondary-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-/* 1. GLOBAL STYLE (Put this first) */
+
+.container {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  flex-grow: 1;
+}
+
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.secondary-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
 h1 {
   text-align: center;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 2rem;       /* Big and clean on desktop/portrait */
+  font-size: 2rem;      
   letter-spacing: 1px;
   margin-bottom: 5px;
   text-transform: uppercase;
-  width: 100%; /* Ensures alignment spans full width */
+  width: 100%; 
 }
 
 .subtitle {
@@ -95,85 +106,103 @@ h1 {
   font-size: 0.95rem;
   margin-bottom: 25px;
 }
-    select {
-      background: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 9px;
-      border-radius: 4px;
-    }
-    .octave-display {
-      font-size: 11px;
-      color: var(--text-dim);
-      min-width: 70px;
-      text-align: center;
-    }
 
-    /* ─── Keyboard ─────────────────────────────────────────── */
-    .keyboard-wrap {
-      width: 100%;
-      overflow-x: auto;
-      padding-bottom: 10px;
-    }
-    .keyboard {
-      position: relative;
-      display: flex;
-      height: 180px;
-      min-width: 700px;
-    }
-    .white-key {
-      position: relative;
-      flex: 1;
-      background: #e9e9f2;
-      border: 1px solid var(--border);
-      border-radius: 0 0 6px 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 8px;
-      font-size: 10px;
-      color: #555;
-      transition: background 0.05s ease;
-    }
-    .white-key.pressed {
-      background: var(--accent);
-    }
-    .black-key {
-      position: absolute;
-      top: 0;
-      width: 6.5%;
-      height: 62%;
-      background: #14141f;
-      border: 1px solid #000;
-      border-radius: 0 0 5px 5px;
-      cursor: pointer;
-      z-index: 2;
-      transition: background 0.05s ease;
-    }
-    .black-key.pressed {
-      background: var(--accent-alt);
-    }
+select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 9px;
+  border-radius: 4px;
+}
 
-    /* ─── Edit panel ───────────────────────────────────────── */
-    .synth-edit-panel {
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-      display: none;
-    }
-    .synth-edit-panel.visible { display: block; }
-    .editor-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      font-size: 12px;
-    }
-    .editor-row label { width: 110px; }
-    .editor-row input[type="range"] { flex: 1; }
+.octave-display {
+  font-size: 11px;
+  color: var(--text-dim);
+  min-width: 70px;
+  text-align: center;
+}
 
-/* 2. LANDSCAPE OVERRIDES */
+/* ─── Keyboard Layout ─────────────────────────────────────────── */
+.keyboard-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.keyboard {
+  position: relative;
+  display: flex;
+  height: 180px;
+  min-width: 700px;
+}
+
+.white-key {
+  position: relative;
+  flex: 1;
+  background: #e9e9f2;
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  font-size: 10px;
+  color: #555;
+  transition: background 0.05s ease;
+}
+
+.white-key.pressed {
+  background: var(--accent);
+  color: #0a0a0f;
+}
+
+.black-key {
+  position: absolute;
+  top: 0;
+  width: 6.5%;
+  height: 62%;
+  background: #14141f;
+  border: 1px solid #000;
+  border-radius: 0 0 5px 5px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.05s ease;
+}
+
+.black-key.pressed {
+  background: var(--accent-alt);
+}
+
+/* ─── Edit panel ───────────────────────────────────────── */
+.synth-edit-panel {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: none;
+}
+
+.synth-edit-panel.visible { 
+  display: block; 
+}
+
+.editor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.editor-row label { 
+  width: 110px; 
+}
+
+.editor-row input[type="range"] { 
+  flex: 1; 
+}
+
+/* ─── Landscape Overrides ───────────────────────────────────── */
 @media (max-height: 500px) and (orientation: landscape) {
   body {
     padding: 8px; 
@@ -189,7 +218,6 @@ h1 {
     display: none !important;       
   }
 
-  /* Force a locked, playable viewport height for the keyboard area */
   .keyboard-wrap {
     height: 130px; 
     margin: 5px auto;
@@ -198,15 +226,13 @@ h1 {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Establish an explicit layout width matching your JavaScript structural count */
   .keyboard {
     height: 100%;
-    min-width: 840px; /* Gives each of the 14 white keys an exact, comfortable width */
+    min-width: 840px; 
     position: relative;
     display: flex;
   }
 
-  /* Set absolute dimensions for the white playing targets */
   .white-key {
     height: 100% !important;
     flex: 1;
@@ -214,10 +240,9 @@ h1 {
     font-size: 9px;
   }
 
-  /* Force the black keys to stay perfectly proportional to their parent white keys */
   .black-key {
     height: 60% !important;
-    width: 28px !important; /* Fixed pixel width stops them from shrinking into millimeters */
+    width: 28px !important; 
     z-index: 5;
   }
   
