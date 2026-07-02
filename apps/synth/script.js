@@ -62,50 +62,11 @@ function loadSamplerInstrument(instrumentName, config) {
   sampler.volume.value = 0;
 }
 
-// Directly generates standalone synthesis engines for specific instrument modes
-function createFallbackSynth(instrumentName) {
-  if (fallbackEngine) fallbackEngine.dispose();
-  console.log(`Generating real-time synth engine for: ${instrumentName}`);
-
-  if (instrumentName === 'guitar') {
-    // FM synthesis engine simulation for bright plucked steel strings
-    fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3,
-      modulationIndex: 10,
-      oscillator: { type: 'sine' },
-      modulation: { type: 'triangle' },
-      envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.8 },
-      modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
-    });
-    fallbackEngine.volume.value = -4;
-
-  } else if (instrumentName === 'bass') {
-    // Thick, slightly fuzzy multi-saw tooth layer for heavy electric bass simulation
-    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatsawtooth', count: 3, spread: 15 },
-      envelope: { attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.5 }
-    });
-    fallbackEngine.volume.value = +4;
-
-  } else if (instrumentName === 'organ') {
-    // Classic drawbar organ simulation using bright brassy wave characteristics
-    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatbrass', count: 2 },
-      envelope: { attack: 0.02, decay: 0.1, sustain: 1, release: 0.2 }
-    });
-    fallbackEngine.volume.value = -8;
-  } else {
-    fallbackEngine = new Tone.PolySynth(Tone.Synth);
-    fallbackEngine.volume.value = -6;
-  }
-
-  fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-}
 
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-// ─── Instrument Configurations (Only working endpoints kept) ────
+// ─── Instrument Configurations ────────────────────────────────
 const SAMPLER_MAPS = {
   piano: {
     baseUrl: "https://tonejs.github.io/audio/salamander/",
@@ -117,6 +78,46 @@ const SAMPLER_MAPS = {
   }
 };
 
+// ─── Standalone Engine Generator ──────────────────────────────
+function createFallbackSynth(instrumentName) {
+  if (fallbackEngine) fallbackEngine.dispose();
+  console.log(`Generating real-time synth engine for: ${instrumentName}`);
+
+  if (instrumentName === 'guitar') {
+    fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 3,
+      modulationIndex: 10,
+      oscillator: { type: 'sine' },
+      modulation: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.8 },
+      modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+    });
+    fallbackEngine.volume.value = -4;
+
+  } else if (instrumentName === 'bass') {
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', count: 3, spread: 15 },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.5 }
+    });
+    fallbackEngine.volume.value = +4;
+
+  } else if (instrumentName === 'organ') {
+    // FIX: Swapped invalid 'fatbrass' out for a rich, additive multi-sine wave 
+    // that mimics authentic drawbars (fundamental + overtones)
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { 
+        type: 'sine8', // Combines 8 harmonic sine waves for a true drawbar organ purr
+      },
+      envelope: { attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.2 }
+    });
+    fallbackEngine.volume.value = -12; // Drawbars are naturally loud, padding headroom
+  } else {
+    fallbackEngine = new Tone.PolySynth(Tone.Synth);
+    fallbackEngine.volume.value = -6;
+  }
+
+  fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+}
 const DEFAULT_SETTINGS = {
   instrument: 'synth',
   wave: 'sawtooth',
