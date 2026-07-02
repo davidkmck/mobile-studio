@@ -27,20 +27,24 @@
       cursor: pointer;
     }
     button:hover { border-color: var(--accent); }
-    
+
 /* Initial unpressed state: Dark text on glowing cyan background */
 .btn-record {
-  background-color: var(--accent);
+  background-color: var(--accent) !important;
   color: #0a0a0f !important; /* Forces dark contrast on cyan */
   width: 100%;
+  font-weight: bold;
 }
 
 /* Active recording state: White text on pulsing red background */
 .btn-recording {
   background-color: #ef4444 !important; /* Cyberpunk danger red */
   color: #ffffff !important; /* Forces bright white text contrast */
+  width: 100%;
+  font-weight: bold;
   animation: pulse 1.5s infinite;
 }
+
 
 @keyframes pulse {
   0% { opacity: 1; }
