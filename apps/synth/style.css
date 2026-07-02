@@ -38,10 +38,10 @@ button:hover {
   border-color: var(--accent); 
 }
 
-/* ─── Record Button Styling (Matches theme defaults, turns red when active) ─── */
+/* ─── Record Button Styling ─── */
 button#recordBtn, .btn-record {
-  background: var(--panel) !important; /* Standard dark panel background */
-  color: var(--text) !important;       /* Clean text color to match the theme */
+  background: var(--panel) !important;
+  color: var(--text) !important;
   border: 1px solid var(--border);
   font-weight: bold !important;
   width: 100%;
@@ -51,8 +51,8 @@ button#recordBtn, .btn-record {
 }
 
 button#recordBtn.btn-recording, .btn-recording {
-  background: #ef4444 !important;     /* Cyberpunk danger red when recording */
-  color: #ffffff !important;           /* Crisp white text while active */
+  background: #ef4444 !important;
+  color: #ffffff !important;
   border-color: #ef4444;
   font-weight: bold !important;
   animation: pulse 1.5s infinite;
@@ -81,6 +81,54 @@ header {
   align-items: center;
   margin-bottom: 25px;
   width: 100%;
+}
+
+/* Wrapper alignment block for controls */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ─── New Octave Control Group Layout ─── */
+.octave-controls-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--panel);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  white-space: nowrap; /* Strictly prevents portrait text line splitting */
+}
+
+/* High prominence styling for octave buttons */
+.control-btn {
+  background: var(--accent);
+  color: #0a0a0f;
+  border: none;
+  padding: 10px 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.control-btn:hover {
+  opacity: 0.85;
+}
+
+/* Clean text badge between the buttons */
+.display-badge {
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: bold;
+  padding: 0 16px;
+  min-width: 120px;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .secondary-controls {
@@ -221,12 +269,28 @@ select {
     display: none !important;       
   }
 
-button#recordBtn, .btn-record {
+  button#recordBtn, .btn-record {
     background: var(--panel) !important;
     color: var(--text) !important;
     padding: 6px 15px;
     font-size: 0.95rem;
     max-width: 200px;
+  }
+
+  /* Shrink octave controls padding and typography slightly for tiny landscape headers */
+  .octave-controls-group {
+    padding: 3px;
+  }
+  
+  .control-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .display-badge {
+    padding: 0 10px;
+    min-width: 100px;
+    font-size: 0.9rem;
   }
 
   .keyboard-wrap {
