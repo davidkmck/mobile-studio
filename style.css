@@ -234,6 +234,30 @@
       width: 100%;
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
+
+/* Default state: Dimmed/Off when the synth tab is hidden or inactive */
+.synth-led {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1a1a24;
+  border: 1px solid var(--border);
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+/* Lit state: Glows brightly with a neon cyberpunk aura when selected */
+.rack-device.active .synth-led,
+[data-app="synth"].active .synth-led, /* Fallback matches your data-app attribute */
+.keyboard-interface .synth-led {      /* Constant on fallback if always illuminated */
+  background-color: var(--accent);
+  border-color: #ffffff;
+  box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent);
+}
+
     .white-keys-layer {
       display: flex;
       width: 100%;
