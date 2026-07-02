@@ -74,11 +74,12 @@ function createFallbackSynth(instrumentName) {
     });
     fallbackEngine.volume.value = -2;
   } else if (instrumentName === 'bass') {
+    // Optimized for deep low-end frequencies
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.4 }
     });
-    fallbackEngine.volume.value = +2; // Boost bass presence
+    fallbackEngine.volume.value = +4; // Extra gain boost for heavy bass presence
   } else if (instrumentName === 'organ') {
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
@@ -86,7 +87,6 @@ function createFallbackSynth(instrumentName) {
     });
     fallbackEngine.volume.value = -6;
   } else {
-    // Default fallback piano placeholder
     fallbackEngine = new Tone.PolySynth(Tone.Synth);
     fallbackEngine.volume.value = -6;
   }
@@ -199,8 +199,22 @@ if (waveSelect) {
 function getActiveEngine() {
   const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
   if (instrumentMode === 'synth') return synth;
-  // If sampler isn't fully loaded yet, automatically fall back to the live synth variant
   return (sampler && sampler.loaded) ? sampler : fallbackEngine;
+}
+
+// Helper utility to safely process note pitches down for the bass fallback engine
+function getProcessedNote(note) {
+  const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
+  // If playing Bass on a fallback engine, drop it down exactly 2 octaves (e.g., C4 becomes C2)
+  if (instrumentMode === 'bass' && (!sampler || !sampler.loaded)) {
+    const match = note.match(/^([A-G]#?)(-?\d+)$/);
+    if (match) {
+      const pitchName = match[1];
+      const octave = parseInt(match[2], 10);
+      return `${pitchName}${octave - 2}`;
+    }
+  }
+  return note;
 }
 
 // ─── Build keyboard ───────────────────────────────────────────
@@ -262,7 +276,8 @@ function attachKeyEvents(el, note) {
     if (engine) {
       activeNotes.add(note);
       el.classList.add('pressed');
-      engine.triggerAttack(note);
+      const finalNote = getProcessedNote(note);
+      engine.triggerAttack(finalNote);
     }
   };
   const release = (e) => {
@@ -271,7 +286,10 @@ function attachKeyEvents(el, note) {
     activeNotes.delete(note);
     el.classList.remove('pressed');
     const engine = getActiveEngine();
-    if (engine) engine.triggerRelease(note);
+    if (engine) {
+      const finalNote = getProcessedNote(note);
+      engine.triggerRelease(finalNote);
+    }
   };
 
   el.addEventListener('mousedown', press);
@@ -307,7 +325,8 @@ window.addEventListener('keydown', async (e) => {
     const engine = getActiveEngine();
     if (engine) {
       activeNotes.add(fullNote);
-      engine.triggerAttack(fullNote);
+      const finalNote = getProcessedNote(fullNote);
+      engine.triggerAttack(finalNote);
       const el = document.querySelector(`[data-note="${fullNote}"]`);
       if (el) el.classList.add('pressed');
     }
@@ -321,7 +340,10 @@ window.addEventListener('keyup', (e) => {
   const fullNote = `${note}${baseOctave}`;
   activeNotes.delete(fullNote);
   const engine = getActiveEngine();
-  if (engine) engine.triggerRelease(fullNote);
+  if (engine) {
+    const finalNote = getProcessedNote(fullNote);
+    engine.triggerRelease(finalNote);
+  }
   const el = document.querySelector(`[data-note="${fullNote}"]`);
   if (el) el.classList.remove('pressed');
 });
@@ -337,7 +359,10 @@ function buildEditorControls() {
       onInput: v => { 
         synth.volume.value = parseFloat(v); 
         if (sampler) sampler.volume.value = parseFloat(v) + 6;
-        if (fallbackEngine) fallbackEngine.volume.value = parseFloat(v);
+        if (fallbackEngine) {
+          const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
+          fallbackEngine.volume.value = parseFloat(v) + (instrumentMode === 'bass' ? 10 : 0);
+        }
       } 
     },
     { label: 'Attack', min: 0, max: 1, step: 0.01, value: localStorage.getItem('synth_setting_Attack') ? parseFloat(localStorage.getItem('synth_setting_Attack')) : initAtk,
@@ -429,7 +454,12 @@ async function recordWav() {
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
     
     const engine = getActiveEngine();
-    if (engine) activeNotes.forEach(note => engine.triggerRelease(note));
+    if (engine) {
+      activeNotes.forEach(note => {
+        const finalNote = getProcessedNote(note);
+        engine.triggerRelease(finalNote);
+      });
+    }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
 
