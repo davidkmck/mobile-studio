@@ -495,7 +495,7 @@
       if (isRecording || isCountdownActive) return;
 
       recordBtn.disabled    = false;
-      recordBtn.textContent = `🔴 Record Track ${tracks.length + 1} from Microphone`;
+      recordBtn.textContent = `🔴 Record from Mic`;
       recordBtn.className   = '';
     }
 
