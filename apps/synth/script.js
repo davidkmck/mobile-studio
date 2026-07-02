@@ -1,7 +1,7 @@
 // ─── Keyboard layout ──────────────────────────────────────────
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const BLACK_NOTES = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
-const NUM_OCTAVES_SHOWN = 2;
+const NUM_OCTAVES_SHOWN = 2; 
 let baseOctave = 4;
 
 let isRecording = false;
