@@ -38,20 +38,22 @@ button:hover {
   border-color: var(--accent); 
 }
 
-/* ─── Record Button Styling (Cyan when ready, Red when recording) ─── */
+/* ─── Record Button Styling (Matches theme defaults, turns red when active) ─── */
 button#recordBtn, .btn-record {
-  background: var(--accent) !important; 
-  color: #0a0a0f !important; 
+  background: var(--panel) !important; /* Standard dark panel background */
+  color: var(--text) !important;       /* Clean text color to match the theme */
+  border: 1px solid var(--border);
   font-weight: bold !important;
   width: 100%;
-  max-width: 280px; /* Keeps the solo button looking sleek and clean */
+  max-width: 280px; 
   font-size: 1.05rem;
   padding: 12px 20px;
 }
 
 button#recordBtn.btn-recording, .btn-recording {
-  background: #ef4444 !important; 
-  color: #ffffff !important; 
+  background: #ef4444 !important;     /* Cyberpunk danger red when recording */
+  color: #ffffff !important;           /* Crisp white text while active */
+  border-color: #ef4444;
   font-weight: bold !important;
   animation: pulse 1.5s infinite;
 }
@@ -219,7 +221,9 @@ select {
     display: none !important;       
   }
 
-  button#recordBtn, .btn-record {
+button#recordBtn, .btn-record {
+    background: var(--panel) !important;
+    color: var(--text) !important;
     padding: 6px 15px;
     font-size: 0.95rem;
     max-width: 200px;
