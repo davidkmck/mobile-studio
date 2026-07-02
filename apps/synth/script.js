@@ -4,7 +4,7 @@ const BLACK_NOTES = { 'C': 'C#', 'D': 'D#', 'F': 'F#', 'G': 'G#', 'A': 'A#' };
 const NUM_OCTAVES_SHOWN = 2;
 let baseOctave = 4;
 
-let isRecording = false; 
+let isRecording = false;
 let recorder = null;
 const activeNotes = new Set();
 
@@ -41,7 +41,6 @@ function loadSamplerInstrument(config) {
     baseUrl: config.baseUrl,
     onload: () => {
       console.log("New instrument samples successfully mapped and ready to play!");
-      // Connect to audio pipeline ONLY after files are confirmed fully loaded
       if (sampler) {
         sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
       }
@@ -51,7 +50,7 @@ function loadSamplerInstrument(config) {
     }
   });
   
-  sampler.volume.value = -2;
+  sampler.volume.value = 0; // Bring volume up to clear default levels
 }
 
 // Route the initial synth engine setup
@@ -134,9 +133,12 @@ if (savedInstrument === 'synth') {
 
 // ─── Event Control Listeners ──────────────────────────────────
 if (instrumentSelect) {
-  instrumentSelect.addEventListener('change', (e) => {
+  instrumentSelect.addEventListener('change', async (e) => {
     const mode = e.target.value;
     localStorage.setItem('synth_instrument', mode);
+    
+    // Explicitly wake up audio context during user interaction
+    await Tone.start();
     
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
@@ -219,7 +221,9 @@ function attachKeyEvents(el, note) {
     await Tone.start();
     if (activeNotes.has(note)) return;
     const engine = getActiveEngine();
-    if (engine) {
+    
+    // Explicit safety check: don't play sampler notes until they are completely loaded
+    if (engine && (engine !== sampler || sampler.loaded)) {
       activeNotes.add(note);
       el.classList.add('pressed');
       engine.triggerAttack(note);
@@ -265,7 +269,7 @@ window.addEventListener('keydown', async (e) => {
   const fullNote = `${note}${baseOctave}`;
   if (!activeNotes.has(fullNote)) {
     const engine = getActiveEngine();
-    if (engine) {
+    if (engine && (engine !== sampler || sampler.loaded)) {
       activeNotes.add(fullNote);
       engine.triggerAttack(fullNote);
       const el = document.querySelector(`[data-note="${fullNote}"]`);
@@ -296,7 +300,7 @@ function buildEditorControls() {
     { label: 'Volume', min: -40, max: 0, value: localStorage.getItem('synth_setting_Volume') ? parseFloat(localStorage.getItem('synth_setting_Volume')) : synth.volume.value,
       onInput: v => { 
         synth.volume.value = parseFloat(v); 
-        if (sampler) sampler.volume.value = parseFloat(v) + 4; 
+        if (sampler) sampler.volume.value = parseFloat(v) + 6; 
       } 
     },
     { label: 'Attack', min: 0, max: 1, step: 0.01, value: localStorage.getItem('synth_setting_Attack') ? parseFloat(localStorage.getItem('synth_setting_Attack')) : initAtk,
