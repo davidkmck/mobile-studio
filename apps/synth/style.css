@@ -169,81 +169,62 @@ h1 {
     .editor-row label { width: 110px; }
     .editor-row input[type="range"] { flex: 1; }
 
-/* 2. LANDSCAPE OVERRIDES (Put this at the very bottom of your styles) */
+/* 2. LANDSCAPE OVERRIDES */
 @media (max-height: 500px) and (orientation: landscape) {
   body {
-    padding: 8px; /* Keeps padding tight to save screen real estate */
+    padding: 8px; 
   }
-  h1 {
-    font-size: 1.3rem;   /* Automatically shrinks just the size when flipped sideways */
+  
+  h1, main h1 {
+    font-size: 1.3rem;   
+    margin-top: 2px;
     margin-bottom: 2px;
   }
   
   .subtitle {
-    display: none;       /* Hides the subtitle to preserve vertical room */
-  }
-  
-  /* Stack synth control modules (Oscillator, Filter, Envelope) vertically */
-  .synth-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    display: none !important;       
   }
 
-  .knob-panel, .adsr-envelope {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Put knobs into a clean 2-column grid instead of a squished row */
-    gap: 10px;
-  }
-
-  /* Make the piano keyboard scrollable so keys stay wide enough to play chords */
-  .keyboard-container {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 10px;
-  }
-
-  .piano-keyboard {
-    display: flex;
-    width: max-content; /* Forces the keyboard to maintain its full natural width */
-  }
-
-  .white-key {
-    width: 40px; /* Big enough for a finger tap */
-    height: 120px;
-    flex-shrink: 0;
-  }
-
-  /* Give the keyboard container a locked, playable height */
+  /* Force a locked, playable viewport height for the keyboard area */
   .keyboard-wrap {
-    height: 140px; 
-    margin: 10px auto;
+    height: 130px; 
+    margin: 5px auto;
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 
+  /* Establish an explicit layout width matching your JavaScript structural count */
   .keyboard {
     height: 100%;
+    min-width: 840px; /* Gives each of the 14 white keys an exact, comfortable width */
+    position: relative;
+    display: flex;
   }
 
-  /* Force white keys to fill the container height */
+  /* Set absolute dimensions for the white playing targets */
   .white-key {
     height: 100% !important;
-    padding-bottom: 8px; /* Keeps the note label neatly near the bottom edge */
+    flex: 1;
+    padding-bottom: 6px;
+    font-size: 9px;
   }
 
-  /* Restrict black keys to roughly 60% of the white key length */
+  /* Force the black keys to stay perfectly proportional to their parent white keys */
   .black-key {
     height: 60% !important;
+    width: 28px !important; /* Fixed pixel width stops them from shrinking into millimeters */
+    z-index: 5;
   }
   
-  /* Shrink header spacing slightly to prevent page scrolling */
-  main h1 {
-    font-size: 1.5rem;
-    margin-top: 5px;
-    margin-bottom: 2px;
+  header, .secondary-controls {
+    margin-bottom: 8px;
+    margin-top: 8px;
+    gap: 6px;
   }
-  .subtitle {
-    display: none; /* Hides description text to win back crucial vertical space */
+
+  select, button {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
