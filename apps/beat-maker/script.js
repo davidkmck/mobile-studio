@@ -1,4 +1,4 @@
-  const TRACKS = [{ id: 'kick', label: 'KICK', color: 'kick' }, { id: 'snare', label: 'SNARE', color: 'snare' }, { id: 'hihat', label: 'HI-HAT', color: 'hihat' }, { id: 'clap', label: 'CLAP', color: 'clap' }, { id: 'bass', label: 'BASS', color: 'bass' }];
+const TRACKS = [{ id: 'kick', label: 'KICK', color: 'kick' }, { id: 'snare', label: 'SNARE', color: 'snare' }, { id: 'hihat', label: 'HI-HAT', color: 'hihat' }, { id: 'clap', label: 'CLAP', color: 'clap' }, { id: 'bass', label: 'BASS', color: 'bass' }];
     const STEPS = 16;
     let bpm = 120;
     let grid = TRACKS.map(() => Array(STEPS).fill(false));
@@ -87,43 +87,21 @@
     }
 
     const playBtn = document.getElementById('playBtn');
-/*
+
     playBtn.addEventListener('click', () => {
-        // 1. Trigger internal audio logic
-        startStopSequencer();
-        
-        // 2. Sync external app only when necessary
-        // Only send if you are starting (isPlaying is false before this click)
-        if (!isPlaying) {
-            window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-        }
-      */
-
-      // ---- Init: listeners ----  replacement
-      // Combined playBtn logic into a single event listener to prevent duplicate triggers
-      playBtn.addEventListener('click', () => {
-        // 1. Sync external app only when necessary (before flipping state internally)
-        if (!isPlaying) {
-          window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-        }
-        
-        // 2. Trigger internal audio logic
-        startStopSequencer();
-      });
+      if (!isPlaying) {
+        window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
+      }
+      startStopSequencer();
+    });
       
-      document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
-      document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
-      document.getElementById('recordBtn').addEventListener('click', recordWav);
-      
-      // ---- Init: listeners ----
-    //});
+    document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
+    document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
+    document.getElementById('recordBtn').addEventListener('click', recordWav);
 
-  
     // ---- Playback ----
     async function startStopSequencer() {
       const btn = document.getElementById('playBtn');
-
-      
       await Tone.start();
 
       if (isPlaying) {
@@ -278,7 +256,11 @@
         house: { bpm: 120, grid: [[true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [false, false, true, false, false, false, false, true, false, true, false, false, false, false, true, false]] },
         hiphop: { bpm: 90, grid: [[true, false, false, false, false, false, false, true, false, true, true, false, false, false, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, true], [true, false, true, false, true, false, true, true, true, false, true, false, true, false, true, false], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false]] },
         synthwave: { bpm: 115, grid: [[true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false]] },
-        chill: { bpm: 95, grid: [[true, false, false, false, false, false, true, false, false, true, false, false, false, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, true, false, true, true, false, true, false, true, true, false, true, true, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, false, false, true, false], [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]] }
+        chill: { bpm: 95, grid: [[true, false, false, false, false, false, true, false, false, true, false, false, false, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], [true, true, false, true, true, false, true, false, true, true, false, true, true, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, false, false, true, false], [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false]] },
+        trap: { bpm: 140, grid: [[true, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false], [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [true, false, false, true, false, false, true, false, false, false, true, false, false, true, false, false]] },
+        dnb: { bpm: 174, grid: [[true, false, false, false, false, false, false, false, false, false, true, false, false, true, false, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, true], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], [true, true, true, false, false, false, false, false, true, true, true, false, false, false, false, false]] },
+        reggaeton: { bpm: 95, grid: [[true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], [false, false, false, true, false, false, true, false, false, false, false, true, false, false, true, false], [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], [false, false, false, true, false, false, true, false, false, false, false, true, false, false, true, false], [true, false, false, false, false, false, true, false, true, false, false, false, false, false, true, false]] },
+        funk: { bpm: 115, grid: [[true, false, false, false, false, false, false, true, false, true, false, false, false, false, true, false], [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false], [true, false, true, false, false, true, false, false, true, false, true, false, false, true, false, true]] }
       };
 
       if (presets[selection]) {
@@ -294,11 +276,9 @@
       const btn = document.getElementById('recordBtn');
       await Tone.start();
       if (!isRecording) {
-        // --- NEW: Start playback if it's not already running ---
         if (!isPlaying) {
           startStopSequencer(); 
         }
-        
         if (!recorder) {
           recorder = new Tone.Recorder();
           Tone.Destination.connect(recorder);
@@ -308,20 +288,15 @@
         btn.textContent = '⏹️ Stop Recording';
         btn.classList.add('active');
       } else {
-        // stop recording
         const recording = await recorder.stop();
-        
-        // 1. Convert the blob to an ArrayBuffer immediately
         const arrayBuffer = await recording.arrayBuffer();
 
-        // 2. Send the raw ArrayBuffer to the parent, adding the transfer list for mobile support
         window.parent.postMessage({ 
             action: 'ADD_TRACK', 
             audioBuffer: arrayBuffer, 
             trackName: 'Beat_' + Date.now() 
-        }, '*', [arrayBuffer]); // <--- Added [arrayBuffer] here
+        }, '*', [arrayBuffer]);
 
-        // 3. Reset UI and stop transport
         if (isPlaying) {
           Tone.Transport.stop();
           if (sequence) { sequence.dispose(); sequence = null; }
@@ -341,11 +316,6 @@
     }
 
     // ---- Init: listeners ----
-
-    document.getElementById('toggleEditBtn').addEventListener('click', toggleEditDashboard);
-    document.getElementById('saveBtn').addEventListener('click', saveCustomPreset);
-    document.getElementById('recordBtn').addEventListener('click', recordWav);
-
     document.getElementById('bpm').addEventListener('change', (e) => {
       bpm = parseInt(e.target.value, 10) || 120;
       if (isPlaying) Tone.Transport.bpm.value = bpm;
@@ -381,14 +351,6 @@
       loadCustomPreset(selection);
       saveSession();
     });
-
-    // NOTE: Beat Maker intentionally does NOT listen for the global
-    // START_AUDIO / STOP_AUDIO sync broadcast. That broadcast is meant to
-    // control playback of the *recorded* mixer tracks in Tracks, not to make
-    // every instrument app replay its own live pattern. If Beat Maker also
-    // restarted its own sequencer here, you'd hear two copies of the beat at
-    // once: the already-recorded clip in the mixer, and this live replay.
-    // Beat Maker only plays when its own Play button is pressed.
 
     // ---- Boot ----
     refreshCustomSelectOptions();
