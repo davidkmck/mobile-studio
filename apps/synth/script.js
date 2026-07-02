@@ -9,7 +9,8 @@ let recorder = null;
 const activeNotes = new Set();
 
 // ─── Effects Setup ────────────────────────────────────────────
-const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 }).start();
+// Note: Kept synchronous; LFO starts automatically once the user interacts with the app
+const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 });
 const feedbackDelay = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.4, wet: 0 });
 const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
 
@@ -62,7 +63,6 @@ function loadSamplerInstrument(instrumentName, config) {
   sampler.volume.value = 0;
 }
 
-
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
@@ -79,38 +79,31 @@ const SAMPLER_MAPS = {
 };
 
 // ─── Standalone Engine Generator ──────────────────────────────
-async function createFallbackSynth(instrumentName) {
-  // Ensure AudioContext resumes when changing instruments
-  await Tone.start();
-  
+function createFallbackSynth(instrumentName) {
   if (fallbackEngine) fallbackEngine.dispose();
   console.log(`Generating real-time synth engine for: ${instrumentName}`);
 
-if (instrumentName === 'guitar') {
+  if (instrumentName === 'guitar') {
     fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 2.5,          // Adjusted for richer electric overtones
-      modulationIndex: 12,       // Pushes the bite/brightness a bit higher
-      oscillator: { type: 'sawtooth' }, // Changing the carrier to sawtooth gives it that string-like buzz
-      modulation: { type: 'square' },   // A square wave modulator introduces aggressive harmonics
+      harmonicity: 2.5,          
+      modulationIndex: 12,       
+      oscillator: { type: 'sawtooth' }, 
+      modulation: { type: 'square' },   
       envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.6 },
       modulationEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.4 }
     });
-    fallbackEngine.volume.value = -8; // Slightly reduced to handle the denser harmonic profile
+    fallbackEngine.volume.value = -8; 
 
   } else if (instrumentName === 'bass') {
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'fatsawtooth', count: 3, spread: 15 },
       envelope: { attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.5 }
     });
-    fallbackEngine.volume.value = +4;
+    fallbackEngine.volume.value = 4;
 
   } else if (instrumentName === 'organ') {
-    // FIX: Replaced invalid type 'brass' with a rich additive multi-sine wave ('sine8')
-    // This stacks 8 harmonic sines together to create a warm drawbar organ texture
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { 
-        type: 'sine8' 
-      },
+      oscillator: { type: 'sine8' },
       envelope: { attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.2 }
     });
     fallbackEngine.volume.value = -12; 
@@ -182,7 +175,11 @@ if (instrumentSelect) {
     const mode = e.target.value;
     localStorage.setItem('synth_instrument', mode);
     
+    // Safely wake up context and effects LFO loops inside user action path
     await Tone.start();
+    if (chorus && chorus.state !== 'started') {
+      chorus.start();
+    }
     
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
@@ -279,6 +276,8 @@ function attachKeyEvents(el, note) {
   const press = async (e) => {
     e.preventDefault();
     await Tone.start();
+    if (chorus && chorus.state !== 'started') chorus.start();
+
     if (activeNotes.has(note)) return;
     const engine = getActiveEngine();
     
@@ -328,7 +327,10 @@ window.addEventListener('keydown', async (e) => {
   const note = KEY_MAP[e.key.toLowerCase()];
   if (!note || heldKeys.has(e.key)) return;
   heldKeys.add(e.key);
+  
   await Tone.start();
+  if (chorus && chorus.state !== 'started') chorus.start();
+
   const fullNote = `${note}${baseOctave}`;
   if (!activeNotes.has(fullNote)) {
     const engine = getActiveEngine();
