@@ -325,9 +325,6 @@
     }
   });
 
-  document.getElementById('playBtn').addEventListener('click', () => {
-    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: 120 }, '*');
-  });
 
   document.getElementById('recordBtn').addEventListener('click', recordWav);
 
