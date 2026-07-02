@@ -78,8 +78,23 @@ const SAMPLER_MAPS = {
   }
 };
 
+// ─── Instrument Configurations ────────────────────────────────
+const SAMPLER_MAPS = {
+  piano: {
+    baseUrl: "https://tonejs.github.io/audio/salamander/",
+    urls: { "A0": "A0.mp3", "C1": "C1.mp3", "A1": "A1.mp3", "C2": "C2.mp3", "A2": "A2.mp3", "C3": "C3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3", "C6": "C6.mp3", "A6": "A6.mp3", "C7": "C7.mp3", "A7": "A7.mp3", "C8": "C8.mp3" }
+  },
+  casio: {
+    baseUrl: "https://tonejs.github.io/audio/casio/",
+    urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" }
+  }
+};
+
 // ─── Standalone Engine Generator ──────────────────────────────
-function createFallbackSynth(instrumentName) {
+async function createFallbackSynth(instrumentName) {
+  // Ensure AudioContext resumes when changing instruments
+  await Tone.start();
+  
   if (fallbackEngine) fallbackEngine.dispose();
   console.log(`Generating real-time synth engine for: ${instrumentName}`);
 
@@ -102,15 +117,15 @@ function createFallbackSynth(instrumentName) {
     fallbackEngine.volume.value = +4;
 
   } else if (instrumentName === 'organ') {
-    // FIX: Swapped invalid 'fatbrass' out for a rich, additive multi-sine wave 
-    // that mimics authentic drawbars (fundamental + overtones)
+    // FIX: Replaced invalid type 'brass' with a rich additive multi-sine wave ('sine8')
+    // This stacks 8 harmonic sines together to create a warm drawbar organ texture
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { 
-        type: 'sine8', // Combines 8 harmonic sine waves for a true drawbar organ purr
+        type: 'sine8' 
       },
       envelope: { attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.2 }
     });
-    fallbackEngine.volume.value = -12; // Drawbars are naturally loud, padding headroom
+    fallbackEngine.volume.value = -12; 
   } else {
     fallbackEngine = new Tone.PolySynth(Tone.Synth);
     fallbackEngine.volume.value = -6;
@@ -118,6 +133,7 @@ function createFallbackSynth(instrumentName) {
 
   fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 }
+
 const DEFAULT_SETTINGS = {
   instrument: 'synth',
   wave: 'sawtooth',
