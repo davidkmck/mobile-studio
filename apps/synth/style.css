@@ -38,19 +38,21 @@ button:hover {
   border-color: var(--accent); 
 }
 
-/* ─── Record Button Fixes (Shorthand 'background' forces cyan override) ─── */
+/* ─── Record Button Styling (Cyan when ready, Red when recording) ─── */
 button#recordBtn, .btn-record {
   background: var(--accent) !important; 
   color: #0a0a0f !important; 
   font-weight: bold !important;
-  min-width: 110px; /* Guarantees space so the emoji + text never get cut off */
+  width: 100%;
+  max-width: 280px; /* Keeps the solo button looking sleek and clean */
+  font-size: 1.05rem;
+  padding: 12px 20px;
 }
 
 button#recordBtn.btn-recording, .btn-recording {
   background: #ef4444 !important; 
   color: #ffffff !important; 
   font-weight: bold !important;
-  min-width: 110px;
   animation: pulse 1.5s infinite;
 }
 
@@ -75,9 +77,8 @@ header {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-bottom: 25px;
+  width: 100%;
 }
 
 .secondary-controls {
@@ -218,6 +219,12 @@ select {
     display: none !important;       
   }
 
+  button#recordBtn, .btn-record {
+    padding: 6px 15px;
+    font-size: 0.95rem;
+    max-width: 200px;
+  }
+
   .keyboard-wrap {
     height: 130px; 
     margin: 5px auto;
@@ -246,13 +253,17 @@ select {
     z-index: 5;
   }
   
-  header, .secondary-controls {
+  header {
+    margin-bottom: 4px;
+  }
+
+  .secondary-controls {
     margin-bottom: 8px;
     margin-top: 8px;
     gap: 6px;
   }
 
-  select, button {
+  select, .secondary-controls button {
     padding: 6px 10px;
     font-size: 12px;
   }
