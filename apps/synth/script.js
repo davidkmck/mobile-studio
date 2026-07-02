@@ -98,16 +98,16 @@ async function createFallbackSynth(instrumentName) {
   if (fallbackEngine) fallbackEngine.dispose();
   console.log(`Generating real-time synth engine for: ${instrumentName}`);
 
-  if (instrumentName === 'guitar') {
+if (instrumentName === 'guitar') {
     fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3,
-      modulationIndex: 10,
-      oscillator: { type: 'sine' },
-      modulation: { type: 'triangle' },
-      envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.8 },
-      modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+      harmonicity: 2.5,          // Adjusted for richer electric overtones
+      modulationIndex: 12,       // Pushes the bite/brightness a bit higher
+      oscillator: { type: 'sawtooth' }, // Changing the carrier to sawtooth gives it that string-like buzz
+      modulation: { type: 'square' },   // A square wave modulator introduces aggressive harmonics
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.6 },
+      modulationEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.4 }
     });
-    fallbackEngine.volume.value = -4;
+    fallbackEngine.volume.value = -8; // Slightly reduced to handle the denser harmonic profile
 
   } else if (instrumentName === 'bass') {
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
