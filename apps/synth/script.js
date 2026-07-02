@@ -68,24 +68,33 @@ function createFallbackSynth(instrumentName) {
   if (fallbackEngine) fallbackEngine.dispose();
 
   if (instrumentName === 'guitar') {
-    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 1.2 }
-    });
-    fallbackEngine.volume.value = -2;
-  } else if (instrumentName === 'bass') {
-    // Optimized for deep low-end frequencies
-    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.4 }
-    });
-    fallbackEngine.volume.value = +4; // Extra gain boost for heavy bass presence
-  } else if (instrumentName === 'organ') {
-    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+    // Uses FM synthesis to create a metallic, plucked string acoustic simulation
+    fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 3,
+      modulationIndex: 10,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.08, decay: 0, sustain: 1, release: 0.2 }
+      modulation: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.8 },
+      modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
     });
-    fallbackEngine.volume.value = -6;
+    fallbackEngine.volume.value = -4;
+
+  } else if (instrumentName === 'bass') {
+    // Dual oscillator simulation for a thicker, warmer electric bass rumble
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', count: 3, spread: 15 },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.5 }
+    });
+    fallbackEngine.volume.value = +4;
+
+  } else if (instrumentName === 'organ') {
+    // Multi-drawbar organ simulation using a combined additive sine/triangle structure
+    fallbackEngine = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatbrass', count: 2 },
+      envelope: { attack: 0.05, decay: 0.1, sustain: 1, release: 0.2 }
+    });
+    fallbackEngine.volume.value = -8;
+
   } else {
     fallbackEngine = new Tone.PolySynth(Tone.Synth);
     fallbackEngine.volume.value = -6;
@@ -114,7 +123,11 @@ const SAMPLER_MAPS = {
   organ: {
     baseUrl: "https://tonejs.github.io/audio/organ/",
     urls: { "C3": "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3", "C5": "C5.mp3" }
-  }
+  },
+  casio: {
+    baseUrl: "https://tonejs.github.io/audio/casio/",
+    urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" }
+ }
 };
 
 const DEFAULT_SETTINGS = {
