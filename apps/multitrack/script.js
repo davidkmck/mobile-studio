@@ -326,7 +326,7 @@
       });
 
       if (recordBtn && !isRecording) {
-        recordBtn.textContent = `🔴 Record Track ${tracks.length + 1} from Microphone`;
+        recordBtn.textContent = `🔴 Record from Mic`;
       }
       updateUI();
     }
