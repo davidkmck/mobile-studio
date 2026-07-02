@@ -41,11 +41,11 @@ function cleanupEngines() {
   }
 }
 
-// Function to safely build/rebuild the sampler node with high-fidelity synth fallbacks
+// Function to safely build the sampler node for working remote assets
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
 
-  console.log(`Attempting to load instrument samples for: ${instrumentName}`);
+  console.log(`Loading verified samples for: ${instrumentName}`);
 
   sampler = new Tone.Sampler({
     urls: config.urls,
@@ -55,20 +55,20 @@ function loadSamplerInstrument(instrumentName, config) {
       if (sampler) sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
     },
     onerror: (err) => {
-      console.warn(`404 or Network Error loading ${instrumentName} samples. Activating high-fidelity synth fallback.`);
-      createFallbackSynth(instrumentName);
+      console.error(`Unexpected error loading verified ${instrumentName} samples:`, err);
     }
   });
   
   sampler.volume.value = 0;
 }
 
-// Generates custom synth engines crafted to match the missing instruments
+// Directly generates standalone synthesis engines for specific instrument modes
 function createFallbackSynth(instrumentName) {
   if (fallbackEngine) fallbackEngine.dispose();
+  console.log(`Generating real-time synth engine for: ${instrumentName}`);
 
   if (instrumentName === 'guitar') {
-    // Uses FM synthesis to create a metallic, plucked string acoustic simulation
+    // FM synthesis engine simulation for bright plucked steel strings
     fallbackEngine = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 3,
       modulationIndex: 10,
@@ -80,7 +80,7 @@ function createFallbackSynth(instrumentName) {
     fallbackEngine.volume.value = -4;
 
   } else if (instrumentName === 'bass') {
-    // Dual oscillator simulation for a thicker, warmer electric bass rumble
+    // Thick, slightly fuzzy multi-saw tooth layer for heavy electric bass simulation
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'fatsawtooth', count: 3, spread: 15 },
       envelope: { attack: 0.01, decay: 0.3, sustain: 0.7, release: 0.5 }
@@ -88,13 +88,12 @@ function createFallbackSynth(instrumentName) {
     fallbackEngine.volume.value = +4;
 
   } else if (instrumentName === 'organ') {
-    // Multi-drawbar organ simulation using a combined additive sine/triangle structure
+    // Classic drawbar organ simulation using bright brassy wave characteristics
     fallbackEngine = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'fatbrass', count: 2 },
-      envelope: { attack: 0.05, decay: 0.1, sustain: 1, release: 0.2 }
+      envelope: { attack: 0.02, decay: 0.1, sustain: 1, release: 0.2 }
     });
     fallbackEngine.volume.value = -8;
-
   } else {
     fallbackEngine = new Tone.PolySynth(Tone.Synth);
     fallbackEngine.volume.value = -6;
@@ -106,28 +105,16 @@ function createFallbackSynth(instrumentName) {
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
 
-// ─── Instrument Configurations ──────────────────────────────────────────
+// ─── Instrument Configurations (Only working endpoints kept) ────
 const SAMPLER_MAPS = {
   piano: {
     baseUrl: "https://tonejs.github.io/audio/salamander/",
     urls: { "A0": "A0.mp3", "C1": "C1.mp3", "A1": "A1.mp3", "C2": "C2.mp3", "A2": "A2.mp3", "C3": "C3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "A4": "A4.mp3", "C5": "C5.mp3", "A5": "A5.mp3", "C6": "C6.mp3", "A6": "A6.mp3", "C7": "C7.mp3", "A7": "A7.mp3", "C8": "C8.mp3" }
   },
-  guitar: {
-    baseUrl: "https://tonejs.github.io/audio/guitar-acoustic/",
-    urls: { "F#1": "Fs1.mp3", "A1": "A1.mp3", "D2": "D2.mp3", "G2": "G2.mp3", "B2": "B2.mp3", "E3": "E3.mp3", "E4": "E4.mp3" }
-  },
-  bass: {
-    baseUrl: "https://tonejs.github.io/audio/bass-electric/",
-    urls: { "C1": "C1.mp3", "E1": "E1.mp3", "G1": "G1.mp3", "C2": "C2.mp3", "E2": "E2.mp3", "G2": "G2.mp3", "C3": "C3.mp3" }
-  },
-  organ: {
-    baseUrl: "https://tonejs.github.io/audio/organ/",
-    urls: { "C3": "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", "A3": "A3.mp3", "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3", "C5": "C5.mp3" }
-  },
   casio: {
     baseUrl: "https://tonejs.github.io/audio/casio/",
     urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" }
- }
+  }
 };
 
 const DEFAULT_SETTINGS = {
@@ -175,11 +162,13 @@ chorus.wet.value = initChorus;
 feedbackDelay.wet.value = initEcho;
 reverb.wet.value = initReverb;
 
+// Initial Routing Choice based on Saved State
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+} else if (SAMPLER_MAPS[savedInstrument]) {
+  loadSamplerInstrument(savedInstrument, SAMPLER_MAPS[savedInstrument]);
 } else {
-  const config = SAMPLER_MAPS[savedInstrument];
-  if (config) loadSamplerInstrument(savedInstrument, config);
+  createFallbackSynth(savedInstrument);
 }
 
 // ─── Event Control Listeners ──────────────────────────────────
@@ -193,10 +182,13 @@ if (instrumentSelect) {
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
       cleanupEngines();
+    } else if (SAMPLER_MAPS[mode]) {
+      if (waveSelect) waveSelect.disabled = true;
+      loadSamplerInstrument(mode, SAMPLER_MAPS[mode]);
     } else {
       if (waveSelect) waveSelect.disabled = true;
-      const config = SAMPLER_MAPS[mode];
-      if (config) loadSamplerInstrument(mode, config);
+      cleanupEngines();
+      createFallbackSynth(mode);
     }
   });
 }
@@ -218,7 +210,6 @@ function getActiveEngine() {
 // Helper utility to safely process note pitches down for the bass fallback engine
 function getProcessedNote(note) {
   const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
-  // If playing Bass on a fallback engine, drop it down exactly 2 octaves (e.g., C4 becomes C2)
   if (instrumentMode === 'bass' && (!sampler || !sampler.loaded)) {
     const match = note.match(/^([A-G]#?)(-?\d+)$/);
     if (match) {
@@ -355,7 +346,7 @@ window.addEventListener('keyup', (e) => {
   const engine = getActiveEngine();
   if (engine) {
     const finalNote = getProcessedNote(fullNote);
-    engine.triggerRelease(finalNote);
+    engine.triggerRelease(fullNote);
   }
   const el = document.querySelector(`[data-note="${fullNote}"]`);
   if (el) el.classList.remove('pressed');
