@@ -77,21 +77,24 @@ h1 {
   width: 100%;
 }
 
-.button-group {
-  display: flex;
-  flex-direction: row; 
+/* Ensure all controller panel buttons share matching heights, paddings, and alignment */
+.button-group button {
+  height: 38px; /* Force an identical uniform height across all components */
+  padding: 0 16px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 720px;
-  flex-wrap: wrap;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-.button-group button {
-  flex: 1;
-  min-width: 140px;
-  box-sizing: border-box;
+/* Specific styling override to ensure Record matches perfectly without bloating padding */
+button#recordBtn {
+  height: 38px !important; 
+  padding: 0 16px !important;
+  font-size: 0.95rem !important;
 }
   
 .toggle-container {
