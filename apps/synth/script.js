@@ -223,6 +223,7 @@ function getProcessedNote(note) {
   return note;
 }
 
+
 // ─── Build keyboard ───────────────────────────────────────────
 function buildKeyboard() {
   const kb = document.getElementById('keyboard');
@@ -266,6 +267,7 @@ function buildKeyboard() {
     });
   }
 
+  // Target the high prominence badge ID in your header block
   const octDisplay = document.getElementById('octaveDisplay');
   if (octDisplay) {
     octDisplay.textContent = `Octave ${baseOctave}–${baseOctave + NUM_OCTAVES_SHOWN - 1}`;
@@ -308,6 +310,7 @@ function attachKeyEvents(el, note) {
   el.addEventListener('touchcancel', release, { passive: false });
 }
 
+// Binds perfectly to your new high prominence button layout IDs
 document.getElementById('octaveDownBtn')?.addEventListener('click', () => {
   if (baseOctave > 1) { baseOctave--; buildKeyboard(); }
 });
