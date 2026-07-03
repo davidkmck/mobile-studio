@@ -35,6 +35,11 @@
         settingsPanel.classList.toggle('active');
       });
     }
+
+// Triggers the hidden audio-file-input element when the visible Import button is tapped
+document.getElementById('import-wav-btn')?.addEventListener('click', () => {
+  document.getElementById('audio-file-input')?.click();
+});
   
     window.addEventListener('message', async (event) => {
       console.log("Multitrack received:", event.data);
