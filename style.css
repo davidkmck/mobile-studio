@@ -226,24 +226,35 @@
     .keyboard-interface {
       position: relative;
       background: #0a0a0f;
-      height: 54px; /* Increased slightly to create chassis room above the keys */
+      height: 60px; /* Expanded slightly to house the structural panel */
       border-radius: 3px;
       border: 1px solid #1a1a26;
       border-top: 3px solid #222;
       display: flex;
-      flex-direction: column; /* Stack the chassis upper rim above the key layers */
-      justify-content: flex-end;
+      flex-direction: column; /* Stacks the control panel structurally over the keys */
+      justify-content: flex-start;
       width: 100%;
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* Default state: Dimmed / dark green-gray when the synth tab is unselected */
+    /* Electronic control panel framing sitting strictly above the piano keys */
+    .keyboard-interface::before {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 14px;
+      background: #14141f;
+      border-bottom: 1px solid #222230;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.05);
+    }
+
+    /* Small dashboard indicator housed cleanly within the upper control panel */
     .synth-led {
       position: absolute;
-      top: 4px;      /* Shifts it upward onto the chassis rim */
-      left: 8px;     /* Tucks it cleanly into the upper-left margin */
-      width: 5px;
-      height: 5px;
+      top: 4px;
+      left: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background-color: #101c14;
       border: 0.5px solid #1a2a1f;
@@ -251,9 +262,9 @@
       transition: all 0.25s ease;
     }
 
-    /* Active selected state: Lights up light green with a hardware glow */
+    /* Active selected state: Status panel LED ignites clean neon green */
     .rack-device.active .synth-led {
-      background-color: #39ff14; /* Crisp light neon green */
+      background-color: #39ff14;
       border-color: #ffffff;
       box-shadow: 0 0 5px #39ff14, 0 0 10px #39ff14;
     }
@@ -261,8 +272,10 @@
     .white-keys-layer {
       display: flex;
       width: 100%;
-      height: 42px; /* Restrict key height to clear the upper chassis zone */
+      height: 42px;
+      position: relative;
     }
+    
     .white-key {
       flex: 1;
       background: #f4f4f9;
@@ -272,21 +285,25 @@
       height: 100%;
       box-shadow: inset 0 -2px 1px rgba(0,0,0,0.1);
     }
+    
     .white-key:last-child {
       border-right: none;
     }
+    
     .rack-device.active .white-key {
       background: #ffffff;
     }
-    /* Absolute Positioning Overlays for Accurate Black Keys Layout */
+    
+    /* Absolute Positioning Overlays perfectly lined up with the key bedding */
     .black-keys-layer {
       position: absolute;
-      bottom: 0;   /* Pin layer to the bottom edge of the container */
+      top: 14px; /* Placed cleanly under the physical dashboard panel boundary */
       left: 0;
       width: 100%;
-      height: 46%; /* Scale height relative to the key area */
+      height: 26px; /* Scaled precisely to align matching layout depths */
       pointer-events: none;
     }
+    
     .black-key {
       position: absolute;
       width: 11%;
@@ -298,13 +315,13 @@
       box-shadow: 1px 1px 2px rgba(0,0,0,0.4);
       z-index: 3;
     }
+    
     /* Standard 7 White / 5 Black Piano Topography Percent offsets */
     .bk-1 { left: 9%; }
     .bk-2 { left: 23%; }
     .bk-3 { left: 51%; }
     .bk-4 { left: 66%; }
     .bk-5 { left: 80%; }
-
 
 
     /* ==========================================================================
