@@ -40,7 +40,31 @@
 document.getElementById('import-wav-btn')?.addEventListener('click', () => {
   document.getElementById('audio-file-input')?.click();
 });
-  
+
+// Listen for when a user selects a file in the file dialog selector
+document.getElementById('audio-file-input')?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Ensure it's an audio file
+  if (!file.type.startsWith('audio/')) {
+    alert('Please select a valid audio file (WAV, MP3, etc.)');
+    return;
+  }
+
+  console.log(`Importing local file: ${file.name}`);
+
+  // Use your existing timeline generator function to inject the track
+  // Pass the file directly as the blob data parameter
+  if (typeof addAudioToTimeline === 'function') {
+    addAudioToTimeline(file.name.replace(/\.[^/.]+$/, ""), file);
+  } else {
+    console.error("addAudioToTimeline function could not be found in scope.");
+  }
+
+  // Clear the input value so the user can import the same file again if needed
+  e.target.value = '';
+});
     window.addEventListener('message', async (event) => {
       console.log("Multitrack received:", event.data);
       
