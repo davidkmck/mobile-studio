@@ -13,13 +13,16 @@
     <h1>MIXER</h1>
     <div class="subtitle">Bring your tracks together</div>
 
-    <div id="controls-sector">
+<div id="controls-sector">
       <div class="button-group">
-        <button id="master-play-btn" disabled>▶️ Play Mix</button>
-        <button id="reset-btn" disabled>⏮️ Restart</button>
+        <button id="master-play-btn" disabled>▶ Play Mix</button>
+        <button id="reset-btn" disabled>⏮ Restart</button>
         <button id="recordBtn">🔴 Record from Mic</button>
-        <button id="settings-toggle-btn">⚙️ Settings</button>
+        <!-- Add this new line here -->
+        <button id="import-wav-btn">📥 Import WAV</button> 
+        <button id="settings-toggle-btn">⚙ Settings</button>
       </div>
+    </div>
       
       <input type="file" id="audio-file-input" accept="audio/*" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
 
