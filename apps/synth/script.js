@@ -7,7 +7,7 @@ let baseOctave = 4;
 let isRecording = false;  
 let recorder = null;
 const activeNotes = new Set();
-
+ 
 // ─── Effects Setup ────────────────────────────────────────────
 // Note: Kept synchronous; LFO starts automatically once the user interacts with the app
 const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 });
