@@ -102,42 +102,57 @@
 document.addEventListener('DOMContentLoaded', () => {
     const globalRecordBtn = document.getElementById('global-record-btn');
     const armBeatMaker = document.getElementById('arm-beat-maker');
-    const armSynth = document.getElementById('arm-synth');
-    
-    // Get iframe windows
+    const armSynth = document.getElementById('arm-synth'); 
+
     const beatMakerWindow = document.getElementById('beat-maker').contentWindow;
     const synthWindow = document.getElementById('synth').contentWindow;
 
     let isRecording = false;
+    let isCountdownActive = false;
 
     globalRecordBtn.addEventListener('click', () => {
-        isRecording = !isRecording;
+        if (isCountdownActive) return;
 
-        if (isRecording) {
-            // Update UI
-            globalRecordBtn.innerHTML = '⏹ STOP';
-            globalRecordBtn.style.color = '#ff4444';
+        if (!isRecording) {
+            // Start 3-Second Countdown
+            isCountdownActive = true;
+            let count = 3;
+            globalRecordBtn.innerHTML = `⏳ Rec in ${count}...`;
+            globalRecordBtn.style.color = '#ffcc00';
 
-            // Send 'start' message to armed iframes
-            if (armBeatMaker.checked) {
-                beatMakerWindow.postMessage({ command: 'start-recording' }, '*');
-            }
-            if (armSynth.checked) {
-                synthWindow.postMessage({ command: 'start-recording' }, '*');
-            }
+            const countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    globalRecordBtn.innerHTML = `⏳ Rec in ${count}...`;
+                } else {
+                    clearInterval(countdownInterval);
+                    isCountdownActive = false;
+                    
+                    // Countdown finished -> Actually Start Recording
+                    isRecording = true;
+                    globalRecordBtn.innerHTML = '⏹ STOP';
+                    globalRecordBtn.style.color = '#ff4444';
+
+                    if (armBeatMaker.checked) {
+                        beatMakerWindow.postMessage({ command: 'start-recording' }, '*');
+                    }
+                    if (armSynth.checked) {
+                        synthWindow.postMessage({ command: 'start-recording' }, '*');
+                    }
+                }
+            }, 1000);
+
         } else {
-            // Update UI
+            // Stop Recording
+            isRecording = false;
             globalRecordBtn.innerHTML = '🔴 REC';
             globalRecordBtn.style.color = 'white';
 
-            // Send 'stop' message to all iframes (safest way to ensure everything stops)
             beatMakerWindow.postMessage({ command: 'stop-recording' }, '*');
             synthWindow.postMessage({ command: 'stop-recording' }, '*');
 
-            // Switch to the mixer view automatically
-            // Assuming loadApp is available in the global scope
-            const fakeEvent = { preventDefault: () => {} }; 
-            loadApp('multitrack', fakeEvent); 
+            const fakeEvent = { preventDefault: () => {} };
+            loadApp('multitrack', fakeEvent);
         }
     });
 });
