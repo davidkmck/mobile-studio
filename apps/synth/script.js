@@ -7,7 +7,8 @@ let baseOctave = 4;
 let isRecording = false;  
 let recorder = null;
 let recordedChunks = [];
-let mediaStreamNode = null;
+let localAudioStreamDestination = null;
+let synthRecordNode = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -40,6 +41,21 @@ function cleanupEngines() {
   }
 }
 
+// Dedicated recording tap node setup
+function initRecorderRouting() {
+  try {
+    const rawCtx = Tone.context.rawContext;
+    localAudioStreamDestination = rawCtx.createMediaStreamDestination();
+    synthRecordNode = rawCtx.createGain();
+    synthRecordNode.gain.value = 1.0;
+    synthRecordNode.connect(localAudioStreamDestination);
+  } catch (err) {
+    console.error("Failed to initialize recorder routing node:", err);
+  }
+}
+
+initRecorderRouting();
+
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
 
@@ -52,7 +68,7 @@ function loadSamplerInstrument(instrumentName, config) {
       console.log(`Samples for ${instrumentName} successfully loaded!`);
       if (sampler) {
         sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-        if (mediaStreamNode) sampler.connect(mediaStreamNode);
+        if (synthRecordNode) sampler.connect(synthRecordNode);
       }
     },
     onerror: (err) => {
@@ -63,22 +79,8 @@ function loadSamplerInstrument(instrumentName, config) {
   sampler.volume.value = 0;
 }
 
-// Create native Web Audio API stream destination and wire it to Tone's master bus
-function initRecorderRouting() {
-  try {
-    const rawCtx = Tone.context.rawContext;
-    mediaStreamNode = rawCtx.createMediaStreamDestination();
-    Tone.Destination.connect(mediaStreamNode);
-  } catch (err) {
-    console.error("Failed to initialize media stream destination routing:", err);
-  }
-}
-
-initRecorderRouting();
-
-// Route initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-if (mediaStreamNode) synth.connect(mediaStreamNode);
+if (synthRecordNode) synth.connect(synthRecordNode);
 
 // ─── Instrument Configurations ────────────────────────────────
 const SAMPLER_MAPS = {
@@ -126,7 +128,7 @@ function createFallbackSynth(instrumentName) {
   }
 
   fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (mediaStreamNode) fallbackEngine.connect(mediaStreamNode);
+  if (synthRecordNode) fallbackEngine.connect(synthRecordNode);
 }
 
 const DEFAULT_SETTINGS = {
@@ -175,7 +177,7 @@ reverb.wet.value = initReverb;
 
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (mediaStreamNode) synth.connect(mediaStreamNode);
+  if (synthRecordNode) synth.connect(synthRecordNode);
 } else if (SAMPLER_MAPS[savedInstrument]) {
   loadSamplerInstrument(savedInstrument, SAMPLER_MAPS[savedInstrument]);
 } else {
@@ -196,7 +198,7 @@ if (instrumentSelect) {
       if (waveSelect) waveSelect.disabled = false;
       cleanupEngines();
       synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-      if (mediaStreamNode) synth.connect(mediaStreamNode);
+      if (synthRecordNode) synth.connect(synthRecordNode);
     } else if (SAMPLER_MAPS[mode]) {
       if (waveSelect) waveSelect.disabled = true;
       loadSamplerInstrument(mode, SAMPLER_MAPS[mode]);
@@ -458,7 +460,7 @@ async function startRecording() {
   const rawCtx = Tone.context.rawContext;
   const oscillator = rawCtx.createOscillator();
   const gainNode = rawCtx.createGain();
-  gainNode.gain.value = 0.0001; // Silent clock keeper ensuring stream initializes from time 0
+  gainNode.gain.value = 0.0001; // Tiny clock anchor to guarantee zero-delay start
   
   const silentDestination = rawCtx.createMediaStreamDestination();
   oscillator.connect(gainNode);
@@ -467,7 +469,7 @@ async function startRecording() {
 
   const streamTracks = [
     ...silentDestination.stream.getAudioTracks(),
-    ...(mediaStreamNode ? mediaStreamNode.stream.getAudioTracks() : [])
+    ...(localAudioStreamDestination ? localAudioStreamDestination.stream.getAudioTracks() : [])
   ];
   const combinedStream = new MediaStream(streamTracks);
 
