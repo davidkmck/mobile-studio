@@ -7,8 +7,7 @@ let baseOctave = 4;
 let isRecording = false;  
 let recorder = null;
 let recordedChunks = [];
-let localAudioStreamDestination = null;
-let synthRecordNode = null;
+let synthMediaDestination = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -41,14 +40,12 @@ function cleanupEngines() {
   }
 }
 
-// Dedicated recording tap node setup
+// Initialize direct audio recording destination node attached to Tone.Destination
 function initRecorderRouting() {
   try {
     const rawCtx = Tone.context.rawContext;
-    localAudioStreamDestination = rawCtx.createMediaStreamDestination();
-    synthRecordNode = rawCtx.createGain();
-    synthRecordNode.gain.value = 1.0;
-    synthRecordNode.connect(localAudioStreamDestination);
+    synthMediaDestination = rawCtx.createMediaStreamDestination();
+    Tone.Destination.connect(synthMediaDestination);
   } catch (err) {
     console.error("Failed to initialize recorder routing node:", err);
   }
@@ -68,7 +65,6 @@ function loadSamplerInstrument(instrumentName, config) {
       console.log(`Samples for ${instrumentName} successfully loaded!`);
       if (sampler) {
         sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-        if (synthRecordNode) sampler.connect(synthRecordNode);
       }
     },
     onerror: (err) => {
@@ -80,7 +76,6 @@ function loadSamplerInstrument(instrumentName, config) {
 }
 
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-if (synthRecordNode) synth.connect(synthRecordNode);
 
 // ─── Instrument Configurations ────────────────────────────────
 const SAMPLER_MAPS = {
@@ -128,7 +123,6 @@ function createFallbackSynth(instrumentName) {
   }
 
   fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (synthRecordNode) fallbackEngine.connect(synthRecordNode);
 }
 
 const DEFAULT_SETTINGS = {
@@ -177,7 +171,6 @@ reverb.wet.value = initReverb;
 
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (synthRecordNode) synth.connect(synthRecordNode);
 } else if (SAMPLER_MAPS[savedInstrument]) {
   loadSamplerInstrument(savedInstrument, SAMPLER_MAPS[savedInstrument]);
 } else {
@@ -198,7 +191,6 @@ if (instrumentSelect) {
       if (waveSelect) waveSelect.disabled = false;
       cleanupEngines();
       synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-      if (synthRecordNode) synth.connect(synthRecordNode);
     } else if (SAMPLER_MAPS[mode]) {
       if (waveSelect) waveSelect.disabled = true;
       loadSamplerInstrument(mode, SAMPLER_MAPS[mode]);
@@ -458,18 +450,23 @@ async function startRecording() {
   await Tone.start();
   
   const rawCtx = Tone.context.rawContext;
+  
+  // Create silent clock keeper node to force recording timeline from t=0
   const oscillator = rawCtx.createOscillator();
   const gainNode = rawCtx.createGain();
-  gainNode.gain.value = 0.0001; // Tiny clock anchor to guarantee zero-delay start
-  
+  gainNode.gain.value = 0.0001;
   const silentDestination = rawCtx.createMediaStreamDestination();
   oscillator.connect(gainNode);
   gainNode.connect(silentDestination);
   oscillator.start();
 
+  if (!synthMediaDestination) {
+    initRecorderRouting();
+  }
+
   const streamTracks = [
     ...silentDestination.stream.getAudioTracks(),
-    ...(localAudioStreamDestination ? localAudioStreamDestination.stream.getAudioTracks() : [])
+    ...(synthMediaDestination ? synthMediaDestination.stream.getAudioTracks() : [])
   ];
   const combinedStream = new MediaStream(streamTracks);
 
