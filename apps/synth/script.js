@@ -5,9 +5,7 @@ const NUM_OCTAVES_SHOWN = 2;
 let baseOctave = 4;
 
 let isRecording = false;  
-let mediaRecorder = null;
-let recordedChunks = [];
-let recordingDestination = null;
+let recorder = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -39,18 +37,6 @@ function cleanupEngines() {
     fallbackEngine = null;
   }
 }
-
-function initRecorderRouting() {
-  try {
-    const rawCtx = Tone.context.rawContext;
-    recordingDestination = rawCtx.createMediaStreamDestination();
-    Tone.Destination.connect(recordingDestination);
-  } catch (err) {
-    console.error("Failed to initialize recorder routing node:", err);
-  }
-}
-
-initRecorderRouting();
 
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
@@ -447,70 +433,32 @@ if (resetBtn) {
   });
 }
 
-// ─── Recording + handoff to Tracks ─────────────────────────────
-let recordingClockOsc = null;
-
+// ─── Recording + handoff to Tracks (Exact Beat-Maker Pattern) ───
 async function startRecording() {
   await Tone.start();
-  
-  const rawCtx = Tone.context.rawContext;
-  if (!recordingDestination) {
-    initRecorderRouting();
+  if (!isRecording) {
+    if (!recorder) {
+      recorder = new Tone.Recorder();
+      Tone.Destination.connect(recorder);
+    }
+    recorder.start();
+    isRecording = true;
   }
-
-  recordingClockOsc = rawCtx.createOscillator();
-  const clockGain = rawCtx.createGain();
-  clockGain.gain.value = 0.0001;
-  
-  recordingClockOsc.connect(clockGain);
-  clockGain.connect(recordingDestination);
-  recordingClockOsc.start();
-
-  recordedChunks = [];
-  mediaRecorder = new MediaRecorder(recordingDestination.stream, { mimeType: 'audio/webm' });
-  
-  mediaRecorder.ondataavailable = (e) => {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  };
-
-  mediaRecorder.start();
-  isRecording = true;
 }
 
 async function stopRecording() {
-  if (isRecording && mediaRecorder) {
-    window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-    isRecording = false;
+  if (isRecording && recorder) {
+    const recording = await recorder.stop();
+    const arrayBuffer = await recording.arrayBuffer();
 
-    // Use a Promise to guarantee data is fully flushed and decoded before posting
-    await new Promise((resolve) => {
-      mediaRecorder.onstop = async () => {
-        try {
-          if (recordingClockOsc) recordingClockOsc.stop();
-        } catch (err) {}
+    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
 
-        try {
-          const rawCtx = Tone.context.rawContext;
-          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-          const arrayBuffer = await blob.arrayBuffer();
-          const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
-          
-          const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+    window.parent.postMessage({ 
+        action: 'ADD_TRACK', 
+        audioBuffer: arrayBuffer, 
+        trackName: `${instrumentName}_${Date.now().toString().slice(-4)}` 
+    }, '*', [arrayBuffer]);
 
-          window.parent.postMessage({
-            action: 'ADD_TRACK',
-            audioBuffer: audioBuffer,
-            trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
-          }, '*');
-        } catch (err) {
-          console.error("Failed to decode synth recording buffer:", err);
-        }
-        resolve();
-      };
-
-      mediaRecorder.stop();
-    });
-    
     const engine = getActiveEngine();
     if (engine) {
       activeNotes.forEach(note => {
@@ -520,6 +468,8 @@ async function stopRecording() {
     }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
+
+    isRecording = false;
   }
 }
 
