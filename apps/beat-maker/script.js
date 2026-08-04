@@ -272,6 +272,28 @@ function triggerFactorySequence(selection) {
 
 // ---- WAV recording ----
 async function startRecording() {
+
+  ///// NEW
+  // 1. Setup a dummy silent oscillator / constant source so MediaRecorder 
+    // captures blank time immediately from second zero, avoiding truncation.
+    const silentCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = silentCtx.createOscillator();
+    const gainNode = silentCtx.createGain();
+    gainNode.gain.value = 0.0001; // virtually silent
+    
+    const dest = silentCtx.createMediaStreamDestination();
+    oscillator.connect(gainNode);
+    gainNode.connect(dest);
+    oscillator.start();
+
+    // 2. Combine or initialize your local MediaRecorder using the stream
+    const combinedStream = new MediaStream([
+        ...dest.stream.getAudioTracks()
+    ]);
+  /////  NEW
+
+  
+  
   await Tone.start();
   if (!isRecording) {
     if (!isPlaying) {
