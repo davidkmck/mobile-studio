@@ -436,14 +436,32 @@ if (resetBtn) {
 const toneRecorder = new Tone.Recorder();
 Tone.Destination.connect(toneRecorder);
 
+// Dedicated silent clock source node to guarantee active audio transport from t=0
+let recordingClockOsc = null;
+
 async function startRecording() {
   await Tone.start();
+  
+  const rawCtx = Tone.context.rawContext;
+  recordingClockOsc = rawCtx.createOscillator();
+  const clockGain = rawCtx.createGain();
+  clockGain.gain.value = 0.0001; // completely inaudible, keeps graph active
+  
+  recordingClockOsc.connect(clockGain);
+  clockGain.connect(Tone.Destination);
+  recordingClockOsc.start();
+
   toneRecorder.start();
   isRecording = true;
 }
 
 async function stopRecording() {
   if (isRecording) {
+    if (recordingClockOsc) {
+      try { recordingClockOsc.stop(); } catch(e) {}
+      recordingClockOsc = null;
+    }
+
     const recordingBlob = await toneRecorder.stop();
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
     
