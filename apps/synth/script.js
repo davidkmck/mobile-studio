@@ -6,6 +6,8 @@ let baseOctave = 4;
 
 let isRecording = false;  
 let recorder = null;
+let recordedChunks = [];
+let synthMediaDestination = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -53,7 +55,10 @@ function loadSamplerInstrument(instrumentName, config) {
     baseUrl: config.baseUrl,
     onload: () => {
       console.log(`Samples for ${instrumentName} successfully loaded!`);
-      if (sampler) sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+      if (sampler) {
+        sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+        if (synthMediaDestination) sampler.connect(synthMediaDestination);
+      }
     },
     onerror: (err) => {
       console.error(`Unexpected error loading verified ${instrumentName} samples:`, err);
@@ -63,8 +68,13 @@ function loadSamplerInstrument(instrumentName, config) {
   sampler.volume.value = 0;
 }
 
+// Setup a dedicated MediaStreamDestination so Tone.js output feeds the recorder
+synthMediaDestination = Tone.context.rawContext.createMediaStreamDestination();
+Tone.Destination.connect(synthMediaDestination);
+
 // Route the initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+if (synthMediaDestination) synth.connect(synthMediaDestination);
 
 // ─── Instrument Configurations ────────────────────────────────
 const SAMPLER_MAPS = {
@@ -113,6 +123,7 @@ function createFallbackSynth(instrumentName) {
   }
 
   fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+  if (synthMediaDestination) fallbackEngine.connect(synthMediaDestination);
 }
 
 const DEFAULT_SETTINGS = {
@@ -163,6 +174,7 @@ reverb.wet.value = initReverb;
 // Initial Routing Choice based on Saved State
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+  if (synthMediaDestination) synth.connect(synthMediaDestination);
 } else if (SAMPLER_MAPS[savedInstrument]) {
   loadSamplerInstrument(savedInstrument, SAMPLER_MAPS[savedInstrument]);
 } else {
@@ -175,7 +187,6 @@ if (instrumentSelect) {
     const mode = e.target.value;
     localStorage.setItem('synth_instrument', mode);
     
-    // Safely wake up context and effects LFO loops inside user action path
     await Tone.start();
     if (chorus && chorus.state !== 'started') {
       chorus.start();
@@ -184,6 +195,8 @@ if (instrumentSelect) {
     if (mode === 'synth') {
       if (waveSelect) waveSelect.disabled = false;
       cleanupEngines();
+      synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
+      if (synthMediaDestination) synth.connect(synthMediaDestination);
     } else if (SAMPLER_MAPS[mode]) {
       if (waveSelect) waveSelect.disabled = true;
       loadSamplerInstrument(mode, SAMPLER_MAPS[mode]);
@@ -209,7 +222,6 @@ function getActiveEngine() {
   return (sampler && sampler.loaded) ? sampler : fallbackEngine;
 }
 
-// Helper utility to safely process note pitches down for the bass fallback engine
 function getProcessedNote(note) {
   const instrumentMode = document.getElementById('instrumentSelect')?.value || 'synth';
   if (instrumentMode === 'bass' && (!sampler || !sampler.loaded)) {
@@ -222,7 +234,6 @@ function getProcessedNote(note) {
   }
   return note;
 }
-
 
 // ─── Build keyboard ───────────────────────────────────────────
 function buildKeyboard() {
@@ -267,7 +278,6 @@ function buildKeyboard() {
     });
   }
 
-  // Target the high prominence badge ID in your header block
   const octDisplay = document.getElementById('octaveDisplay');
   if (octDisplay) {
     octDisplay.textContent = `Octave ${baseOctave}–${baseOctave + NUM_OCTAVES_SHOWN - 1}`;
@@ -310,7 +320,6 @@ function attachKeyEvents(el, note) {
   el.addEventListener('touchcancel', release, { passive: false });
 }
 
-// Binds perfectly to your new high prominence button layout IDs
 document.getElementById('octaveDownBtn')?.addEventListener('click', () => {
   if (baseOctave > 1) { baseOctave--; buildKeyboard(); }
 });
@@ -447,52 +456,57 @@ if (resetBtn) {
 
 // ─── Recording + handoff to Tracks ─────────────────────────────
 async function startRecording() {
-   await Tone.start();
-        
-      // 1. Force immediate audio routing clock generation with a silent oscillator
-      // This prevents the MediaRecorder from waiting for the first key press
-      const silentCtx = Tone.context.rawContext;
-      const oscillator = silentCtx.createOscillator();
-      const gainNode = silentCtx.createGain();
-      gainNode.gain.value = 0.0001; // completely inaudible silence
-      
-      const destination = silentCtx.createMediaStreamDestination();
-      oscillator.connect(gainNode);
-      gainNode.connect(destination);
-      oscillator.start();
+  await Tone.start();
+  
+  const silentCtx = Tone.context.rawContext;
+  const oscillator = silentCtx.createOscillator();
+  const gainNode = silentCtx.createGain();
+  gainNode.gain.value = 0.0001; // Silent clock keeper
+  
+  const silentDestination = silentCtx.createMediaStreamDestination();
+  oscillator.connect(gainNode);
+  gainNode.connect(silentDestination);
+  oscillator.start();
 
-      // 2. Combine the silent stream with your engine output stream if applicable
-      const recordingStream = destination.stream;
+  // Combine silent timeline clock stream with live synth audio stream tracks
+  const tracks = [
+    ...silentDestination.stream.getAudioTracks(),
+    ...(synthMediaDestination ? synthMediaDestination.stream.getAudioTracks() : [])
+  ];
+  const combinedStream = new MediaStream(tracks);
 
-      recordedChunks = [];
-      recorder = new MediaRecorder(recordingStream, { mimeType: 'audio/webm' });
-      
-      recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) recordedChunks.push(e.data);
-      };
-      
-      recorder.onstop = async () => {
-          oscillator.stop();
-          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-          
-          // Convert to audio buffer and send back to the multitrack parent
-          const arrayBuffer = await blob.arrayBuffer();
-          const audioBuffer = await silentCtx.decodeAudioData(arrayBuffer);
-          
-          window.parent.postMessage({
-              action: 'ADD_TRACK',
-              audioBuffer: audioBuffer,
-              trackName: `Synth Mix ${Date.now().toString().slice(-4)}`
-          }, '*');
-      };
+  recordedChunks = [];
+  recorder = new MediaRecorder(combinedStream, { mimeType: 'audio/webm' });
+  
+  recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+  };
+  
+  recorder.onstop = async () => {
+      try {
+        oscillator.stop();
+      } catch (err) {}
 
-      recorder.start();
-      isRecording = true;
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await silentCtx.decodeAudioData(arrayBuffer);
+      
+      const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+
+      window.parent.postMessage({
+          action: 'ADD_TRACK',
+          audioBuffer: audioBuffer,
+          trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
+      }, '*');
+  };
+
+  recorder.start();
+  isRecording = true;
 }
 
 async function stopRecording() {
-  if (isRecording) {
-    const recording = await recorder.stop();
+  if (isRecording && recorder) {
+    recorder.stop();
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
     
     const engine = getActiveEngine();
@@ -504,17 +518,6 @@ async function stopRecording() {
     }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
-
-    const audioBuffer = await recording.arrayBuffer();
-    
-    // Safely get the instrument value if the element exists
-    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
-
-    window.parent.postMessage({
-      action: 'ADD_TRACK',
-      audioBuffer: audioBuffer,
-      trackName: `${instrumentName}_${Date.now()}`
-    }, '*');
     
     isRecording = false;
   }
