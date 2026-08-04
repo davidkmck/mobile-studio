@@ -447,38 +447,47 @@ if (resetBtn) {
 
 // ─── Recording + handoff to Tracks ─────────────────────────────
 async function startRecording() {
- // NEW
- // 1. Setup a dummy silent oscillator / constant source so MediaRecorder 
-    // captures blank time immediately from second zero, avoiding truncation.
-    const silentCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = silentCtx.createOscillator();
-    const gainNode = silentCtx.createGain();
-    gainNode.gain.value = 0.0001; // virtually silent
-    
-    const dest = silentCtx.createMediaStreamDestination();
-    oscillator.connect(gainNode);
-    gainNode.connect(dest);
-    oscillator.start();
+   await Tone.start();
+        
+      // 1. Force immediate audio routing clock generation with a silent oscillator
+      // This prevents the MediaRecorder from waiting for the first key press
+      const silentCtx = Tone.context.rawContext;
+      const oscillator = silentCtx.createOscillator();
+      const gainNode = silentCtx.createGain();
+      gainNode.gain.value = 0.0001; // completely inaudible silence
+      
+      const destination = silentCtx.createMediaStreamDestination();
+      oscillator.connect(gainNode);
+      gainNode.connect(destination);
+      oscillator.start();
 
-    // 2. Combine or initialize your local MediaRecorder using the stream
-    const combinedStream = new MediaStream([
-        ...dest.stream.getAudioTracks()
-    ]);
-// NEW
- 
- 
-  await Tone.start();
+      // 2. Combine the silent stream with your engine output stream if applicable
+      const recordingStream = destination.stream;
 
-  if (!isRecording) {
-    if (!recorder) {
-      recorder = new Tone.Recorder();
-      Tone.Destination.connect(recorder);
-    }
-    window.parent.postMessage({ action: 'REQUEST_PLAY', bpm: Tone.Transport.bpm.value || 120 }, '*');
-    
-    recorder.start();
-    isRecording = true;
-  }
+      recordedChunks = [];
+      recorder = new MediaRecorder(recordingStream, { mimeType: 'audio/webm' });
+      
+      recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+      
+      recorder.onstop = async () => {
+          oscillator.stop();
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          
+          // Convert to audio buffer and send back to the multitrack parent
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioBuffer = await silentCtx.decodeAudioData(arrayBuffer);
+          
+          window.parent.postMessage({
+              action: 'ADD_TRACK',
+              audioBuffer: audioBuffer,
+              trackName: `Synth Mix ${Date.now().toString().slice(-4)}`
+          }, '*');
+      };
+
+      recorder.start();
+      isRecording = true;
 }
 
 async function stopRecording() {
