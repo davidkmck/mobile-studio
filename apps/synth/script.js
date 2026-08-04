@@ -5,9 +5,6 @@ const NUM_OCTAVES_SHOWN = 2;
 let baseOctave = 4;
 
 let isRecording = false;  
-let recorder = null;
-let recordedChunks = [];
-let destNode = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -40,20 +37,6 @@ function cleanupEngines() {
   }
 }
 
-// Set up a direct MediaStream destination tied directly to the Web Audio context graph
-function initRecorderRouting() {
-  try {
-    const rawCtx = Tone.context.rawContext;
-    destNode = rawCtx.createMediaStreamDestination();
-    // Connect Tone's output safely to the stream destination
-    Tone.Destination.connect(destNode);
-  } catch (err) {
-    console.error("Failed to initialize recorder routing node:", err);
-  }
-}
-
-initRecorderRouting();
-
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
 
@@ -64,9 +47,7 @@ function loadSamplerInstrument(instrumentName, config) {
     baseUrl: config.baseUrl,
     onload: () => {
       console.log(`Samples for ${instrumentName} successfully loaded!`);
-      if (sampler) {
-        sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-      }
+      if (sampler) sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
     },
     onerror: (err) => {
       console.error(`Unexpected error loading verified ${instrumentName} samples:`, err);
@@ -139,6 +120,7 @@ const DEFAULT_SETTINGS = {
   reverbMix: 0
 };
 
+// ─── Boot State Cache Restore Logic ───────────────────────────
 const savedInstrument = localStorage.getItem('synth_instrument') || DEFAULT_SETTINGS.instrument;
 const savedWave = localStorage.getItem('synth_wave') || DEFAULT_SETTINGS.wave;
 
@@ -178,6 +160,7 @@ if (savedInstrument === 'synth') {
   createFallbackSynth(savedInstrument);
 }
 
+// ─── Event Control Listeners ──────────────────────────────────
 if (instrumentSelect) {
   instrumentSelect.addEventListener('change', async (e) => {
     const mode = e.target.value;
@@ -230,6 +213,7 @@ function getProcessedNote(note) {
   return note;
 }
 
+// ─── Build keyboard ───────────────────────────────────────────
 function buildKeyboard() {
   const kb = document.getElementById('keyboard');
   if (!kb) return;
@@ -321,6 +305,7 @@ document.getElementById('octaveUpBtn')?.addEventListener('click', () => {
   if (baseOctave < 6) { baseOctave++; buildKeyboard(); }
 });
 
+// ─── Computer keyboard support ──────────────────────────────────
 const KEY_MAP = {
   'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E',
   'f': 'F', 't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A',
@@ -364,6 +349,7 @@ window.addEventListener('keyup', (e) => {
   if (el) el.classList.remove('pressed');
 });
 
+// ─── Edit panel controls builder ───────────────────────────────
 function buildEditorControls() {
   const wrap = document.getElementById('globalEditorControls');
   if (!wrap) return;
@@ -447,62 +433,18 @@ if (resetBtn) {
 }
 
 // ─── Recording + handoff to Tracks ─────────────────────────────
+const toneRecorder = new Tone.Recorder();
+Tone.Destination.connect(toneRecorder);
+
 async function startRecording() {
   await Tone.start();
-  
-  const rawCtx = Tone.context.rawContext;
-  
-  // Guarantee destination node is active
-  if (!destNode) {
-    initRecorderRouting();
-  }
-
-  // Create silent clock stream to anchor track timing from 0.0s
-  const oscillator = rawCtx.createOscillator();
-  const gainNode = rawCtx.createGain();
-  gainNode.gain.value = 0.0001;
-  const silentDestination = rawCtx.createMediaStreamDestination();
-  oscillator.connect(gainNode);
-  gainNode.connect(silentDestination);
-  oscillator.start();
-
-  const combinedStream = new MediaStream([
-    ...silentDestination.stream.getAudioTracks(),
-    ...(destNode ? destNode.stream.getAudioTracks() : [])
-  ]);
-
-  recordedChunks = [];
-  recorder = new MediaRecorder(combinedStream, { mimeType: 'audio/webm' });
-  
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  };
-  
-  recorder.onstop = async () => {
-    try {
-      oscillator.stop();
-    } catch (err) {}
-
-    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-    const arrayBuffer = await blob.arrayBuffer();
-    const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
-    
-    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
-
-    window.parent.postMessage({
-      action: 'ADD_TRACK',
-      audioBuffer: audioBuffer,
-      trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
-    }, '*');
-  };
-
-  recorder.start();
+  toneRecorder.start();
   isRecording = true;
 }
 
 async function stopRecording() {
-  if (isRecording && recorder) {
-    recorder.stop();
+  if (isRecording) {
+    const recordingBlob = await toneRecorder.stop();
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
     
     const engine = getActiveEngine();
@@ -514,6 +456,18 @@ async function stopRecording() {
     }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
+
+    const rawCtx = Tone.context.rawContext;
+    const arrayBuffer = await recordingBlob.arrayBuffer();
+    const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
+    
+    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+
+    window.parent.postMessage({
+      action: 'ADD_TRACK',
+      audioBuffer: audioBuffer,
+      trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
+    }, '*');
     
     isRecording = false;
   }
