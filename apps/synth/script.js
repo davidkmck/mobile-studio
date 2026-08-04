@@ -446,9 +446,7 @@ if (resetBtn) {
 }
 
 // ─── Recording + handoff to Tracks ─────────────────────────────
-async function recordWav() {
-  const btn = document.getElementById('recordBtn');
-  if (!btn) return;
+async function startRecording() {
   await Tone.start();
 
   if (!isRecording) {
@@ -460,10 +458,11 @@ async function recordWav() {
     
     recorder.start();
     isRecording = true;
-    
-    btn.textContent = '⏹️ Stop Recording';
-    btn.className = 'btn-recording';
-  } else {
+  }
+}
+
+async function stopRecording() {
+  if (isRecording) {
     const recording = await recorder.stop();
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
     
@@ -478,17 +477,17 @@ async function recordWav() {
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
 
     const audioBuffer = await recording.arrayBuffer();
+    
+    // Safely get the instrument value if the element exists
+    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+
     window.parent.postMessage({
       action: 'ADD_TRACK',
       audioBuffer: audioBuffer,
-      trackName: `${instrumentSelect.value || 'Synth'}_${Date.now()}`
+      trackName: `${instrumentName}_${Date.now()}`
     }, '*');
     
-    window.parent.postMessage({ action: 'SWITCH_APP', app: 'multitrack' }, '*');
-
     isRecording = false;
-    btn.textContent = '🔴 Record';
-    btn.className = 'btn-record';
   }
 }
 
@@ -498,16 +497,17 @@ window.addEventListener('message', (event) => {
     Tone.Transport.bpm.value = event.data.bpm || 120;
     Tone.Transport.start();
   }
-  if (event.data.action === 'STOP_AUDIO') {
+  else if (event.data.action === 'STOP_AUDIO') {
     if (isRecording) return; 
     Tone.Transport.stop();
   }
+  else if (event.data.command === 'start-recording') {
+    startRecording();
+  }
+  else if (event.data.command === 'stop-recording') {
+    stopRecording();
+  }
 });
-
-const recordButtonEl = document.getElementById('recordBtn');
-if (recordButtonEl) {
-  recordButtonEl.addEventListener('click', recordWav);
-}
 
 // ─── Boot ───────────────────────────────────────────────────────
 buildKeyboard();
