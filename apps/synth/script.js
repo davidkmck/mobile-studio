@@ -7,11 +7,10 @@ let baseOctave = 4;
 let isRecording = false;  
 let recorder = null;
 let recordedChunks = [];
-let synthMediaDestination = null;
+let mediaStreamNode = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
-// Note: Kept synchronous; LFO starts automatically once the user interacts with the app
 const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 });
 const feedbackDelay = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.4, wet: 0 });
 const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
@@ -19,18 +18,15 @@ const reverb = new Tone.Reverb({ roomSize: 0.7, wet: 0 });
 reverb.generate();
 
 // ─── Sound engines ────────────────────────────────────────────
-// 1. Classic Synth Engine
 const synth = new Tone.PolySynth(Tone.Synth, {
   oscillator: { type: 'sawtooth' },
   envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
 });
 synth.volume.value = -6;
 
-// 2. Sample Engine & Fallback Engine Map
 let sampler = null;
 let fallbackEngine = null;
 
-// Clean up any loaded sampler or fallback instruments
 function cleanupEngines() {
   if (sampler) {
     sampler.disconnect();
@@ -44,7 +40,6 @@ function cleanupEngines() {
   }
 }
 
-// Function to safely build the sampler node for working remote assets
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
 
@@ -57,7 +52,7 @@ function loadSamplerInstrument(instrumentName, config) {
       console.log(`Samples for ${instrumentName} successfully loaded!`);
       if (sampler) {
         sampler.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-        if (synthMediaDestination) sampler.connect(synthMediaDestination);
+        if (mediaStreamNode) sampler.connect(mediaStreamNode);
       }
     },
     onerror: (err) => {
@@ -68,13 +63,22 @@ function loadSamplerInstrument(instrumentName, config) {
   sampler.volume.value = 0;
 }
 
-// Setup a dedicated MediaStreamDestination so Tone.js output feeds the recorder
-synthMediaDestination = Tone.context.rawContext.createMediaStreamDestination();
-Tone.Destination.connect(synthMediaDestination);
+// Create native Web Audio API stream destination and wire it to Tone's master bus
+function initRecorderRouting() {
+  try {
+    const rawCtx = Tone.context.rawContext;
+    mediaStreamNode = rawCtx.createMediaStreamDestination();
+    Tone.Destination.connect(mediaStreamNode);
+  } catch (err) {
+    console.error("Failed to initialize media stream destination routing:", err);
+  }
+}
 
-// Route the initial synth engine setup
+initRecorderRouting();
+
+// Route initial synth engine setup
 synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-if (synthMediaDestination) synth.connect(synthMediaDestination);
+if (mediaStreamNode) synth.connect(mediaStreamNode);
 
 // ─── Instrument Configurations ────────────────────────────────
 const SAMPLER_MAPS = {
@@ -88,7 +92,6 @@ const SAMPLER_MAPS = {
   }
 };
 
-// ─── Standalone Engine Generator ──────────────────────────────
 function createFallbackSynth(instrumentName) {
   if (fallbackEngine) fallbackEngine.dispose();
   console.log(`Generating real-time synth engine for: ${instrumentName}`);
@@ -123,7 +126,7 @@ function createFallbackSynth(instrumentName) {
   }
 
   fallbackEngine.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (synthMediaDestination) fallbackEngine.connect(synthMediaDestination);
+  if (mediaStreamNode) fallbackEngine.connect(mediaStreamNode);
 }
 
 const DEFAULT_SETTINGS = {
@@ -139,7 +142,6 @@ const DEFAULT_SETTINGS = {
   reverbMix: 0
 };
 
-// ─── Boot State Cache Restore Logic ───────────────────────────
 const savedInstrument = localStorage.getItem('synth_instrument') || DEFAULT_SETTINGS.instrument;
 const savedWave = localStorage.getItem('synth_wave') || DEFAULT_SETTINGS.wave;
 
@@ -171,17 +173,15 @@ chorus.wet.value = initChorus;
 feedbackDelay.wet.value = initEcho;
 reverb.wet.value = initReverb;
 
-// Initial Routing Choice based on Saved State
 if (savedInstrument === 'synth') {
   synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-  if (synthMediaDestination) synth.connect(synthMediaDestination);
+  if (mediaStreamNode) synth.connect(mediaStreamNode);
 } else if (SAMPLER_MAPS[savedInstrument]) {
   loadSamplerInstrument(savedInstrument, SAMPLER_MAPS[savedInstrument]);
 } else {
   createFallbackSynth(savedInstrument);
 }
 
-// ─── Event Control Listeners ──────────────────────────────────
 if (instrumentSelect) {
   instrumentSelect.addEventListener('change', async (e) => {
     const mode = e.target.value;
@@ -196,7 +196,7 @@ if (instrumentSelect) {
       if (waveSelect) waveSelect.disabled = false;
       cleanupEngines();
       synth.chain(chorus, feedbackDelay, reverb, Tone.Destination);
-      if (synthMediaDestination) synth.connect(synthMediaDestination);
+      if (mediaStreamNode) synth.connect(mediaStreamNode);
     } else if (SAMPLER_MAPS[mode]) {
       if (waveSelect) waveSelect.disabled = true;
       loadSamplerInstrument(mode, SAMPLER_MAPS[mode]);
@@ -235,7 +235,6 @@ function getProcessedNote(note) {
   return note;
 }
 
-// ─── Build keyboard ───────────────────────────────────────────
 function buildKeyboard() {
   const kb = document.getElementById('keyboard');
   if (!kb) return;
@@ -327,7 +326,6 @@ document.getElementById('octaveUpBtn')?.addEventListener('click', () => {
   if (baseOctave < 6) { baseOctave++; buildKeyboard(); }
 });
 
-// ─── Computer keyboard support ──────────────────────────────────
 const KEY_MAP = {
   'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#', 'd': 'E',
   'f': 'F', 't': 'F#', 'g': 'G', 'y': 'G#', 'h': 'A',
@@ -371,7 +369,6 @@ window.addEventListener('keyup', (e) => {
   if (el) el.classList.remove('pressed');
 });
 
-// ─── Edit panel controls builder ───────────────────────────────
 function buildEditorControls() {
   const wrap = document.getElementById('globalEditorControls');
   if (!wrap) return;
@@ -458,46 +455,45 @@ if (resetBtn) {
 async function startRecording() {
   await Tone.start();
   
-  const silentCtx = Tone.context.rawContext;
-  const oscillator = silentCtx.createOscillator();
-  const gainNode = silentCtx.createGain();
-  gainNode.gain.value = 0.0001; // Silent clock keeper
+  const rawCtx = Tone.context.rawContext;
+  const oscillator = rawCtx.createOscillator();
+  const gainNode = rawCtx.createGain();
+  gainNode.gain.value = 0.0001; // Silent clock keeper ensuring stream initializes from time 0
   
-  const silentDestination = silentCtx.createMediaStreamDestination();
+  const silentDestination = rawCtx.createMediaStreamDestination();
   oscillator.connect(gainNode);
   gainNode.connect(silentDestination);
   oscillator.start();
 
-  // Combine silent timeline clock stream with live synth audio stream tracks
-  const tracks = [
+  const streamTracks = [
     ...silentDestination.stream.getAudioTracks(),
-    ...(synthMediaDestination ? synthMediaDestination.stream.getAudioTracks() : [])
+    ...(mediaStreamNode ? mediaStreamNode.stream.getAudioTracks() : [])
   ];
-  const combinedStream = new MediaStream(tracks);
+  const combinedStream = new MediaStream(streamTracks);
 
   recordedChunks = [];
   recorder = new MediaRecorder(combinedStream, { mimeType: 'audio/webm' });
   
   recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) recordedChunks.push(e.data);
+    if (e.data.size > 0) recordedChunks.push(e.data);
   };
   
   recorder.onstop = async () => {
-      try {
-        oscillator.stop();
-      } catch (err) {}
+    try {
+      oscillator.stop();
+    } catch (err) {}
 
-      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const audioBuffer = await silentCtx.decodeAudioData(arrayBuffer);
-      
-      const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
+    
+    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
 
-      window.parent.postMessage({
-          action: 'ADD_TRACK',
-          audioBuffer: audioBuffer,
-          trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
-      }, '*');
+    window.parent.postMessage({
+      action: 'ADD_TRACK',
+      audioBuffer: audioBuffer,
+      trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
+    }, '*');
   };
 
   recorder.start();
