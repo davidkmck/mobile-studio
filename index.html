@@ -20,13 +20,18 @@
     <!-- BEAT (Drum Kit) -->
     <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">
       
-      <!-- Floating ARM Toggle: Top Center -->
-      <div class="arm-toggle" onclick="event.stopPropagation()" style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 20; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
-          <input type="checkbox" id="arm-beat-maker" checked>
-          <label for="arm-beat-maker" style="color: red; font-size: 10px; font-weight: bold; margin: 0;">ARM</label>
+      <!-- Consistent Hardware Header -->
+      <div class="device-header" style="position: absolute; top: 0; left: 0; right: 0; height: 24px; background: linear-gradient(to bottom, rgba(30,30,30,0.95), rgba(15,15,15,0.85)); border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 30; pointer-events: none;">
+          <!-- Green Selected Indicator -->
+          <div class="status-led" style="width: 8px; height: 8px; border-radius: 50%; background-color: #33ff33; box-shadow: 0 0 5px #33ff33;"></div>
+          <!-- ARM Toggle -->
+          <div class="arm-toggle" onclick="event.stopPropagation()" style="pointer-events: auto; display: flex; align-items: center; gap: 4px;">
+              <input type="checkbox" id="arm-beat-maker" checked>
+              <label for="arm-beat-maker" style="color: #ff4444; font-size: 10px; font-weight: bold; margin: 0; cursor: pointer; text-shadow: 0 0 2px #ff4444;">ARM</label>
+          </div>
       </div>
 
-      <div class="drum-interface">
+      <div class="drum-interface" style="padding-top: 24px; box-sizing: border-box; height: 100%;">
         <div class="drum-top-row">
           <div class="drum-screen">KIT</div>
           <div class="drum-knob"></div>
@@ -73,15 +78,18 @@
     <!-- SYNTH (Keyboard) -->
     <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)">
       
-      <!-- Floating ARM Toggle: Bottom Right (on the white keys) -->
-      <div class="arm-toggle" onclick="event.stopPropagation()" style="position: absolute; bottom: 4px; right: 4px; z-index: 20; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
-        <input type="checkbox" id="arm-synth" checked>
-        <label for="arm-synth" style="color: red; font-size: 10px; font-weight: bold; margin: 0;">ARM</label>
+      <!-- Consistent Hardware Header -->
+      <div class="device-header" style="position: absolute; top: 0; left: 0; right: 0; height: 24px; background: linear-gradient(to bottom, rgba(30,30,30,0.95), rgba(15,15,15,0.85)); border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 30; pointer-events: none;">
+        <!-- Green Selected Indicator -->
+        <div class="status-led" style="width: 8px; height: 8px; border-radius: 50%; background-color: #33ff33; box-shadow: 0 0 5px #33ff33;"></div>
+        <!-- ARM Toggle -->
+        <div class="arm-toggle" onclick="event.stopPropagation()" style="pointer-events: auto; display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" id="arm-synth" checked>
+          <label for="arm-synth" style="color: #ff4444; font-size: 10px; font-weight: bold; margin: 0; cursor: pointer; text-shadow: 0 0 2px #ff4444;">ARM</label>
+        </div>
       </div>
 
-      <div class="keyboard-interface">
-        <div class="synth-led"></div>
-        <div class="synth-led"></div>
+      <div class="keyboard-interface" style="padding-top: 24px; box-sizing: border-box; height: 100%;">
         
         <!-- White Keys Layer -->
         <div class="white-keys-layer">
