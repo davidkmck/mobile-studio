@@ -1,18 +1,10 @@
-
-  let mediaRecorder = null;
-    let recordedChunks = [];
-    let isRecording = false;
-    let isCountdownActive = false;
-    let isPlayingMix = false;
-    let localStream = null;
-    
+let isPlayingMix = false;
     let progressAnimationId = null;
     let isScrubbing = false;
 
     const tracks = [];
     let audioCtx = null;
 
-    const recordBtn         = document.getElementById('recordBtn');
     const audioFileInput    = document.getElementById('audio-file-input');
     const masterPlayBtn     = document.getElementById('master-play-btn');
     const resetBtn          = document.getElementById('reset-btn');
@@ -36,41 +28,44 @@
       });
     }
 
-// Triggers the hidden audio-file-input element when the visible Import button is tapped
-document.getElementById('import-wav-btn')?.addEventListener('click', () => {
-  document.getElementById('audio-file-input')?.click();
-});
+    // Triggers the hidden audio-file-input element when the visible Import button is tapped
+    document.getElementById('import-wav-btn')?.addEventListener('click', () => {
+      document.getElementById('audio-file-input')?.click();
+    });
 
-// Listen for when a user selects a file in the file dialog selector
-document.getElementById('audio-file-input')?.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    // Listen for when a user selects a file in the file dialog selector
+    document.getElementById('audio-file-input')?.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-  // Ensure it's an audio file
-  if (!file.type.startsWith('audio/')) {
-    alert('Please select a valid audio file (WAV, MP3, etc.)');
-    return;
-  }
+      // Ensure it's an audio file
+      if (!file.type.startsWith('audio/')) {
+        alert('Please select a valid audio file (WAV, MP3, etc.)');
+        return;
+      }
 
-  console.log(`Importing local file: ${file.name}`);
+      console.log(`Importing local file: ${file.name}`);
 
-  // Use your existing timeline generator function to inject the track
-  // Pass the file directly as the blob data parameter
-  if (typeof addAudioToTimeline === 'function') {
-    addAudioToTimeline(file.name.replace(/\.[^/.]+$/, ""), file);
-  } else {
-    console.error("addAudioToTimeline function could not be found in scope.");
-  }
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const trackName = file.name.replace(/\.[^/.]+$/, "");
+        
+        await createTrackNodeFromBuffer(arrayBuffer, trackName);
+        console.log("Success: Local file added to mixer.");
+      } catch (err) {
+        console.error("Failed to import local audio file:", err);
+      }
 
-  // Clear the input value so the user can import the same file again if needed
-  e.target.value = '';
-});
+      // Clear the input value so the user can import the same file again if needed
+      e.target.value = '';
+    });
+    
     window.addEventListener('message', async (event) => {
       console.log("Multitrack received:", event.data);
       
       if (event.data.action === 'ADD_CLIP_TO_TIMELINE') {
         const { audioBlob, trackName } = event.data;
-        addAudioToTimeline(trackName, audioBlob);
+        addAudioToTimeline(trackName, audioBlob); 
       }
       
       if (event.data.action === 'START_AUDIO') {
@@ -149,130 +144,6 @@ document.getElementById('audio-file-input')?.addEventListener('change', (e) => {
         audioCtx.resume();
       }
       return audioCtx;
-    }
-
-    recordBtn.addEventListener('click', async () => {
-      if (isCountdownActive) return;
-      getAudioContext();
-
-      if (!isRecording) {
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          isCountdownActive = true;
-          recordBtn.className = 'btn-countdown';
-          
-          let count = 3;
-          recordBtn.textContent = `⏳ Recording starts in ${count}...`;
-
-          const countdownInterval = setInterval(() => {
-            count--;
-            if (count > 0) {
-              recordBtn.textContent = `⏳ Recording starts in ${count}...`;
-            } else {
-              clearInterval(countdownInterval);
-              isCountdownActive = false;
-              startHardwareRecording();
-            }
-          }, 1000);
-
-        } catch (err) {
-          console.error('Microphone access denied:', err);
-          alert('Could not access microphone. Check site permissions.');
-        }
-      } else {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-        isRecording = false;
-      }
-    });
-
-    function startHardwareRecording() {
-      stopAllTracks();
-      recordedChunks = [];
-      if (tracks.length > 0) {
-        startAllTracks({ monitoringOnly: true });
-      }
-
-      const mimeType = getSupportedMimeType();
-      const recorderOptions = mimeType ? { mimeType } : {};
-
-      mediaRecorder = new MediaRecorder(localStream, recorderOptions);
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) recordedChunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        stopAllTracks();
-        let rawBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-        
-        const compensationMs = parseInt(latencySlider.value);
-        if (compensationMs > 0 && tracks.length > 0) {
-          rawBlob = await sliceAudioBlobLatency(rawBlob, compensationMs);
-        }
-
-        await createTrackNode(rawBlob, `Recorded Input ${tracks.length + 1}`);
-
-        if (localStream) {
-          localStream.getTracks().forEach(t => t.stop());
-          localStream = null;
-        }
-        updateUI();
-      };
-
-      mediaRecorder.start();
-      isRecording = true;
-      recordBtn.textContent = '⏹️ Stop recording';
-      recordBtn.className = 'btn-recording';
-    }
-
-    function getSupportedMimeType() {
-      const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
-      return candidates.find(m => MediaRecorder.isTypeSupported(m)) || '';
-    }
-
-    async function sliceAudioBlobLatency(blob, msToRemove) {
-      const tempCtx = getAudioContext();
-      const arrayBuffer = await blob.arrayBuffer();
-      const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-      
-      const sampleRate = audioBuffer.sampleRate;
-      const samplesToRemove = Math.floor((msToRemove / 1000) * sampleRate);
-      if (samplesToRemove >= audioBuffer.length) return blob;
-
-      const newLength = audioBuffer.length - samplesToRemove;
-      const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, newLength, sampleRate);
-      
-      const bufferSource = offlineCtx.createBufferSource();
-      bufferSource.buffer = audioBuffer;
-      bufferSource.connect(offlineCtx.destination);
-      bufferSource.start(0, msToRemove / 1000);
-      
-      const renderedBuffer = await offlineCtx.startRendering();
-      return audioBufferToWav(renderedBuffer);
-    }
-
-    async function createTrackNode(blob, customName) {
-      const ctx = getAudioContext();
-      const arrayBuffer = await blob.arrayBuffer();
-      const decodedAudio = await ctx.decodeAudioData(arrayBuffer);
-
-      const trackObject = {
-        id: Date.now(),
-        name: customName || `Track ${tracks.length + 1}`,
-        blob: blob,
-        audioBuffer: decodedAudio,
-        tonePlayer: null,
-        volumeNode: null,
-        pannerNode: null,
-        currentPan: 0,
-        currentVolume: 1.0,
-        duration: decodedAudio.duration || 0,
-        playheadOffset: 0
-      };
-
-      tracks.push(trackObject);
-      renderMixerBoard();
     }
 
     function renderMixerBoard() {
@@ -354,9 +225,6 @@ document.getElementById('audio-file-input')?.addEventListener('change', (e) => {
         }
       });
 
-      if (recordBtn && !isRecording) {
-        recordBtn.textContent = `🔴 Record from Mic`;
-      }
       updateUI();
     }
 
@@ -520,12 +388,6 @@ document.getElementById('audio-file-input')?.addEventListener('change', (e) => {
       masterPlayBtn.disabled = noTracks;
       resetBtn.disabled      = noTracks;
       saveMixBtn.disabled    = noTracks;
-
-      if (isRecording || isCountdownActive) return;
-
-      recordBtn.disabled    = false;
-      recordBtn.textContent = `🔴 Record from Mic`;
-      recordBtn.className   = '';
     }
 
     saveMixBtn.addEventListener('click', async () => {
