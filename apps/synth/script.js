@@ -7,7 +7,7 @@ let baseOctave = 4;
 let isRecording = false;  
 let recorder = null;
 let recordedChunks = [];
-let synthMediaDestination = null;
+let destNode = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -40,12 +40,13 @@ function cleanupEngines() {
   }
 }
 
-// Initialize direct audio recording destination node attached to Tone.Destination
+// Set up a direct MediaStream destination tied directly to the Web Audio context graph
 function initRecorderRouting() {
   try {
     const rawCtx = Tone.context.rawContext;
-    synthMediaDestination = rawCtx.createMediaStreamDestination();
-    Tone.Destination.connect(synthMediaDestination);
+    destNode = rawCtx.createMediaStreamDestination();
+    // Connect Tone's output safely to the stream destination
+    Tone.Destination.connect(destNode);
   } catch (err) {
     console.error("Failed to initialize recorder routing node:", err);
   }
@@ -451,7 +452,12 @@ async function startRecording() {
   
   const rawCtx = Tone.context.rawContext;
   
-  // Create silent clock keeper node to force recording timeline from t=0
+  // Guarantee destination node is active
+  if (!destNode) {
+    initRecorderRouting();
+  }
+
+  // Create silent clock stream to anchor track timing from 0.0s
   const oscillator = rawCtx.createOscillator();
   const gainNode = rawCtx.createGain();
   gainNode.gain.value = 0.0001;
@@ -460,15 +466,10 @@ async function startRecording() {
   gainNode.connect(silentDestination);
   oscillator.start();
 
-  if (!synthMediaDestination) {
-    initRecorderRouting();
-  }
-
-  const streamTracks = [
+  const combinedStream = new MediaStream([
     ...silentDestination.stream.getAudioTracks(),
-    ...(synthMediaDestination ? synthMediaDestination.stream.getAudioTracks() : [])
-  ];
-  const combinedStream = new MediaStream(streamTracks);
+    ...(destNode ? destNode.stream.getAudioTracks() : [])
+  ]);
 
   recordedChunks = [];
   recorder = new MediaRecorder(combinedStream, { mimeType: 'audio/webm' });
