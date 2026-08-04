@@ -18,7 +18,18 @@
   <div class="studio-rack">
     <!-- BEAT (Drum Kit) -->
     <a href="#" class="rack-device drum-kit-tab active" data-app="beat-maker" onclick="loadApp('beat-maker', event)">
+      <!-- NEW -->
       <div class="drum-interface">
+        <div class="drum-top-row">
+          <div class="drum-screen">KIT</div>
+          <!-- New Arm Toggle -->
+          <div class="arm-toggle" onclick="event.stopPropagation()" style="margin-left: auto;">
+              <input type="checkbox" id="arm-beat-maker" checked>
+              <label for="arm-beat-maker" style="color: red; font-size: 10px;">ARM</label>
+          </div>
+          <div class="drum-knob"></div>
+      </div>
+        
         <div class="drum-top-row">
           <div class="drum-screen">KIT</div>
           <div class="drum-knob"></div>
@@ -29,6 +40,9 @@
           <div class="drum-pad"></div>
           <div class="drum-pad"></div>
         </div>
+
+
+
       </div>
       <div class="audio-port" style="left: 50%;"></div>
     </a>
@@ -59,6 +73,13 @@
     <!-- SYNTH (Keyboard) -->
     <a href="#" class="rack-device synth-tab" data-app="synth" onclick="loadApp('synth', event)">
       <div class="keyboard-interface">
+            <!-- New Arm Toggle -->
+        <div class="arm-toggle" onclick="event.stopPropagation()" style="position: absolute; top: 5px; right: 5px; z-index: 10;">
+            <input type="checkbox" id="arm-synth" checked>
+            <label for="arm-synth" style="color: red; font-size: 10px;">ARM</label>
+        </div>
+        <div class="synth-led"></div>
+        
         <!-- Add this line right here -->
         <div class="synth-led"></div>
         
@@ -89,6 +110,15 @@
       <path class="cable-left" d="M 0 0" />
       <path class="cable-right" d="M 0 0" />
     </svg>
+
+    <!-- Add this somewhere visible in your studio-rack, perhaps as a new div outside the tabs -->
+    <div class="global-transport" style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); z-index: 10;">
+        <button id="global-record-btn" style="padding: 10px 20px; font-weight: bold; background: #333; color: white; border: 2px solid #555; border-radius: 5px; cursor: pointer;">
+            🔴 REC
+        </button>
+    </div>
+
+</div>
   </div>
 <script src="script.js"></script>
 </body>
