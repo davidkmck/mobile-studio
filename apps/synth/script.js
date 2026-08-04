@@ -5,6 +5,9 @@ const NUM_OCTAVES_SHOWN = 2;
 let baseOctave = 4;
 
 let isRecording = false;  
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingDestination = null;
 const activeNotes = new Set();
  
 // ─── Effects Setup ────────────────────────────────────────────
@@ -36,6 +39,18 @@ function cleanupEngines() {
     fallbackEngine = null;
   }
 }
+
+function initRecorderRouting() {
+  try {
+    const rawCtx = Tone.context.rawContext;
+    recordingDestination = rawCtx.createMediaStreamDestination();
+    Tone.Destination.connect(recordingDestination);
+  } catch (err) {
+    console.error("Failed to initialize recorder routing node:", err);
+  }
+}
+
+initRecorderRouting();
 
 function loadSamplerInstrument(instrumentName, config) {
   cleanupEngines();
@@ -433,35 +448,61 @@ if (resetBtn) {
 }
 
 // ─── Recording + handoff to Tracks ─────────────────────────────
-const toneRecorder = new Tone.Recorder();
-Tone.Destination.connect(toneRecorder);
 let recordingClockOsc = null;
 
 async function startRecording() {
   await Tone.start();
   
   const rawCtx = Tone.context.rawContext;
+  if (!recordingDestination) {
+    initRecorderRouting();
+  }
+
+  // Anchor stream timeline from t=0 with a tiny silent oscillator
   recordingClockOsc = rawCtx.createOscillator();
   const clockGain = rawCtx.createGain();
   clockGain.gain.value = 0.0001;
   
   recordingClockOsc.connect(clockGain);
-  clockGain.connect(Tone.Destination);
+  clockGain.connect(recordingDestination);
   recordingClockOsc.start();
 
-  toneRecorder.start();
+  recordedChunks = [];
+  mediaRecorder = new MediaRecorder(recordingDestination.stream, { mimeType: 'audio/webm' });
+  
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) recordedChunks.push(e.data);
+  };
+
+  mediaRecorder.start();
   isRecording = true;
 }
 
 async function stopRecording() {
-  if (isRecording) {
-    if (recordingClockOsc) {
-      try { recordingClockOsc.stop(); } catch(e) {}
-      recordingClockOsc = null;
-    }
-
-    const recordingBlob = await toneRecorder.stop();
+  if (isRecording && mediaRecorder) {
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
+    
+    mediaRecorder.onstop = async () => {
+      try {
+        if (recordingClockOsc) recordingClockOsc.stop();
+      } catch (err) {}
+
+      const rawCtx = Tone.context.rawContext;
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
+      
+      const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+
+      // Dispatches directly to root script.js listener which forwards it to multitrack
+      window.parent.postMessage({
+        action: 'ADD_TRACK',
+        audioBuffer: audioBuffer,
+        trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
+      }, '*');
+    };
+
+    mediaRecorder.stop();
     
     const engine = getActiveEngine();
     if (engine) {
@@ -472,19 +513,6 @@ async function stopRecording() {
     }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
-
-    const rawCtx = Tone.context.rawContext;
-    const arrayBuffer = await recordingBlob.arrayBuffer();
-    const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
-    
-    const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
-
-    // Matches the { action: 'ADD_TRACK', audioBuffer, trackName } pattern expected by root script.js
-    window.parent.postMessage({
-      action: 'ADD_TRACK',
-      audioBuffer: audioBuffer,
-      trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
-    }, '*');
     
     isRecording = false;
   }
