@@ -458,7 +458,6 @@ async function startRecording() {
     initRecorderRouting();
   }
 
-  // Anchor stream timeline from t=0 with a tiny silent oscillator
   recordingClockOsc = rawCtx.createOscillator();
   const clockGain = rawCtx.createGain();
   clockGain.gain.value = 0.0001;
@@ -481,28 +480,36 @@ async function startRecording() {
 async function stopRecording() {
   if (isRecording && mediaRecorder) {
     window.parent.postMessage({ action: 'REQUEST_STOP' }, '*');
-    
-    mediaRecorder.onstop = async () => {
-      try {
-        if (recordingClockOsc) recordingClockOsc.stop();
-      } catch (err) {}
+    isRecording = false;
 
-      const rawCtx = Tone.context.rawContext;
-      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
-      
-      const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
+    // Use a Promise to guarantee data is fully flushed and decoded before posting
+    await new Promise((resolve) => {
+      mediaRecorder.onstop = async () => {
+        try {
+          if (recordingClockOsc) recordingClockOsc.stop();
+        } catch (err) {}
 
-      // Dispatches directly to root script.js listener which forwards it to multitrack
-      window.parent.postMessage({
-        action: 'ADD_TRACK',
-        audioBuffer: audioBuffer,
-        trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
-      }, '*');
-    };
+        try {
+          const rawCtx = Tone.context.rawContext;
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioBuffer = await rawCtx.decodeAudioData(arrayBuffer);
+          
+          const instrumentName = document.getElementById('instrumentSelect')?.value || 'Synth';
 
-    mediaRecorder.stop();
+          window.parent.postMessage({
+            action: 'ADD_TRACK',
+            audioBuffer: audioBuffer,
+            trackName: `${instrumentName}_${Date.now().toString().slice(-4)}`
+          }, '*');
+        } catch (err) {
+          console.error("Failed to decode synth recording buffer:", err);
+        }
+        resolve();
+      };
+
+      mediaRecorder.stop();
+    });
     
     const engine = getActiveEngine();
     if (engine) {
@@ -513,8 +520,6 @@ async function stopRecording() {
     }
     activeNotes.clear();
     document.querySelectorAll('.pressed').forEach(el => el.classList.remove('pressed'));
-    
-    isRecording = false;
   }
 }
 
