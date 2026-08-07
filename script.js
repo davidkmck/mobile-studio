@@ -133,6 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     globalRecordBtn.innerHTML = '⏹ STOP';
                     globalRecordBtn.style.color = '#ff4444';
 
+                    // 1. Tell all subapps to start playback so you can hear existing tracks while recording!
+                    document.querySelectorAll('.app-frame').forEach(frame => {
+                      if (frame.contentWindow) {
+                          frame.contentWindow.postMessage({ action: 'START_AUDIO' }, '*');
+                      }
+                    });
+
+                    // 2. Arm and start recording on the selected instruments
                     if (armBeatMaker.checked) {
                         beatMakerWindow.postMessage({ command: 'start-recording' }, '*');
                     }
