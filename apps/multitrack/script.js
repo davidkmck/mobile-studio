@@ -120,9 +120,11 @@ let isPlayingMix = false;
         duration: decodedBuffer.duration || 0,
         playheadOffset: 0
       };
-
+        
+      // Instead of clearing the whole board and losing active states, 
+      // re-render or append dynamically:
       tracks.push(trackObject);
-      if (mixerBoard) { mixerBoard.innerHTML = ''; }
+
       renderMixerBoard();
     }
     
