@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const beatMakerWindow = document.getElementById('beat-maker').contentWindow;
     const synthWindow = document.getElementById('synth').contentWindow;
+    const multitrackWindow = document.getElementById('multitrack').contentWindow;
 
     let isRecording = false;
     let isCountdownActive = false;
@@ -159,14 +160,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     globalRecordBtn.innerHTML = '⏹ STOP';
                     globalRecordBtn.style.color = '#ff4444';
 
-                    // 1. Tell all subapps to start playback so existing tracks play during recording
+                    // 1. Explicitly command the multitrack (mixer) window to start audio playback timeline
+                    if (multitrackWindow) {
+                        multitrackWindow.postMessage({ action: 'START_AUDIO' }, '*');
+                    }
+
+                    // 2. Also broadcast to any other subapps just in case
                     document.querySelectorAll('.app-frame').forEach(frame => {
-                        if (frame.contentWindow) {
+                        if (frame.contentWindow && frame.contentWindow !== multitrackWindow) {
                             frame.contentWindow.postMessage({ action: 'START_AUDIO' }, '*');
                         }
                     });
 
-                    // 2. Arm and start recording on selected instruments
+                    // 3. Arm and start recording on selected instruments
                     if (armBeatMaker.checked) {
                         beatMakerWindow.postMessage({ command: 'start-recording' }, '*');
                     }
