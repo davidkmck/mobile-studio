@@ -137,6 +137,24 @@ let isPlayingMix = false;
         console.error('CRITICAL ERROR in addAudioToTimeline:', err);
       }
     }
+
+function checkExistingTracksAndDisarm() {
+    const multitrackFrame = document.getElementById('multitrack');
+    if (!multitrackFrame || !multitrackFrame.contentWindow) return;
+
+    // Access the tracks array from the multitrack subapp window context
+    const subAppTracks = multitrackFrame.contentWindow.tracks;
+    if (subAppTracks && subAppTracks.length > 0) {
+        // Check if any existing track name includes 'beat'
+        const hasBeatTrack = subAppTracks.some(track => track.name.toLowerCase().includes('beat'));
+        
+        const armBeatMaker = document.getElementById('arm-beat-maker');
+        if (armBeatMaker && hasBeatTrack) {
+            armBeatMaker.checked = false;
+        }
+    }
+}
+
     
     function getAudioContext() {
       if (!audioCtx) {
