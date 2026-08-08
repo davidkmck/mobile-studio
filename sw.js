@@ -10,12 +10,15 @@ const ASSETS = [
   '/apps/beat-maker/index.html',
   '/apps/multitrack/index.html',
   '/apps/synth/index.html',
+  '/apps/mic/index.html',
   '/apps/beat-maker/style.css',
   '/apps/multitrack/style.css',
   '/apps/synth/style.css',
+  '/apps/mic/style.css',
   '/apps/beat-maker/script.js',
   '/apps/multitrack/script.js',
   '/apps/synth/script.js',
+  '/apps/mic/script.js'
 
 
   // Icons
