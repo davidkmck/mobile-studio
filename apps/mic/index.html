@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Microphone Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="mic-app-container">
+    <header class="app-topbar">
+      <h1>MIC / FX RECORDER</h1>
+      <div class="status-indicator">
+        <span id="mic-led" class="led-off"></span>
+        <span id="mic-status">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Main Rack Area -->
+    <div class="rack-section">
+      
+      <!-- Input & Monitoring Module -->
+      <div class="module-box">
+        <h3>Input Channel</h3>
+        <div class="control-row">
+          <label for="mic-gain">Gain / Trim</label>
+          <input type="range" id="mic-gain" min="0" max="2" step="0.1" value="1">
+        </div>
+        <div class="control-row">
+          <label>
+            <input type="checkbox" id="mic-monitor"> Direct Monitor (Headphones)
+          </label>
+        </div>
+        <button id="mic-connect-btn" class="btn primary-btn">Enable Mic</button>
+      </div>
+
+      <!-- Effects Chain Module -->
+      <div class="module-box">
+        <h3>FX Rack</h3>
+        
+        <div class="fx-item">
+          <label><input type="checkbox" id="fx-reverb-toggle"> Reverb / Delay</label>
+          <input type="range" id="fx-reverb-mix" min="0" max="1" step="0.05" value="0.2">
+        </div>
+
+        <div class="fx-item">
+          <label>Tone Filter</label>
+          <select id="fx-filter-type">
+            <option value="none">Bypass</option>
+            <option value="lowpass">Low Pass (Warm)</option>
+            <option value="highpass">High Pass (Crisp)</option>
+          </select>
+          <input type="range" id="fx-filter-freq" min="200" max="10000" step="100" value="3000">
+        </div>
+      </div>
+
+      <!-- Recorder Transport Module -->
+      <div class="module-box transport-box">
+        <h3>Transport</h3>
+        <div class="transport-controls">
+          <button id="mic-rec-btn" class="btn rec-btn" disabled>🔴 REC</button>
+          <button id="mic-stop-btn" class="btn stop-btn" disabled>⏹ STOP</button>
+        </div>
+        <div id="mic-timer">00:00</div>
+      </div>
+
+    </div>
+
+    <!-- Recorded Takes Playlist -->
+    <div class="playlist-section">
+      <h3>Recorded Takes</h3>
+      <ul id="takes-list">
+        <!-- Dynamic takes populate here -->
+      </ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
