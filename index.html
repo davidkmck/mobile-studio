@@ -13,6 +13,7 @@
     <iframe id="beat-maker" class="app-frame active" src="apps/beat-maker/index.html"></iframe>
     <iframe id="multitrack" class="app-frame" src="apps/multitrack/index.html"></iframe>
     <iframe id="synth" class="app-frame" src="apps/synth/index.html"></iframe>
+    <iframe id="mic-recorder" class="app-frame" src="apps/mic-recorder/index.html"></iframe>
   </div>
 
   <div class="studio-rack">
@@ -110,6 +111,27 @@
           <div class="black-key bk-4"></div>
           <div class="black-key bk-5"></div>
         </div>
+      </div>
+      <div class="audio-port" style="left: 50%;"></div>
+    </a>
+
+    <!-- MIC / RECORDER UNIT -->
+    <a href="#" class="rack-device mic-tab" data-app="mic-recorder" onclick="loadApp('mic-recorder', event)">
+      
+      <!-- Consistent Hardware Header -->
+      <div class="device-header" style="position: absolute; top: 0; left: 0; right: 0; height: 24px; background: linear-gradient(to bottom, rgba(30,30,30,0.95), rgba(15,15,15,0.85)); border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 30; pointer-events: none;">
+        <!-- Green Selected Indicator -->
+        <div class="status-led" style="width: 8px; height: 8px; border-radius: 50%; background-color: #33ff33; box-shadow: 0 0 5px #33ff33;"></div>
+        <!-- ARM Toggle -->
+        <div class="arm-toggle" onclick="event.stopPropagation()" style="pointer-events: auto; display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" id="arm-mic-recorder" checked>
+          <label for="arm-mic-recorder" style="color: #ff4444; font-size: 10px; font-weight: bold; margin: 0; cursor: pointer; text-shadow: 0 0 2px #ff4444;">ARM</label>
+        </div>
+      </div>
+
+      <div class="mic-interface" style="padding-top: 24px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+        <div class="mic-screen" style="background: #111; color: #0ff; font-family: monospace; padding: 6px 12px; border: 1px solid #333; border-radius: 4px; font-size: 12px; letter-spacing: 1px;">MIC FX</div>
+        <div class="mic-icon-graphic" style="font-size: 24px;">🎙️</div>
       </div>
       <div class="audio-port" style="left: 50%;"></div>
     </a>
