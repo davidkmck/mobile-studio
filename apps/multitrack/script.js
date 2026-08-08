@@ -72,10 +72,10 @@ let isPlayingMix = false;
         await Tone.start(); 
         Tone.Transport.bpm.value = event.data.bpm || 120;
         
+        // Force-stop and restart the mix timeline reliably
+        stopAllTracks();
+        startAllTracks(); 
         if (Tone.Transport.state !== 'started') {
-          Tone.Transport.loop = false;
-          stopAllTracks();
-          startAllTracks(); 
           Tone.Transport.start();
         }
       }
@@ -325,6 +325,25 @@ function checkExistingTracksAndDisarm() {
         }
       }
     }
+
+// 1. Automatically disarm the parent's beat maker if a beat track already exists
+function syncParentArmStates() {
+    try {
+        const hasBeatTrack = tracks.some(track => 
+            track.name && track.name.toLowerCase().includes('beat')
+        );
+        
+        // Access parent document's arm toggle if available
+        if (window.parent && window.parent.document) {
+            const parentArmBeat = window.parent.document.getElementById('arm-beat-maker');
+            if (parentArmBeat && hasBeatTrack) {
+                parentArmBeat.checked = false;
+            }
+        }
+    } catch (e) {
+        console.error("Could not sync arm state with parent:", e);
+    }
+}
 
     function stopAllTracks() {
       cancelAnimationFrame(progressAnimationId);
