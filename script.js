@@ -36,6 +36,9 @@ window.addEventListener('message', (event) => {
       multitrackFrame.contentWindow.postMessage(event.data, '*');
     }
   }
+
+  // Whenever tracks change or sync messages arrive, update arm states
+  updateArmStates();
 });
 
 function drawPatchCables() {
@@ -83,15 +86,17 @@ function updateArmStates() {
     const multitrackFrame = document.getElementById('multitrack');
     const armBeatMaker = document.getElementById('arm-beat-maker');
     
-    if (!multitrackFrame || !multitrackFrame.contentWindow || !armBeatMaker) return;
+    if (!multitrackFrame || !armBeatMaker) return;
 
     try {
-        const subAppTracks = multitrackFrame.contentWindow.tracks;
-        if (subAppTracks && subAppTracks.length > 0) {
+        const subAppTracks = multitrackFrame.contentWindow?.tracks;
+        
+        if (subAppTracks && Array.isArray(subAppTracks)) {
             const hasBeatTrack = subAppTracks.some(track => 
                 track.name && track.name.toLowerCase().includes('beat')
             );
             
+            // Disarm if beat track exists, otherwise leave/allow user toggle
             if (hasBeatTrack) {
                 armBeatMaker.checked = false;
             }
@@ -134,6 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isRecording = false;
     let isCountdownActive = false;
+
+    // Run once on load to catch initial states
+    setTimeout(updateArmStates, 500);
 
     globalRecordBtn.addEventListener('click', () => {
         if (isCountdownActive) return;
@@ -193,6 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const fakeEvent = { preventDefault: () => {} };
             loadApp('multitrack', fakeEvent);
+            
+            // Check arm states shortly after returning to multitrack so the UI updates
+            setTimeout(updateArmStates, 300);
         }
     });
 });
