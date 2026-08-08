@@ -125,6 +125,9 @@ let isPlayingMix = false;
       // re-render or append dynamically:
       tracks.push(trackObject);
 
+      // Automatically sync with parent to disarm beat maker if a beat track exists
+      syncParentArmStates();
+
       renderMixerBoard();
     }
     
