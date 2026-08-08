@@ -61,7 +61,7 @@ connectBtn.addEventListener('click', async () => {
     connectBtn.textContent = 'Mic Connected';
     connectBtn.disabled = true;
 
-    // Listen to parent/global transport record button if available in top frame
+    // Listen to parent/global transport record button
     setupGlobalTransportListener();
 
   } catch (err) {
@@ -96,7 +96,7 @@ micMonitorCheckbox.addEventListener('change', (e) => {
   }
 });
 
-// Sync with Main Studio's Global Record Button
+// Sync with Main Studio's Global Record Button (accounting for 3s countdown)
 function setupGlobalTransportListener() {
   const globalRecBtn = window.parent.document.getElementById('global-record-btn');
   if (!globalRecBtn) return;
@@ -107,19 +107,26 @@ function setupGlobalTransportListener() {
     if (!mediaRecorder) return;
 
     if (!isRecording) {
-      // START RECORDING
-      recordedChunks = [];
-      mediaRecorder.start();
-      isRecording = true;
-      micStatus.textContent = 'Recording (Master)...';
-      micLed.className = 'led-recording';
+      // WAIT FOR 3-SECOND COUNTDOWN (Matches your other tracks)
+      micStatus.textContent = 'Counting down (3s)...';
+      micLed.className = 'led-off';
 
-      secondsElapsed = 0;
-      updateTimerDisplay();
-      recordingInterval = setInterval(() => {
-        secondsElapsed++;
+      setTimeout(() => {
+        // Double check state incase user cancelled
+        recordedChunks = [];
+        mediaRecorder.start();
+        isRecording = true;
+        micStatus.textContent = 'Recording (Live)...';
+        micLed.className = 'led-recording';
+
+        secondsElapsed = 0;
         updateTimerDisplay();
-      }, 1000);
+        recordingInterval = setInterval(() => {
+          secondsElapsed++;
+          updateTimerDisplay();
+        }, 1000);
+      }, 3000);
+
     } else {
       // STOP RECORDING
       mediaRecorder.stop();
@@ -150,21 +157,31 @@ function saveRecordedTakeToMixer() {
   `;
   takesList.prepend(li);
 
-  // 2. Automatically inject a new track element into the Multitrack Mixer frame if accessible
+  // 2. Automatically inject a fully functional track channel into the Multitrack Mixer frame
   try {
     const mixerDoc = window.parent.document.getElementById('multitrack').contentDocument;
     if (mixerDoc) {
+      // Find the main tracks list wrapper or insert before the Save Mix control area
       const tracksContainer = mixerDoc.getElementById('tracks-container') || mixerDoc.body;
+      const saveMixBtn = mixerDoc.getElementById('save-mix-btn'); // assuming this exists based on your note
+
       const trackDiv = mixerDoc.createElement('div');
-      trackDiv.className = 'mixer-channel new-mic-track';
-      trackDiv.style.cssText = "background: #222; padding: 10px; margin: 5px; border-radius: 6px; border: 1px solid #444;";
+      trackDiv.className = 'track-item channel-strip'; // Matches typical multi-track classes
+      trackDiv.style.cssText = "background: #1e1e1e; padding: 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #444; display: flex; align-items: center; justify-content: space-between; gap: 10px;";
+      
       trackDiv.innerHTML = `
-        <div style="font-size: 10px; color: #0ff; margin-bottom: 4px;">MIC TAKE (${timestamp})</div>
-        <audio controls src="${audioUrl}" style="width: 100%; height: 25px;"></audio>
+        <div style="font-size: 11px; color: #0ff; font-weight: bold; min-width: 80px;">MIC TAKE</div>
+        <audio controls src="${audioUrl}" style="flex-grow: 1; height: 32px;"></audio>
       `;
-      tracksContainer.appendChild(trackDiv);
+
+      // Insert before save mix button if present so it doesn't drop below bottom controls
+      if (saveMixBtn && saveMixBtn.parentNode) {
+        saveMixBtn.parentNode.insertBefore(trackDiv, saveMixBtn);
+      } else {
+        tracksContainer.appendChild(trackDiv);
+      }
     }
   } catch (err) {
-    console.log('Could not auto-inject into mixer frame due to cross-origin or selector mismatch:', err);
+    console.log('Could not auto-inject into mixer frame:', err);
   }
 }
