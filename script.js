@@ -96,9 +96,17 @@ function updateArmStates() {
                 track.name && track.name.toLowerCase().includes('beat')
             );
             
-            // Disarm if beat track exists, otherwise leave/allow user toggle
-            if (hasBeatTrack) {
-                armBeatMaker.checked = false;
+        if (hasBeatTrack) {
+                // 1. Try parent-level fallback if it exists in parent DOM
+                const armBeatMakerParent = document.getElementById('arm-beat-maker');
+                if (armBeatMakerParent) {
+                    armBeatMakerParent.checked = false;
+                }
+
+                // 2. Send disarm message down to the beat-maker iframe where the UI control actually lives
+                if (beatMakerFrame && beatMakerFrame.contentWindow) {
+                    beatMakerFrame.contentWindow.postMessage({ command: 'disarm-beat' }, '*');
+                }
             }
         }
     } catch (e) {
