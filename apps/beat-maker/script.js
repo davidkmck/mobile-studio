@@ -373,10 +373,17 @@ document.getElementById('customSelect').addEventListener('change', (e) => {
 window.addEventListener('message', (event) => {
   if (event.data.command === 'start-recording') {
       startRecording();
-  } 
+  }    
   else if (event.data.command === 'stop-recording') {
       stopRecording();
   }
+
+  if (event.data && event.data.command === 'disarm-beat') {
+        const localArmCheckbox = document.getElementById('arm-beat-maker'); // or whatever its internal ID is
+        if (localArmCheckbox) {
+            localArmCheckbox.checked = false;
+        }
+    }
 });
 
 // ---- Boot ----
